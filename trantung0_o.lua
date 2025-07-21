@@ -1,113 +1,165 @@
--- Tải Rayfield
-loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
-
--- Tạo GUI
 local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
 
-local Window = Rayfield:CreateWindow({
-   Name = "💀 tung hub",
-   LoadingTitle = "tung hub",
-   LoadingSubtitle = "bởi trantung",
-   ConfigurationSaving = {
-      Enabled = false,
-   },
-   Discord = {
-      Enabled = false,
-   },
-   KeySystem = false
-})
+local ESPEnabled = false
+local NoClipEnabled = false
+local WalkSpeed = 16
+local SavedTeleports = {}
 
-local MainTab = Window:CreateTab("🏃 Fly / Speed / NoClip", 4483362458)
-local TeleTab = Window:CreateTab("📍 Teleport", 4483362458)
-local PlayerTab = Window:CreateTab("👥 Player TP", 4483362458)
-local EspTab = Window:CreateTab("👁 ESP", 4483362458)
-
--- Fly Toggle
-MainTab:CreateToggle({
-   Name = "✈️ Fly",
-   CurrentValue = false,
-   Callback = function(Value)
-      if Value then
-         loadstring(game:HttpGet("https://raw.githubusercontent.com/XNEOFF/FlyGuiV3/main/FlyGuiV3.txt"))()
-      end
-   end,
-})
-
--- NoClip
-MainTab:CreateToggle({
-   Name = "🚧 NoClip",
-   CurrentValue = false,
-   Callback = function(v)
-      noclip = v
-      game:GetService("RunService").Stepped:Connect(function()
-         if noclip then
-            for _, v in pairs(game.Players.LocalPlayer.Character:GetDescendants()) do
-               if v:IsA("BasePart") then
-                  v.CanCollide = false
-               end
-            end
-         end
-      end)
-   end,
-})
-
--- Speed Slider
-MainTab:CreateSlider({
-   Name = "🏃 WalkSpeed",
-   Range = {16, 200},
-   Increment = 1,
-   CurrentValue = 16,
-   Callback = function(val)
-      game.Players.LocalPlayer.Character.Humanoid.WalkSpeed = val
-   end,
-})
-
--- ESP
-EspTab:CreateButton({
-   Name = "👁 Bật ESP người chơi",
-   Callback = function()
-      loadstring(game:HttpGet("https://kiriot22.com/releases/ESP.lua"))()
-   end
-})
-
--- Teleport lưu điểm
-local savedPoints = {}
-
-TeleTab:CreateButton({
-   Name = "💾 Lưu vị trí hiện tại",
-   Callback = function()
-      local pos = game.Players.LocalPlayer.Character.HumanoidRootPart.Position
-      table.insert(savedPoints, pos)
-      Rayfield:Notify("Đã lưu!", "Vị trí số " .. tostring(#savedPoints) .. " được lưu!")
-   end
-})
-
-for i = 1, 5 do
-   TeleTab:CreateButton({
-      Name = "📍 TP đến điểm " .. i,
-      Callback = function()
-         local pos = savedPoints[i]
-         if pos then
-            game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(pos)
-         else
-            Rayfield:Notify("Lỗi", "Chưa lưu vị trí số " .. i)
-         end
-      end
-   })
+local function Notify(title, content)
+	Rayfield:Notify({
+		Title = title,
+		Content = content,
+		Duration = 3,
+		Actions = {
+			Ignore = {
+				Name = "OK",
+				Callback = function() end
+			}
+		}
+	})
 end
 
--- Teleport đến người chơi
-PlayerTab:CreateInput({
-   Name = "Nhập tên người chơi",
-   PlaceholderText = "Ví dụ: ngotung",
-   RemoveTextAfterFocusLost = true,
-   Callback = function(txt)
-      local target = game.Players:FindFirstChild(txt)
-      if target and target.Character then
-         game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame =
-            target.Character.HumanoidRootPart.CFrame + Vector3.new(0, 3, 0)
-      else
-         Rayfield:Notify("Không tìm thấy", "Tên người chơi không tồn tại")
-      end
-   end,
+local Window = Rayfield:CreateWindow({
+	Name = "💀 Tung Hub - Rayfield UI",
+	LoadingTitle = "Tung Hub Loading...",
+	LoadingSubtitle = "by ngố",
+	ConfigurationSaving = {
+		Enabled = false
+	},
+	Discord = {
+		Enabled = false
+	},
+	KeySystem = false
+})
+
+local Tab = Window:CreateTab("🏃 Main", 4483362458)
+
+Tab:CreateSlider({
+	Name = "Speed",
+	Range = {16, 200},
+	Increment = 2,
+	Default = 16,
+	Callback = function(Value)
+		WalkSpeed = Value
+		game.Players.LocalPlayer.Character.Humanoid.WalkSpeed = Value
+		Notify("Tốc độ", "Đã chỉnh: " .. Value)
+	end
+})
+
+Tab:CreateToggle({
+	Name = "NoClip",
+	CurrentValue = false,
+	Callback = function(Value)
+		NoClipEnabled = Value
+		if Value then
+			Notify("NoClip", "Đã bật")
+		else
+			Notify("NoClip", "Đã tắt")
+		end
+	end
+})
+
+game:GetService("RunService").Stepped:Connect(function()
+	if NoClipEnabled then
+		for _, part in pairs(game.Players.LocalPlayer.Character:GetDescendants()) do
+			if part:IsA("BasePart") and part.CanCollide then
+				part.CanCollide = false
+			end
+		end
+	end
+end)
+
+Tab:CreateToggle({
+	Name = "ESP",
+	CurrentValue = false,
+	Callback = function(Value)
+		ESPEnabled = Value
+		if Value then
+			for _, player in pairs(game.Players:GetPlayers()) do
+				if player ~= game.Players.LocalPlayer and player.Character then
+					local box = Instance.new("BoxHandleAdornment", player.Character:FindFirstChild("HumanoidRootPart"))
+					box.Size = Vector3.new(4, 6, 1)
+					box.Color3 = Color3.new(1, 0, 0)
+					box.AlwaysOnTop = true
+					box.Adornee = player.Character:FindFirstChild("HumanoidRootPart")
+					box.ZIndex = 5
+					box.Name = "ESPBox"
+				end
+			end
+			Notify("ESP", "Đã bật")
+		else
+			for _, player in pairs(game.Players:GetPlayers()) do
+				if player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
+					local adorn = player.Character.HumanoidRootPart:FindFirstChild("ESPBox")
+					if adorn then adorn:Destroy() end
+				end
+			end
+			Notify("ESP", "Đã tắt")
+		end
+	end
+})
+
+Tab:CreateButton({
+	Name = "Teleport về Spawn",
+	Callback = function()
+		local root = game.Players.LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+		if root then
+			root.CFrame = CFrame.new(0, 10, 0)
+			Notify("Teleport", "Đã về điểm Spawn")
+		end
+	end
+})
+
+Tab:CreateButton({
+	Name = "Lưu điểm Teleport",
+	Callback = function()
+		local pos = game.Players.LocalPlayer.Character:FindFirstChild("HumanoidRootPart").Position
+		table.insert(SavedTeleports, pos)
+
+		local pointNum = #SavedTeleports
+		Tab:CreateButton({
+			Name = "Điểm TP " .. pointNum,
+			Callback = function()
+				game.Players.LocalPlayer.Character:FindFirstChild("HumanoidRootPart").CFrame = CFrame.new(SavedTeleports[pointNum])
+				Notify("Teleport", "Đã tới Điểm TP " .. pointNum)
+			end
+		})
+
+		Notify("Lưu điểm", "Đã lưu điểm số " .. pointNum)
+	end
+})
+
+local TpTab = Window:CreateTab("🧍 Teleport", 4483362458)
+local PlayerList = {}
+
+local function UpdatePlayerList()
+	PlayerList = {}
+	for _, player in pairs(game.Players:GetPlayers()) do
+		if player ~= game.Players.LocalPlayer then
+			table.insert(PlayerList, player.Name)
+		end
+	end
+end
+
+local Dropdown
+Dropdown = TpTab:CreateDropdown({
+	Name = "Chọn người chơi",
+	Options = PlayerList,
+	CurrentOption = "",
+	Callback = function(Option)
+		local plr = game.Players:FindFirstChild(Option)
+		if plr and plr.Character and plr.Character:FindFirstChild("HumanoidRootPart") then
+			game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = plr.Character.HumanoidRootPart.CFrame + Vector3.new(2,0,0)
+			Notify("Teleport", "Đã tới " .. Option)
+		end
+	end
+})
+
+TpTab:CreateButton({
+	Name = "🔁 Tải lại danh sách người chơi",
+	Callback = function()
+		UpdatePlayerList()
+		Dropdown:SetOptions(PlayerList)
+		Notify("Danh sách", "Đã tải lại người chơi")
+	end
 })
