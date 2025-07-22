@@ -336,20 +336,20 @@ end
 end
 end)
 
----------------- fps -----------------
-
+---------------- fps ping -----------------
 local RunService = game:GetService("RunService")
 local Players = game:GetService("Players")
+local StatsService = game:GetService("Stats")
 local LocalPlayer = Players.LocalPlayer
 local PlayerGui = LocalPlayer:WaitForChild("PlayerGui")
 
--- Tạo màn hình hiển thị FPS
+-- Tạo màn hình hiển thị FPS và Ping
 local screenGui = Instance.new("ScreenGui")
-screenGui.Name = "FPSCounter"
+screenGui.Name = "PerformanceCounter"
 screenGui.Parent = PlayerGui
 
 local frame = Instance.new("Frame")
-frame.Size = UDim2.new(0, 120, 0, 40)
+frame.Size = UDim2.new(0, 150, 0, 60)  -- Tăng kích thước để hiển thị thêm ping
 frame.Position = UDim2.new(0, 10, 0, 10)
 frame.BackgroundTransparency = 0.7
 frame.BackgroundColor3 = Color3.new(0, 0, 0)
@@ -359,40 +359,66 @@ local textLabel = Instance.new("TextLabel")
 textLabel.Size = UDim2.new(1, 0, 1, 0)
 textLabel.BackgroundTransparency = 1
 textLabel.TextColor3 = Color3.new(1, 1, 1)
-textLabel.Text = "FPS: 0"
+textLabel.Text = "FPS: 0 (0ms)\nPing: 0ms"
 textLabel.Font = Enum.Font.Code
-textLabel.TextSize = 18
+textLabel.TextSize = 16
+textLabel.TextYAlignment = Enum.TextYAlignment.Top
 textLabel.Parent = frame
 
 -- Biến để tính FPS
 local fps = 0
 local lastTime = os.clock()
 local frames = 0
-local updateInterval = 0.2 -- Thay đổi khoảng thời gian cập nhật (giây)
+local updateInterval = 0.2 -- Khoảng thời gian cập nhật (giây)
 
--- Hàm cập nhật FPS với tốc độ nhanh hơn
-local function updateFPS()
+-- Hàm cập nhật thông tin hiệu suất
+local function updatePerformance()
+    -- Tính FPS
     frames = frames + 1
-    
     local currentTime = os.clock()
+    
     if currentTime - lastTime >= updateInterval then
         fps = math.floor(frames / (currentTime - lastTime) + 0.5)
         frames = 0
         lastTime = currentTime
         
-        -- Cập nhật hiển thị
-        textLabel.Text = string.format("FPS: %d (%.1fms)", fps, 1000/fps)
+        -- Lấy thông tin ping
+        local ping = StatsService.Network.ServerStatsItem["Data Ping"]:GetValue()
+        ping = math.floor(ping + 0.5) -- Làm tròn ping
         
-        -- Đổi màu dựa trên FPS
+        -- Cập nhật hiển thị
+        textLabel.Text = string.format("FPS: %d (%.1fms)\nPing: %dms", fps, 1000/fps, ping)
+        
+        -- Đổi màu dựa trên FPS và Ping
+        local fpsColor, pingColor
+        
+        -- Màu cho FPS
         if fps < 20 then
-            textLabel.TextColor3 = Color3.new(1, 0.3, 0.3) -- Đỏ nhạt
+            fpsColor = Color3.new(1, 0.3, 0.3) -- Đỏ nhạt
         elseif fps < 45 then
-            textLabel.TextColor3 = Color3.new(1, 1, 0.4) -- Vàng
+            fpsColor = Color3.new(1, 1, 0.4) -- Vàng
         else
-            textLabel.TextColor3 = Color3.new(0.4, 1, 0.4) -- Xanh lá
+            fpsColor = Color3.new(0.4, 1, 0.4) -- Xanh lá
         end
+        
+        -- Màu cho Ping
+        if ping > 300 then
+            pingColor = Color3.new(1, 0.3, 0.3) -- Đỏ
+        elseif ping > 150 then
+            pingColor = Color3.new(1, 1, 0.4) -- Vàng
+        else
+            pingColor = Color3.new(0.4, 1, 0.4) -- Xanh lá
+        end
+        
+        -- Tạo text với màu sắc
+        textLabel.Text = string.format(
+            '<font color="rgb(%d,%d,%d)">FPS: %d (%.1fms)</font>\n<font color="rgb(%d,%d,%d)">Ping: %dms</font>',
+            fpsColor.R * 255, fpsColor.G * 255, fpsColor.B * 255, fps, 1000/fps,
+            pingColor.R * 255, pingColor.G * 255, pingColor.B * 255, ping
+        )
     end
 end
 
--- Kết nối với RenderStepped để tính FPS
-RunService.RenderStepped:Connect(updateFPS)
+-- Kết nối với RenderStepped để tính FPS và ping
+RunService.RenderStepped:Connect(updatePerformance)
+
