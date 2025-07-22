@@ -31,7 +31,7 @@ Title = "Shit hub💩",
 Subtitle = "Key System",
 Note = "Key = Nhập lại key vừa nãy đã nhập",
 FileName = "TranTungUIKey",
-SaveKey = false,
+SaveKey = true,
 GrabKeyFromSite = false,
 Key = "hhx44xhh"
 }
