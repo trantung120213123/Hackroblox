@@ -1,195 +1,178 @@
---[[
-Script GUI by ChatGPT for Tien Tung
-Rayfield UI + ESP + Lock NPC + Teleport + Speed + NoClip
-Key: TranTungxChatGpt
-Mobile-Friendly + Notification
-]]
-
--- Load Rayfield UI
-loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
+-- Tải Rayfield UI
 local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
 
-local ESP_ON = false
-local ESP_NPC_ON = false
-local LockNPC = false
-local savedPoints = {}
-local noclip = false
-local players = game:GetService("Players")
-local localPlayer = players.LocalPlayer
-local camera = workspace.CurrentCamera
-
--- GUI Init
+-- UI Window
 local Window = Rayfield:CreateWindow({
-   Name = "💀 Hack UI - TranTungxChatGpt",
-   LoadingTitle = "💀 Loading...",
-   LoadingSubtitle = "By ChatGPT",
+   Name = "Tung Script Hub",
+   LoadingTitle = "TranTungxChatGpt",
    ConfigurationSaving = {
-      Enabled = false
+      Enabled = false,
    },
-   KeySystem = true,
-   KeySettings = {
-      Title = "Hack GUI",
-      Subtitle = "Key System",
-      Note = "Key = TranTungxChatGpt",
-      FileName = "TranTungUIKey",
-      SaveKey = false,
-      GrabKeyFromSite = false,
-      Key = "TranTungxChatGpt"
-   }
 })
 
------------------- MAIN TAB -------------------
-local MainTab = Window:CreateTab("Main", 4483362458)
+-- 💀 Toggle Button
+Window:ToggleWindow()
 
+-- Tab: Main
+local MainTab = Window:CreateTab("Main")
+
+-- Speed Slider
 MainTab:CreateSlider({
-   Name = "Speed",
-   Range = {16, 200},
+   Name = "WalkSpeed",
+   Range = {16, 100},
    Increment = 1,
    CurrentValue = 16,
    Callback = function(Value)
       game.Players.LocalPlayer.Character.Humanoid.WalkSpeed = Value
-      Rayfield:Notify("Speed", "Đã chỉnh tốc độ!", 2)
-   end
+   end,
 })
 
+-- NoClip Toggle
+local noclip = false
 MainTab:CreateToggle({
    Name = "NoClip",
    CurrentValue = false,
-   Callback = function(Value)
-      noclip = Value
-      Rayfield:Notify("NoClip", Value and "Bật" or "Tắt", 2)
-   end
+   Callback = function(state)
+      noclip = state
+      Rayfield:Notify({Title="NoClip", Content=state and "Bật" or "Tắt", Duration=2.5})
+   end,
 })
 
-MainTab:CreateToggle({
-   Name = "ESP người chơi",
-   CurrentValue = false,
-   Callback = function(Value)
-      ESP_ON = Value
-      Rayfield:Notify("ESP", Value and "Bật" or "Tắt", 2)
-   end
-})
-
------------------- TELEPORT TAB -------------------
-local TeleportTab = Window:CreateTab("Teleport", 4483362458)
-
-TeleportTab:CreateButton({
-   Name = "Save Point",
-   Callback = function()
-      local pos = localPlayer.Character and localPlayer.Character:FindFirstChild("HumanoidRootPart") and localPlayer.Character.HumanoidRootPart.Position
-      if pos then
-         table.insert(savedPoints, pos)
-         TeleportTab:CreateButton({
-            Name = "Teleport Point " .. #savedPoints,
-            Callback = function()
-               localPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(savedPoints[#savedPoints])
-            end
-         })
-         Rayfield:Notify("Save Point", "Đã lưu điểm!", 2)
-      end
-   end
-})
-
------------------- PLAYER TAB -------------------
-local PlayerTab = Window:CreateTab("Players", 4483362458)
-
-local function LoadPlayers()
-   for _, p in pairs(players:GetPlayers()) do
-      if p ~= localPlayer then
-         PlayerTab:CreateButton({
-            Name = "TP đến: " .. p.Name,
-            Callback = function()
-               if p.Character and p.Character:FindFirstChild("HumanoidRootPart") then
-                  localPlayer.Character.HumanoidRootPart.CFrame = p.Character.HumanoidRootPart.CFrame + Vector3.new(0, 3, 0)
-               end
-            end
-         })
-      end
-   end
-end
-
-PlayerTab:CreateButton({
-   Name = "🔁 Load lại danh sách",
-   Callback = LoadPlayers
-})
-
-LoadPlayers()
-
------------------- NPC TAB -------------------
-local NPCTab = Window:CreateTab("NPC", 4483362458)
-
-NPCTab:CreateToggle({
-   Name = "ESP NPC",
-   CurrentValue = false,
-   Callback = function(Value)
-      ESP_NPC_ON = Value
-      Rayfield:Notify("ESP NPC", Value and "Bật" or "Tắt", 2)
-   end
-})
-
-NPCTab:CreateToggle({
-   Name = "Lock NPC gần nhất",
-   CurrentValue = false,
-   Callback = function(Value)
-      LockNPC = Value
-      Rayfield:Notify("Lock NPC", Value and "Bật" or "Tắt", 2)
-   end
-})
-
------------------- ESP + LockNPC LOOP -------------------
-game:GetService("RunService").RenderStepped:Connect(function()
-   -- NoClip
-   if noclip and localPlayer.Character and localPlayer.Character:FindFirstChild("HumanoidRootPart") then
-      localPlayer.Character.Humanoid:ChangeState(11)
-   end
-
-   -- ESP Player
-   if ESP_ON then
-      for _, plr in pairs(players:GetPlayers()) do
-         if plr ~= localPlayer and plr.Character and plr.Character:FindFirstChild("Head") and not plr.Character.Head:FindFirstChild("ESP") then
-            local box = Instance.new("BillboardGui", plr.Character.Head)
-            box.Name = "ESP"
-            box.Size = UDim2.new(2, 0, 2, 0)
-            box.AlwaysOnTop = true
-            local frame = Instance.new("Frame", box)
-            frame.Size = UDim2.new(1, 0, 1, 0)
-            frame.BackgroundColor3 = Color3.new(1, 0, 0)
-            frame.BackgroundTransparency = 0.5
+game:GetService("RunService").Stepped:Connect(function()
+   if noclip then
+      for _,v in pairs(game.Players.LocalPlayer.Character:GetDescendants()) do
+         if v:IsA("BasePart") then
+            v.CanCollide = false
          end
-      end
-   end
-
-   -- ESP NPC
-   if ESP_NPC_ON then
-      for _, npc in pairs(workspace:GetDescendants()) do
-         if npc:IsA("Model") and not players:GetPlayerFromCharacter(npc) and npc:FindFirstChild("Head") and not npc.Head:FindFirstChild("ESP") then
-            local esp = Instance.new("BillboardGui", npc.Head)
-            esp.Name = "ESP"
-            esp.Size = UDim2.new(2, 0, 2, 0)
-            esp.AlwaysOnTop = true
-            local frame = Instance.new("Frame", esp)
-            frame.Size = UDim2.new(1, 0, 1, 0)
-            frame.BackgroundColor3 = Color3.new(0, 1, 0)
-            frame.BackgroundTransparency = 0.5
-         end
-      end
-   end
-
-   -- Lock NPC
-   if LockNPC then
-      local closest = nil
-      local minDist = math.huge
-      for _, npc in pairs(workspace:GetDescendants()) do
-         if npc:IsA("Model") and not players:GetPlayerFromCharacter(npc) and npc:FindFirstChild("Head") then
-            local dist = (npc.Head.Position - camera.CFrame.Position).Magnitude
-            if dist < minDist then
-               closest = npc
-               minDist = dist
-            end
-         end
-      end
-      if closest and closest:FindFirstChild("Head") then
-         camera.CFrame = CFrame.new(camera.CFrame.Position, closest.Head.Position)
       end
    end
 end)
+
+-- ESP (Players + NPC)
+local function createESP(part, name)
+   local esp = Instance.new("BillboardGui", part)
+   esp.Size = UDim2.new(0,100,0,40)
+   esp.Adornee = part
+   esp.AlwaysOnTop = true
+   local text = Instance.new("TextLabel", esp)
+   text.Size = UDim2.new(1,0,1,0)
+   text.BackgroundTransparency = 1
+   text.TextColor3 = Color3.new(1,0,0)
+   text.Text = name
+   text.TextScaled = true
+end
+
+MainTab:CreateButton({
+   Name = "Bật ESP",
+   Callback = function()
+      for _,v in pairs(game:GetDescendants()) do
+         if v:IsA("Model") and v:FindFirstChild("Humanoid") and v:FindFirstChild("Head") then
+            if v ~= game.Players.LocalPlayer.Character then
+               createESP(v.Head, v.Name)
+            end
+         end
+      end
+      Rayfield:Notify({Title="ESP", Content="Đã bật ESP cho NPC & người chơi", Duration=2.5})
+   end,
+})
+
+-- Auto Aim Lock to Nearest NPC Head
+local aiming = false
+MainTab:CreateToggle({
+   Name = "Lock NPC (Auto Aim)",
+   CurrentValue = false,
+   Callback = function(state)
+      aiming = state
+      Rayfield:Notify({Title="Lock NPC", Content=state and "Đang Ghim Tâm" or "Tắt Ghim", Duration=2.5})
+   end,
+})
+
+-- Aim Lock Code
+local camera = game.Workspace.CurrentCamera
+game:GetService("RunService").RenderStepped:Connect(function()
+   if aiming then
+      local nearest, shortest = nil, math.huge
+      for _,v in pairs(game:GetDescendants()) do
+         if v:IsA("Model") and v:FindFirstChild("Head") and v:FindFirstChild("Humanoid") and v ~= game.Players.LocalPlayer.Character then
+            local headPos = camera:WorldToViewportPoint(v.Head.Position)
+            local distance = (Vector2.new(headPos.X, headPos.Y) - Vector2.new(camera.ViewportSize.X/2, camera.ViewportSize.Y/2)).Magnitude
+            if distance < shortest then
+               shortest = distance
+               nearest = v.Head
+            end
+         end
+      end
+      if nearest then
+         camera.CFrame = CFrame.new(camera.CFrame.Position, nearest.Position)
+      end
+   end
+end)
+
+-- Tab: Teleport
+local TeleTab = Window:CreateTab("Teleport")
+local savedPoints = {}
+
+TeleTab:CreateButton({
+   Name = "Save Point",
+   Callback = function()
+      local char = game.Players.LocalPlayer.Character
+      if char then
+         local pos = char.HumanoidRootPart.Position
+         table.insert(savedPoints, pos)
+         TeleTab:CreateButton({
+            Name = "TP Point "..#savedPoints,
+            Callback = function()
+               char:MoveTo(pos)
+               Rayfield:Notify({Title="Teleport", Content="Đã dịch chuyển về điểm đã lưu", Duration=2})
+            end,
+         })
+      end
+   end,
+})
+
+-- Tab: Players
+local PlayerTab = Window:CreateTab("Players")
+local dropdown
+local selectedPlayer = nil
+
+dropdown = PlayerTab:CreateDropdown({
+   Name = "Chọn người chơi",
+   Options = {},
+   CurrentOption = "",
+   Callback = function(Value)
+      selectedPlayer = game.Players:FindFirstChild(Value)
+   end,
+})
+
+PlayerTab:CreateButton({
+   Name = "Tải lại danh sách người chơi",
+   Callback = function()
+      local names = {}
+      for _,p in pairs(game.Players:GetPlayers()) do
+         if p.Name ~= game.Players.LocalPlayer.Name then
+            table.insert(names, p.Name)
+         end
+      end
+      dropdown:SetOptions(names)
+   end,
+})
+
+PlayerTab:CreateButton({
+   Name = "Teleport đến người chơi",
+   Callback = function()
+      if selectedPlayer and selectedPlayer.Character and selectedPlayer.Character:FindFirstChild("HumanoidRootPart") then
+         game.Players.LocalPlayer.Character:MoveTo(selectedPlayer.Character.HumanoidRootPart.Position)
+         Rayfield:Notify({Title="Teleport", Content="Đã dịch chuyển đến người chơi", Duration=2})
+      end
+   end,
+})
+
+-- Tab: Misc
+local MiscTab = Window:CreateTab("Misc")
+MiscTab:CreateParagraph({Title="Script by", Content="TranTungxChatGpt"})
+
+Rayfield:Notify({
+   Title = "Tung Script Hub",
+   Content = "Đã khởi động script thành công!",
+   Duration = 3
+})
