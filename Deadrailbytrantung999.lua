@@ -73,40 +73,25 @@ end
 local TeleportTab = Window:CreateTab("Teleport", 4483362458)
 
 local savedPoints = {}
-local maxPoints = 10
 local pointFolder = TeleportTab:CreateSection("Saved Points")
 
 TeleportTab:CreateButton({
     Name = "Save Point",
     Callback = function()
-        if #savedPoints >= maxPoints then
-            Rayfield:Notify({
-                Title = "Thông báo",
-                Content = "Đã đạt giới hạn 10 điểm!",
-                Duration = 3,
-                Image = 4483362458
-            })
-            return
-        end
-
-        -- Lấy vị trí hiện tại
         local pos = game.Players.LocalPlayer.Character.HumanoidRootPart.Position
         table.insert(savedPoints, pos)
 
-        -- Lưu lại chỉ số
-        local pointIndex = #savedPoints
-        local savedPos = pos  -- Dùng biến tách biệt để giữ đúng tọa độ
+        local index = #savedPoints
 
-        -- Tạo nút mới
         pointFolder:CreateButton({
-            Name = "Point " .. pointIndex,
+            Name = "Point " .. index,
             Callback = function()
                 local hrp = game.Players.LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
                 if hrp then
-                    hrp.CFrame = CFrame.new(savedPos)
+                    hrp.CFrame = CFrame.new(savedPoints[index])
                     Rayfield:Notify({
                         Title = "Dịch chuyển",
-                        Content = "Đã dịch đến Point " .. pointIndex,
+                        Content = "Đã dịch đến Point " .. index,
                         Duration = 2,
                         Image = 4483362458
                     })
