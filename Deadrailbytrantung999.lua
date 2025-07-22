@@ -1,6 +1,6 @@
 --[[ Script GUI by Tien Tung
 Rayfield UI + ESP + Lock NPC + Teleport + Speed + NoClip
-Key: hhx44xhh
+Key: shithub999
 Mobile-Friendly + Notification
 ]]
 
@@ -33,7 +33,7 @@ Note = "Key = Nhập lại key vừa nãy đã nhập",
 FileName = "TranTungUIKey",
 SaveKey = true,
 GrabKeyFromSite = false,
-Key = "hhx44xhh"
+Key = "shithub999"
 }
 })
 
