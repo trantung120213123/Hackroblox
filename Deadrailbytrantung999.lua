@@ -171,51 +171,55 @@ SkinTab:CreateButton({
 	end,
 })
 
-local ClonePlayerName = ""
-local Players = game:GetService("Players")
-local LocalPlayer = Players.LocalPlayer
+-- Thêm vào Tab Skin đã có sẵn
+local clonePlayerName = ""
 
-Rayfield:CreateInput({
-	Name = "Nhập tên người chơi",
-	PlaceholderText = "Ví dụ: TienTung123",
-	RemoveTextAfterFocusLost = true,
-	SectionParent = SkinTab,
-	Callback = function(Text)
-		ClonePlayerName = Text
-	end,
+SkinTab:CreateInput({
+    Name = "Tên người chơi",
+    PlaceholderText = "Nhập tên người cần clone skin...",
+    RemoveTextAfterFocusLost = false,
+    Callback = function(text)
+        clonePlayerName = text
+    end,
 })
 
-Rayfield:CreateButton({
-	Name = "Clone Skin",
-	Callback = function()
-		local TargetPlayer = Players:FindFirstChild(ClonePlayerName)
-		if TargetPlayer and TargetPlayer.Character and LocalPlayer.Character then
-			for _, item in pairs(LocalPlayer.Character:GetChildren()) do
-				if item:IsA("Accessory") or item:IsA("Shirt") or item:IsA("Pants") or item:IsA("ShirtGraphic") or item:IsA("BodyColors") or item:IsA("CharacterMesh") or item:IsA("Decal") or item:IsA("Hat") or item:IsA("MeshPart") then
-					item:Destroy()
-				end
-			end
+SkinTab:CreateButton({
+    Name = "Clone Skin",
+    Callback = function()
+        local targetPlayer = game.Players:FindFirstChild(clonePlayerName)
+        local localChar = game.Players.LocalPlayer.Character
+        if not targetPlayer or not targetPlayer.Character then
+            Rayfield:Notify({
+                Title = "Clone Skin",
+                Content = "Không tìm thấy người chơi!",
+                Duration = 3,
+                Image = 4483362458
+            })
+            return
+        end
 
-			for _, item in pairs(TargetPlayer.Character:GetChildren()) do
-				if item:IsA("Accessory") or item:IsA("Shirt") or item:IsA("Pants") or item:IsA("ShirtGraphic") or item:IsA("BodyColors") or item:IsA("CharacterMesh") or item:IsA("Decal") or item:IsA("Hat") or item:IsA("MeshPart") then
-					local cloned = item:Clone()
-					cloned.Parent = LocalPlayer.Character
-				end
-			end
-			Rayfield:Notify({
-				Title = "✅ Clone Skin",
-				Content = "Đã clone skin từ: " .. ClonePlayerName,
-				Duration = 3,
-			})
-		else
-			Rayfield:Notify({
-				Title = "❌ Lỗi",
-				Content = "Không tìm thấy người chơi hoặc nhân vật!",
-				Duration = 3,
-			})
-		end
-	end,
-	SectionParent = SkinTab
+        -- Xóa phụ kiện cũ
+        for _, item in ipairs(localChar:GetChildren()) do
+            if item:IsA("Accessory") or item:IsA("Shirt") or item:IsA("Pants") or item:IsA("CharacterMesh") or item:IsA("ShirtGraphic") or item:IsA("BodyColors") then
+                item:Destroy()
+            end
+        end
+
+        -- Clone phụ kiện từ người chơi kia
+        for _, item in ipairs(targetPlayer.Character:GetChildren()) do
+            if item:IsA("Accessory") or item:IsA("Shirt") or item:IsA("Pants") or item:IsA("CharacterMesh") or item:IsA("ShirtGraphic") or item:IsA("BodyColors") then
+                local clone = item:Clone()
+                clone.Parent = localChar
+            end
+        end
+
+        Rayfield:Notify({
+            Title = "Clone Skin",
+            Content = "Đã clone skin từ " .. clonePlayerName,
+            Duration = 3,
+            Image = 4483362458
+        })
+    end,
 })
 
 ------------------ LOOP: ESP + LockNPC + NoClip -------------------
