@@ -171,9 +171,9 @@ SkinTab:CreateButton({
 	end,
 })
 
--- Skin Tab (đặt vào Tab Skin đã có)
 local userIdToClone = nil
 
+-- Nhập tên người chơi (tự lấy UserId)
 SkinTab:CreateInput({
     Name = "Tên người chơi",
     PlaceholderText = "Nhập tên người chơi...",
@@ -200,34 +200,61 @@ SkinTab:CreateInput({
     end
 })
 
+-- Nhập trực tiếp UserId
+SkinTab:CreateInput({
+    Name = "Hoặc nhập UserId trực tiếp",
+    PlaceholderText = "Nhập UserId...",
+    RemoveTextAfterFocusLost = false,
+    Callback = function(input)
+        local id = tonumber(input)
+        if id then
+            userIdToClone = id
+            setclipboard(input)
+            Rayfield:Notify({
+                Title = "Đã nhận ID",
+                Content = "UserId: " .. input,
+                Duration = 3,
+            })
+        else
+            Rayfield:Notify({
+                Title = "Lỗi",
+                Content = "ID không hợp lệ!",
+                Duration = 3,
+            })
+        end
+    end
+})
+
+-- Nút clone skin
 SkinTab:CreateButton({
     Name = "Clone Skin từ ID",
     Callback = function()
         if not userIdToClone then
             Rayfield:Notify({
                 Title = "Thiếu UserId!",
-                Content = "Vui lòng nhập tên trước.",
+                Content = "Vui lòng nhập tên hoặc ID trước.",
                 Duration = 3,
             })
             return
         end
 
         local success, appearance = pcall(function()
-            return game:GetService("Players"):GetCharacterAppearanceAsync(userIdToClone)
+            return game.Players:GetCharacterAppearanceAsync(userIdToClone)
         end)
 
-        if success then
+        if success and appearance then
             local char = game.Players.LocalPlayer.Character or game.Players.LocalPlayer.CharacterAdded:Wait()
-            local assets = game:GetObjects("rbxassetid://"..userIdToClone)
 
+            -- Xoá skin cũ
             for _, v in pairs(char:GetChildren()) do
-                if v:IsA("Accessory") or v:IsA("Shirt") or v:IsA("Pants") or v:IsA("ShirtGraphic") then
+                if v:IsA("Accessory") or v:IsA("Shirt") or v:IsA("Pants") or v:IsA("ShirtGraphic") or v:IsA("BodyColors") then
                     v:Destroy()
                 end
             end
 
+            -- Clone skin mới
             for _, v in ipairs(appearance:GetChildren()) do
-                if v:IsA("Accessory") or v:IsA("Shirt") or v:IsA("Pants") or v:IsA("ShirtGraphic") then
+                if v:IsA("Accessory") or v:IsA("Shirt") or v:IsA("Pants") or v:IsA("ShirtGraphic") or v:IsA("BodyColors") then
                     v:Clone().Parent = char
                 end
             end
