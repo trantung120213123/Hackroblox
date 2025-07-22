@@ -1,6 +1,6 @@
 -- Loader với kiểm tra key
-local key = "hhx44xhh"
-local url = "https://yeumoney.com/WTsRyATIY"
+local key = "shithub999"
+local url = "https://yeumoney.com/iqrMw0"
 local scriptUrl = "https://raw.githubusercontent.com/trantung120213123/Hackroblox/main/Deadrailbytrantung999.lua"
 
 local Notification = function(text)
