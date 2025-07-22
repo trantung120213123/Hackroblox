@@ -171,37 +171,53 @@ SkinTab:CreateButton({
 	end,
 })
 
-SkinTab:CreateInput({
-    Name = "Clone Skin",
-    PlaceholderText = "Nhập tên người chơi...",
-    RemoveTextAfterFocusLost = false,
-    Callback = function(playerName)
-        local player = game.Players:FindFirstChild(playerName)
-        local localPlayer = game.Players.LocalPlayer
-        if player and player.Character and localPlayer.Character then
-            -- Xoá skin hiện tại
-            for _, item in ipairs(localPlayer.Character:GetChildren()) do
-                if item:IsA("Accessory") or item:IsA("Shirt") or item:IsA("Pants") or item:IsA("ShirtGraphic") or item:IsA("BodyColors") then
-                    item:Destroy()
-                end
-            end
+local skinInput
 
-            -- Clone skin mới
-            for _, item in ipairs(player.Character:GetChildren()) do
-                if item:IsA("Accessory") or item:IsA("Shirt") or item:IsA("Pants") or item:IsA("ShirtGraphic") or item:IsA("BodyColors") then
-                    local clone = item:Clone()
-                    clone.Parent = localPlayer.Character
-                end
-            end
-        else
-            Rayfield:Notify({
-                Title = "Clone Skin",
-                Content = "Không tìm thấy người chơi hoặc nhân vật",
-                Duration = 3,
-                Image = 4483362458
-            })
-        end
-    end,
+-- Nhập tên người cần clone skin
+skinInput = SkinTab:CreateInput({
+	Name = "Tên người cần Clone Skin",
+	PlaceholderText = "Nhập tên người chơi...",
+	RemoveTextAfterFocusLost = false,
+	Callback = function(Value)
+		-- Lưu tên vào biến để nút Clone dùng
+		cloneTarget = Value
+	end,
+})
+
+-- Nút Clone Skin
+SkinTab:CreateButton({
+	Name = "Clone Skin",
+	Callback = function()
+		if not cloneTarget or cloneTarget == "" then
+			Rayfield:Notify({
+				Title = "Clone Skin",
+				Content = "Bạn chưa nhập tên người chơi!",
+				Duration = 3,
+			})
+			return
+		end
+
+		local players = game:GetService("Players")
+		local localPlayer = players.LocalPlayer
+		local targetPlayer = players:FindFirstChild(cloneTarget)
+
+		if targetPlayer and targetPlayer.Character and targetPlayer.Character:FindFirstChild("Humanoid") then
+			local desc = targetPlayer.Character.Humanoid:GetAppliedDescription()
+			localPlayer.Character.Humanoid:ApplyDescription(desc)
+
+			Rayfield:Notify({
+				Title = "Clone Skin",
+				Content = "Đã clone skin từ " .. cloneTarget,
+				Duration = 3,
+			})
+		else
+			Rayfield:Notify({
+				Title = "Clone Skin",
+				Content = "Không tìm thấy người chơi!",
+				Duration = 3,
+			})
+		end
+	end,
 })
 
 ------------------ LOOP: ESP + LockNPC + NoClip -------------------
