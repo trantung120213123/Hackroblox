@@ -135,93 +135,71 @@ Rayfield:Notify("Lock NPC", Value and "Bật" or "Tắt", 2)
 end
 })
 
-local CloneTab = Window:CreateTab("🧬 Clone", 4483362458)
+local SkinTab = Window:CreateTab("Skin", 4483362458)
 
-local SelectedPlayer = nil
+local selectedTarget = nil
 
-CloneTab:CreateButton({
-    Name = "Chọn người gần nhất",
-    Callback = function()
-        local closest = nil
-        local shortest = math.huge
-        for _, v in pairs(game.Players:GetPlayers()) do
-            if v ~= game.Players.LocalPlayer and v.Character and v.Character:FindFirstChild("HumanoidRootPart") then
-                local distance = (v.Character.HumanoidRootPart.Position - game.Players.LocalPlayer.Character.HumanoidRootPart.Position).Magnitude
-                if distance < shortest then
-                    shortest = distance
-                    closest = v
-                end
-            end
-        end
-        if closest then
-            SelectedPlayer = closest
-            Rayfield:Notify({
-                Title = "Đã chọn",
-                Content = "Người chơi: "..closest.Name,
-                Duration = 3,
-            })
-        end
+-- Dropdown chọn người chơi
+local playerList = {}
+for i, v in pairs(game.Players:GetPlayers()) do
+    if v ~= game.Players.LocalPlayer then
+        table.insert(playerList, v.Name)
+    end
+end
+
+SkinTab:CreateDropdown({
+    Name = "Chọn người để clone",
+    Options = playerList,
+    CurrentOption = "",
+    Callback = function(Value)
+        selectedTarget = game.Players:FindFirstChild(Value)
+        Rayfield:Notify({
+            Title = "Clone Skin",
+            Content = "Đã chọn: " .. Value,
+            Duration = 3
+        })
     end,
 })
 
-CloneTab:CreateButton({
-    Name = "Clone Skin người đã chọn",
+-- Nút Clone Skin
+SkinTab:CreateButton({
+    Name = "👕 Clone Skin",
     Callback = function()
-        if not SelectedPlayer then
+        if not selectedTarget then
             Rayfield:Notify({
                 Title = "Lỗi",
-                Content = "Chưa chọn người chơi",
-                Duration = 2,
+                Content = "Bạn chưa chọn người chơi!",
+                Duration = 3
             })
             return
         end
 
-        local function cloneAppearance(targetPlayer)
-            local lp = game.Players.LocalPlayer
-            local character = lp.Character
-            local target = targetPlayer
+        local lp = game.Players.LocalPlayer
+        local targetChar = selectedTarget.Character
+        local myChar = lp.Character
 
-            -- Clone body colors
-            if target.Character:FindFirstChild("Body Colors") then
-                local bc = target.Character:FindFirstChild("Body Colors"):Clone()
-                if character:FindFirstChild("Body Colors") then
-                    character:FindFirstChild("Body Colors"):Destroy()
-                end
-                bc.Parent = character
-            end
-
-            -- Clone shirt and pants
-            for _, item in pairs(character:GetChildren()) do
-                if item:IsA("Shirt") or item:IsA("Pants") then
-                    item:Destroy()
-                end
-            end
-            for _, item in pairs(target.Character:GetChildren()) do
-                if item:IsA("Shirt") or item:IsA("Pants") then
-                    item:Clone().Parent = character
+        if targetChar and myChar then
+            -- Xoá phụ kiện cũ
+            for _, v in pairs(myChar:GetChildren()) do
+                if v:IsA("Accessory") or v:IsA("Shirt") or v:IsA("Pants") or v:IsA("BodyColors") or v:IsA("ShirtGraphic") then
+                    v:Destroy()
                 end
             end
 
-            -- Clone accessories
-            for _, acc in pairs(character:GetChildren()) do
-                if acc:IsA("Accessory") then
-                    acc:Destroy()
-                end
-            end
-            for _, acc in pairs(target.Character:GetChildren()) do
-                if acc:IsA("Accessory") then
-                    acc:Clone().Parent = character
+            -- Clone phụ kiện và quần áo
+            for _, v in pairs(targetChar:GetChildren()) do
+                if v:IsA("Accessory") or v:IsA("Shirt") or v:IsA("Pants") or v:IsA("BodyColors") or v:IsA("ShirtGraphic") then
+                    local clone = v:Clone()
+                    clone.Parent = myChar
                 end
             end
 
             Rayfield:Notify({
-                Title = "Hoàn tất",
-                Content = "Đã clone skin của "..target.Name,
-                Duration = 3,
+                Title = "Clone Skin",
+                Content = "Đã clone toàn bộ skin từ " .. selectedTarget.Name,
+                Duration = 3
             })
         end
-
-        cloneAppearance(SelectedPlayer)
     end,
 })
 
