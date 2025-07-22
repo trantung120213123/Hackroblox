@@ -19,15 +19,15 @@ local camera = workspace.CurrentCamera
 
 -- GUI Init
 local Window = Rayfield:CreateWindow({
-Name = "💀 Hack UI - TranTung999",
-LoadingTitle = "💀 Loading...",
+Name = "Shit hub💩 by TranTung999",
+LoadingTitle = "💩 Loading...",
 LoadingSubtitle = "By TranTung999",
 ConfigurationSaving = {
 Enabled = false
 },
 KeySystem = true,
 KeySettings = {
-Title = "Hack GUI",
+Title = "Shit hub💩",
 Subtitle = "Key System",
 Note = "Key = Nhập lại key vừa nãy đã nhập",
 FileName = "TranTungUIKey",
