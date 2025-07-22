@@ -431,3 +431,45 @@ Players.LocalPlayer.CharacterAdded:Connect(onCharacterAdded)
 
 -- Khởi tạo lần đầu
 createPerformanceDisplay()
+----------------- Game -----------------
+
+-- Tạo Tab "Ink Game"
+local InkTab = Window:CreateTab("Ink Game", 4483362458)
+InkTab:CreateButton({
+    Name = "Ringta",
+    Callback = function()
+        loadstring(game:HttpGet("https://raw.githubusercontent.com/wefwef127382/inkgames.github.io/refs/heads/main/ringta.lua"))()
+        Rayfield:Notify({Title = "Ringta", Content = "Script loaded!", Duration = 3})
+    end,
+})
+
+-- Tạo Tab "Grow A Garden"
+local GrowTab = Window:CreateTab("Grow A Garden", 13014560)
+GrowTab:CreateButton({
+    Name = "Speed X Hub",
+    Callback = function()
+        loadstring(game:HttpGet("https://raw.githubusercontent.com/AhmadV99/Speed-Hub-X/main/Speed%20Hub%20X.lua", true))()
+        Rayfield:Notify({Title = "Speed X Hub", Content = "Script loaded!", Duration = 3})
+    end,
+})
+
+GrowTab:CreateButton({
+    Name = "No Lag",
+    Callback = function()
+        repeat wait() until game:IsLoaded() and game.Players.LocalPlayer
+
+        local scripts = {
+            [126884695634066] = "https://raw.githubusercontent.com/NoLag-id/No-Lag-HUB/refs/heads/main/Garden/Garden-V1.lua",
+            [81440632616906] = "https://raw.githubusercontent.com/NoLag-id/No-Lag-HUB/refs/heads/main/DigEarth/V1.lua",
+        }
+
+        local url = scripts[game.PlaceId]
+        if url then
+            loadstring(game:HttpGetAsync(url))()
+            loadstring(game:HttpGetAsync("https://raw.githubusercontent.com/NoLag-id/No-Lag-HUB/refs/heads/main/untitled.lua"))()
+            Rayfield:Notify({Title = "No Lag", Content = "Loaded for this game", Duration = 3})
+        else
+            Rayfield:Notify({Title = "No Lag", Content = "Game không hỗ trợ!", Duration = 3})
+        end
+    end,
+})
