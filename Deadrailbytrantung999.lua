@@ -214,6 +214,38 @@ SkinTab:CreateButton({
     end,
 })
 
+-- Gắn vào bất kỳ tab hoặc section nào, ví dụ: MiscTab hoặc MainTab
+MiscTab:CreateButton({
+    Name = "🧼 Xoá toàn bộ quần áo",
+    Callback = function()
+        local character = game.Players.LocalPlayer.Character
+        if not character then return end
+
+        -- Xoá áo và quần
+        for _, item in ipairs({"Shirt", "Pants", "ShirtGraphic"}) do
+            local clothing = character:FindFirstChildOfClass(item)
+            if clothing then
+                clothing:Destroy()
+            end
+        end
+
+        -- Xoá phụ kiện (Accessories như mũ, mắt kính,...)
+        for _, accessory in ipairs(character:GetChildren()) do
+            if accessory:IsA("Accessory") then
+                accessory:Destroy()
+            end
+        end
+
+        -- Thông báo đã xoá
+        Rayfield:Notify({
+            Title = "Thành công",
+            Content = "Đã xoá sạch quần áo và phụ kiện!",
+            Duration = 3,
+            Image = 4483362458
+        })
+    end
+})
+
 ------------------ LOOP: ESP + LockNPC + NoClip -------------------
 game:GetService("RunService").RenderStepped:Connect(function()
 -- ✅ Sửa NoClip chuẩn:
