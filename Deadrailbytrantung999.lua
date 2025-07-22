@@ -335,3 +335,64 @@ camera.CFrame = CFrame.new(camera.CFrame.Position, closest.Head.Position)
 end
 end
 end)
+
+---------------- fps -----------------
+
+local RunService = game:GetService("RunService")
+local Players = game:GetService("Players")
+local LocalPlayer = Players.LocalPlayer
+local PlayerGui = LocalPlayer:WaitForChild("PlayerGui")
+
+-- Tạo màn hình hiển thị FPS
+local screenGui = Instance.new("ScreenGui")
+screenGui.Name = "FPSCounter"
+screenGui.Parent = PlayerGui
+
+local frame = Instance.new("Frame")
+frame.Size = UDim2.new(0, 120, 0, 40)
+frame.Position = UDim2.new(0, 10, 0, 10)
+frame.BackgroundTransparency = 0.7
+frame.BackgroundColor3 = Color3.new(0, 0, 0)
+frame.Parent = screenGui
+
+local textLabel = Instance.new("TextLabel")
+textLabel.Size = UDim2.new(1, 0, 1, 0)
+textLabel.BackgroundTransparency = 1
+textLabel.TextColor3 = Color3.new(1, 1, 1)
+textLabel.Text = "FPS: 0"
+textLabel.Font = Enum.Font.Code
+textLabel.TextSize = 18
+textLabel.Parent = frame
+
+-- Biến để tính FPS
+local fps = 0
+local lastTime = os.clock()
+local frames = 0
+local updateInterval = 0.2 -- Thay đổi khoảng thời gian cập nhật (giây)
+
+-- Hàm cập nhật FPS với tốc độ nhanh hơn
+local function updateFPS()
+    frames = frames + 1
+    
+    local currentTime = os.clock()
+    if currentTime - lastTime >= updateInterval then
+        fps = math.floor(frames / (currentTime - lastTime) + 0.5)
+        frames = 0
+        lastTime = currentTime
+        
+        -- Cập nhật hiển thị
+        textLabel.Text = string.format("FPS: %d (%.1fms)", fps, 1000/fps)
+        
+        -- Đổi màu dựa trên FPS
+        if fps < 20 then
+            textLabel.TextColor3 = Color3.new(1, 0.3, 0.3) -- Đỏ nhạt
+        elseif fps < 45 then
+            textLabel.TextColor3 = Color3.new(1, 1, 0.4) -- Vàng
+        else
+            textLabel.TextColor3 = Color3.new(0.4, 1, 0.4) -- Xanh lá
+        end
+    end
+end
+
+-- Kết nối với RenderStepped để tính FPS
+RunService.RenderStepped:Connect(updateFPS)
