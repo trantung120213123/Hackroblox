@@ -1,0 +1,164 @@
+--// Load Rayfield
+local Rayfield = loadstring(game:HttpGet('https://raw.githubusercontent.com/shlexware/Rayfield/main/source'))()
+
+--// Tạo GUI
+local Window = Rayfield:CreateWindow({
+   Name = "💀 TUNG HUB GUI",
+   LoadingTitle = "Đang bật GUI...",
+   LoadingSubtitle = "Bởi ChatGPT x Tung",
+   ConfigurationSaving = {
+      Enabled = true,
+      FolderName = "TungHub",
+      FileName = "Config"
+   }
+})
+
+--// Nút toggle GUI 💀
+local toggleBtn = Instance.new("TextButton")
+toggleBtn.Parent = game.CoreGui
+toggleBtn.Size = UDim2.new(0, 50, 0, 50)
+toggleBtn.Position = UDim2.new(0, 10, 0, 10)
+toggleBtn.Text = "💀"
+toggleBtn.BackgroundColor3 = Color3.fromRGB(30,30,30)
+toggleBtn.TextColor3 = Color3.new(1,1,1)
+toggleBtn.TextScaled = true
+toggleBtn.Draggable = true
+toggleBtn.Active = true
+
+local visible = true
+toggleBtn.MouseButton1Click:Connect(function()
+    visible = not visible
+    for _, v in pairs(game.CoreGui:GetChildren()) do
+        if v.Name:find("Rayfield") then
+            v.Enabled = visible
+        end
+    end
+end)
+
+--// Notify
+function Notify(title, text)
+   Rayfield:Notify({
+       Title = title,
+       Content = text,
+       Duration = 3,
+       Image = 4483362458,
+   })
+end
+
+--// Tab MAIN
+local Main = Window:CreateTab("Main", 4483362458)
+
+Main:CreateSlider({
+   Name = "Speed",
+   Range = {16, 200},
+   Increment = 1,
+   CurrentValue = 16,
+   Callback = function(val)
+       game.Players.LocalPlayer.Character.Humanoid.WalkSpeed = val
+       Notify("Speed", "Đã chỉnh tốc độ: "..val)
+   end
+})
+
+Main:CreateToggle({
+   Name = "NoClip",
+   CurrentValue = false,
+   Callback = function(state)
+       getgenv().noclip = state
+       Notify("NoClip", state and "Đã bật NoClip" or "Đã tắt NoClip")
+       game:GetService("RunService").Stepped:Connect(function()
+           if getgenv().noclip then
+               for _,v in pairs(game.Players.LocalPlayer.Character:GetDescendants()) do
+                   if v:IsA("BasePart") then
+                       v.CanCollide = false
+                   end
+               end
+           end
+       end)
+   end
+})
+
+Main:CreateToggle({
+   Name = "ESP",
+   CurrentValue = false,
+   Callback = function(state)
+       Notify("ESP", state and "Đã bật ESP" or "Đã tắt ESP")
+       for _, plr in pairs(game.Players:GetPlayers()) do
+           if plr ~= game.Players.LocalPlayer and plr.Character then
+               if not plr.Character:FindFirstChild("ESP") then
+                   local esp = Instance.new("BillboardGui", plr.Character:WaitForChild("Head"))
+                   esp.Name = "ESP"
+                   esp.Size = UDim2.new(0,100,0,40)
+                   esp.AlwaysOnTop = true
+                   local label = Instance.new("TextLabel", esp)
+                   label.Size = UDim2.new(1,0,1,0)
+                   label.BackgroundTransparency = 1
+                   label.TextColor3 = Color3.new(1,0,0)
+                   label.Text = plr.Name
+               end
+           end
+       end
+   end
+})
+
+--// Tab TELEPORT
+local Teleport = Window:CreateTab("Teleport", 4483362458)
+local savedPoints = {}
+
+Teleport:CreateButton({
+   Name = "Save Point",
+   Callback = function()
+       local pos = game.Players.LocalPlayer.Character.HumanoidRootPart.Position
+       table.insert(savedPoints, pos)
+       local index = #savedPoints
+       Teleport:CreateButton({
+           Name = "Point "..index,
+           Callback = function()
+               game.Players.LocalPlayer.Character:MoveTo(savedPoints[index])
+               Notify("Teleport", "Đã dịch chuyển đến Point "..index)
+           end
+       })
+       Notify("Lưu vị trí", "Đã lưu Point "..index)
+   end
+})
+
+--// Tab PLAYERS
+local Players = Window:CreateTab("Players", 4483362458)
+local dropdown
+
+dropdown = Players:CreateDropdown({
+   Name = "Chọn người chơi",
+   Options = {},
+   CurrentOption = "",
+   Callback = function(name)
+       local plr = game.Players:FindFirstChild(name)
+       if plr and plr.Character then
+           game.Players.LocalPlayer.Character:MoveTo(plr.Character.HumanoidRootPart.Position)
+           Notify("Teleport", "Đến: "..name)
+       end
+   end
+})
+
+Players:CreateButton({
+   Name = "Load danh sách người chơi",
+   Callback = function()
+       local list = {}
+       for _,p in pairs(game.Players:GetPlayers()) do
+           if p ~= game.Players.LocalPlayer then
+               table.insert(list, p.Name)
+           end
+       end
+       dropdown:Refresh(list)
+       Notify("Players", "Đã tải danh sách!")
+   end
+})
+
+--// Tab MISC
+local Misc = Window:CreateTab("Misc", 4483362458)
+
+Misc:CreateButton({
+   Name = "Fly (script trước)",
+   Callback = function()
+       loadstring(game:HttpGet("https://pastebin.com/raw/zQmRRPW9"))()
+       Notify("Fly", "Đã bật Fly")
+   end
+})
