@@ -169,6 +169,42 @@ SkinTab:CreateButton({
 	end,
 })
 
+SkinTab:CreateButton({
+	Name = "Clone Skin",
+	Callback = function()
+		local player = game.Players.LocalPlayer
+		local character = player.Character or player.CharacterAdded:Wait()
+
+		-- Lưu danh sách các phụ kiện, quần áo...
+		local clonedItems = {}
+
+		for _, item in ipairs(character:GetChildren()) do
+			if item:IsA("Accessory") or item:IsA("Shirt") or item:IsA("Pants") or item:IsA("ShirtGraphic") or item:IsA("CharacterMesh") then
+				local clone = item:Clone()
+				table.insert(clonedItems, clone)
+			end
+		end
+
+		-- Xoá tất cả skin hiện tại
+		for _, item in ipairs(character:GetChildren()) do
+			if item:IsA("Accessory") or item:IsA("Shirt") or item:IsA("Pants") or item:IsA("ShirtGraphic") or item:IsA("CharacterMesh") then
+				item:Destroy()
+			end
+		end
+
+		-- Gắn lại skin đã clone
+		for _, clone in ipairs(clonedItems) do
+			clone.Parent = character
+		end
+
+		Rayfield:Notify({
+			Title = "Clone Skin",
+			Content = "Đã clone lại toàn bộ skin!",
+			Duration = 3,
+		})
+	end,
+})
+
 ------------------ LOOP: ESP + LockNPC + NoClip -------------------
 game:GetService("RunService").RenderStepped:Connect(function()
 -- ✅ Sửa NoClip chuẩn:
