@@ -342,22 +342,38 @@ local RunService = game:GetService("RunService")
 local Players = game:GetService("Players")
 local StatsService = game:GetService("Stats")
 
-local function createFPSDisplay()
+-- Biến toàn cục để quản lý GUI
+local performanceGUI = nil
+local connection = nil
+
+local function createPerformanceDisplay()
+    -- Xóa GUI cũ nếu tồn tại
+    if performanceGUI then
+        performanceGUI:Destroy()
+        performanceGUI = nil
+    end
+    
+    -- Ngắt kết nối cũ
+    if connection then
+        connection:Disconnect()
+        connection = nil
+    end
+
     local player = Players.LocalPlayer
     local playerGui = player:WaitForChild("PlayerGui")
-    
-    -- Tạo ScreenGui với ResetOnSpawn = false
-    local gui = Instance.new("ScreenGui")
-    gui.Name = "FPSPingDisplay"
-    gui.ResetOnSpawn = false -- Quan trọng: Ngăn không bị reset khi chết
-    gui.Parent = playerGui
+
+    -- Tạo GUI mới
+    performanceGUI = Instance.new("ScreenGui")
+    performanceGUI.Name = "PerformanceMonitor"
+    performanceGUI.ResetOnSpawn = false
+    performanceGUI.Parent = playerGui
 
     local frame = Instance.new("Frame")
     frame.Size = UDim2.new(0, 150, 0, 40)
     frame.Position = UDim2.new(0, 10, 0, 10)
     frame.BackgroundTransparency = 0.7
     frame.BackgroundColor3 = Color3.new(0, 0, 0)
-    frame.Parent = gui
+    frame.Parent = performanceGUI
 
     local label = Instance.new("TextLabel")
     label.Size = UDim2.new(1, 0, 1, 0)
@@ -373,8 +389,8 @@ local function createFPSDisplay()
     local lastUpdate = os.clock()
     local frameCount = 0
 
-    -- Hàm cập nhật
-    local function update()
+    -- Kết nối sự kiện RenderStepped
+    connection = RunService.RenderStepped:Connect(function()
         frameCount = frameCount + 1
         local currentTime = os.clock()
         
@@ -394,16 +410,17 @@ local function createFPSDisplay()
             frameCount = 0
             lastUpdate = currentTime
         end
-    end
-
-    RunService.RenderStepped:Connect(update)
+    end)
 end
 
--- Kết nối sự kiện respawn
-Players.LocalPlayer.CharacterAdded:Connect(function()
-    wait(1) -- Đợi 1 chút để đảm bảo PlayerGui tồn tại
-    createFPSDisplay()
-end)
+-- Xử lý khi respawn
+local function onCharacterAdded()
+    wait(0.5) -- Đợi PlayerGui sẵn sàng
+    createPerformanceDisplay()
+end
+
+-- Kết nối sự kiện
+Players.LocalPlayer.CharacterAdded:Connect(onCharacterAdded)
 
 -- Khởi tạo lần đầu
-createFPSDisplay()
+createPerformanceDisplay()
