@@ -505,3 +505,30 @@ MM2Tab:CreateButton({
         loadstring(game:HttpGet("https://raw.githubusercontent.com/Au0yX/Community/main/XhubMM2"))()
     end,
 })
+
+local GiamLagTab = Window:CreateTab("🧹 Giảm Lag", 4483362458) -- ID icon tùy chỉnh
+
+GiamLagTab:CreateButton({
+    Name = "Kích hoạt Giảm Lag",
+    Callback = function()
+        -- Script giảm lag mạnh
+        setfpscap(30)
+        for i,v in pairs(game:GetDescendants()) do
+            if v:IsA("BasePart") then
+                v.Material = Enum.Material.SmoothPlastic
+                v.Reflectance = 0
+            elseif v:IsA("Decal") then
+                v.Transparency = 1
+            end
+        end
+        game:GetService("Lighting").GlobalShadows = false
+        game:GetService("Lighting").FogEnd = 9e9
+        game:GetService("Lighting").Brightness = 0
+        settings().Rendering.QualityLevel = "Level01"
+        Rayfield:Notify({
+            Title = "Đã bật Giảm Lag",
+            Content = "Tối ưu FPS và hình ảnh.",
+            Duration = 3,
+        })
+    end,
+})
