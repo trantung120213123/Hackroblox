@@ -344,172 +344,99 @@ local LocalPlayer = Players.LocalPlayer
 local PlayerGui = LocalPlayer:WaitForChild("PlayerGui")
 
 -- Cấu hình
-local SETTINGS = {
-    UpdateInterval = 0.5, -- Giây
-    HighPingThreshold = 300, -- ms
-    LowFpsThreshold = 30, -- FPS
-    WarningCooldown = 10 -- Giây
-}
+local HIGH_PING = 300 -- ms
+local LOW_FPS = 25 -- frames
+local WARNING_DURATION = 2 -- seconds
 
--- Tạo giao diện
+-- Tạo giao diện chính
 local screenGui = Instance.new("ScreenGui")
-screenGui.Name = "GamePerformanceMonitor"
+screenGui.Name = "PerformanceMonitor"
 screenGui.Parent = PlayerGui
-screenGui.ResetOnSpawn = false
 
-local mainFrame = Instance.new("Frame")
-mainFrame.Size = UDim2.new(0, 280, 0, 180)
-mainFrame.Position = UDim2.new(0, 10, 0, 10)
-mainFrame.BackgroundTransparency = 0.8
-mainFrame.BackgroundColor3 = Color3.fromRGB(20, 20, 30)
-mainFrame.Parent = screenGui
+-- Hiển thị FPS/Ping cơ bản
+local mainDisplay = Instance.new("TextLabel")
+mainDisplay.Size = UDim2.new(0, 120, 0, 40)
+mainDisplay.Position = UDim2.new(0, 10, 0, 10)
+mainDisplay.BackgroundTransparency = 0.7
+mainDisplay.BackgroundColor3 = Color3.new(0, 0, 0)
+mainDisplay.Text = "FPS: --\nPing: --ms"
+mainDisplay.Font = Enum.Font.Code
+mainDisplay.TextSize = 14
+mainDisplay.TextColor3 = Color3.new(1, 1, 1)
+mainDisplay.TextXAlignment = Enum.TextXAlignment.Left
+mainDisplay.Parent = screenGui
 
-local title = Instance.new("TextLabel")
-title.Size = UDim2.new(1, 0, 0, 25)
-title.Text = "GAME PERFORMANCE MONITOR"
-title.Font = Enum.Font.Code
-title.TextSize = 16
-title.TextColor3 = Color3.fromRGB(255, 255, 255)
-title.BackgroundTransparency = 1
-title.Parent = mainFrame
+-- Tạo cảnh báo
+local warningFrame = Instance.new("Frame")
+warningFrame.Size = UDim2.new(0, 200, 0, 50)
+warningFrame.Position = UDim2.new(1, -210, 1, -60)
+warningFrame.BackgroundTransparency = 0.5
+warningFrame.BackgroundColor3 = Color3.new(0.8, 0.2, 0.2)
+warningFrame.Visible = false
+warningFrame.Parent = screenGui
 
-local content = Instance.new("TextLabel")
-content.Size = UDim2.new(1, -10, 1, -30)
-content.Position = UDim2.new(0, 5, 0, 30)
-content.Font = Enum.Font.Code
-content.TextSize = 14
-content.TextColor3 = Color3.fromRGB(220, 220, 220)
-content.TextXAlignment = Enum.TextXAlignment.Left
-content.TextYAlignment = Enum.TextYAlignment.Top
-content.BackgroundTransparency = 1
-content.Text = "Đang tải dữ liệu..."
-content.Parent = mainFrame
+local warningText = Instance.new("TextLabel")
+warningText.Size = UDim2.new(1, 0, 1, 0)
+warningText.Text = "CẢNH BÁO!"
+warningText.Font = Enum.Font.SourceSansBold
+warningText.TextSize = 18
+warningText.TextColor3 = Color3.new(1, 1, 1)
+warningText.BackgroundTransparency = 1
+warningText.Parent = warningFrame
 
 -- Biến hệ thống
-local lastUpdate = 0
+local lastUpdate = os.clock()
 local frameCount = 0
-local lastWarningTime = 0
+local warningEndTime = 0
 
--- Hàm tiện ích
-local function formatMem(mb)
-    return string.format("%.1fMB", mb)
+-- Hiển thị cảnh báo
+local function showWarning(message)
+    warningText.Text = message
+    warningFrame.Visible = true
+    warningEndTime = os.clock() + WARNING_DURATION
 end
 
-local function formatSpeed(kbps)
-    return string.format("%.1f", kbps)
-end
-
-local function getColor(value, thresholds)
-    if value < thresholds.good then
-        return Color3.fromRGB(100, 255, 100) -- Xanh lá
-    elseif value < thresholds.medium then
-        return Color3.fromRGB(255, 255, 100) -- Vàng
-    else
-        return Color3.fromRGB(255, 100, 100) -- Đỏ
+-- Ẩn cảnh báo khi hết thời gian
+local function updateWarning()
+    if warningFrame.Visible and os.clock() > warningEndTime then
+        warningFrame.Visible = false
     end
 end
 
--- Hàm lấy thông tin
-local function getNetworkInfo()
-    local stats = StatsService.Network.ServerStatsItem
-    return {
-        ping = stats["Data Ping"]:GetValue(),
-        packetLoss = stats["Data Packet Loss"]:GetValue(),
-        incoming = stats["Incoming KBits/Sec"]:GetValue(),
-        outgoing = stats["Outgoing KBits/Sec"]:GetValue()
-    }
-end
-
-local function getPerformanceStats()
-    local stats = StatsService
-    return {
-        fps = 0, -- Sẽ được tính sau
-        memory = stats:GetMemoryUsageMbForTag(Enum.DeveloperMemoryTag.Engine),
-        physics = stats.Physics.PhysicsSenderStatsItem["Step Count"]:GetValue(),
-        render = stats.Render.RenderStatsItem["Render Count"]:GetValue()
-    }
-end
-
-local function getOptimizationTips(fps, ping)
-    local tips = {}
-    
-    if fps < SETTINGS.LowFpsThreshold then
-        table.insert(tips, "🔹 Giảm chất lượng đồ họa trong Settings")
-        table.insert(tips, "🔹 Đóng ứng dụng nền không cần thiết")
-        table.insert(tips, "🔹 Giảm khoảng cách nhìn (Render Distance)")
-    end
-    
-    if ping > SETTINGS.HighPingThreshold then
-        table.insert(tips, "🔸 Kiểm tra kết nối mạng")
-        table.insert(tips, "🔸 Chọn server gần hơn nếu có thể")
-        table.insert(tips, "🔸 Tránh tải file khi đang chơi")
-    end
-    
-    return #tips > 0 and table.concat(tips, "\n") or "✔ Hiệu suất tốt"
-end
-
--- Hàm chính cập nhật thông tin
-local function updateMonitor()
+-- Hàm chính
+RunService.RenderStepped:Connect(function()
+    -- Cập nhật FPS
     frameCount = frameCount + 1
-    local now = os.clock()
+    local currentTime = os.clock()
+    local deltaTime = currentTime - lastUpdate
     
-    if now - lastUpdate >= SETTINGS.UpdateInterval then
-        -- Tính toán các thông số
-        local perfStats = getPerformanceStats()
-        perfStats.fps = math.floor(frameCount / (now - lastUpdate))
-        frameCount = 0
-        lastUpdate = now
+    if deltaTime >= 0.5 then
+        -- Tính toán FPS và Ping
+        local fps = math.floor(frameCount / deltaTime)
+        local ping = math.floor(StatsService.Network.ServerStatsItem["Data Ping"]:GetValue())
         
-        local netInfo = getNetworkInfo()
-        local tips = getOptimizationTips(perfStats.fps, netInfo.ping)
+        -- Cập nhật hiển thị chính
+        mainDisplay.Text = string.format("FPS: %d\nPing: %dms", fps, ping)
         
-        -- Cảnh báo nếu cần
-        if netInfo.ping > SETTINGS.HighPingThreshold and now - lastWarningTime > SETTINGS.WarningCooldown then
-            lastWarningTime = now
-            warn("[CẢNH BÁO] Ping cao: "..netInfo.ping.."ms")
-        end
-        
-        -- Tạo báo cáo
-        local report = string.format(
-            "🖥️ FPS: %d (%.1fms)\n"..
-            "📶 Ping: %dms | Mất gói: %.1f%%\n"..
-            "🔽 %s Kbps | 🔼 %s Kbps\n"..
-            "💾 Bộ nhớ: %s\n\n"..
-            "📌 GỢI Ý:\n%s",
-            perfStats.fps, 1000/perfStats.fps,
-            netInfo.ping, netInfo.packetLoss,
-            formatSpeed(netInfo.incoming), formatSpeed(netInfo.outgoing),
-            formatMem(perfStats.memory),
-            tips
-        )
-        
-        -- Cập nhật giao diện
-        content.Text = report
-        
-        -- Đổi màu title theo tình trạng
-        if perfStats.fps < 20 or netInfo.ping > 500 then
-            title.TextColor3 = Color3.fromRGB(255, 50, 50)
-        elseif perfStats.fps < 30 or netInfo.ping > 300 then
-            title.TextColor3 = Color3.fromRGB(255, 200, 50)
+        -- Đổi màu theo hiệu suất
+        if fps < LOW_FPS or ping > HIGH_PING then
+            mainDisplay.TextColor3 = Color3.new(1, 0.3, 0.3)
         else
-            title.TextColor3 = Color3.fromRGB(100, 255, 100)
+            mainDisplay.TextColor3 = Color3.new(1, 1, 1)
         end
+        
+        -- Kiểm tra cảnh báo
+        if fps < LOW_FPS then
+            showWarning(string.format("FPS THẤP: %d!", fps))
+        elseif ping > HIGH_PING then
+            showWarning(string.format("PING CAO: %dms!", ping))
+        end
+        
+        -- Reset bộ đếm
+        frameCount = 0
+        lastUpdate = currentTime
     end
-end
-
--- Bắt đầu hệ thống
-RunService.RenderStepped:Connect(updateMonitor)
-
--- Nút tắt/mở (bấm vào khung để ẩn/hiện)
-local visible = true
-mainFrame.InputBegan:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.MouseButton1 then
-        visible = not visible
-        mainFrame.Visible = visible
-    end
+    
+    -- Cập nhật trạng thái cảnh báo
+    updateWarning()
 end)
-
-print("Game Performance Monitor đã được kích hoạt!")
-
-
-
