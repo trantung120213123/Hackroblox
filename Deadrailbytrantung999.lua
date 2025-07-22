@@ -1,5 +1,4 @@
---[[
-Script GUI by Tien Tung
+--[[ Script GUI by Tien Tung
 Rayfield UI + ESP + Lock NPC + Teleport + Speed + NoClip
 Key: hhx44xhh
 Mobile-Friendly + Notification
@@ -136,11 +135,15 @@ Rayfield:Notify("Lock NPC", Value and "Bật" or "Tắt", 2)
 end
 })
 
------------------- ESP + LockNPC LOOP -------------------
+------------------ LOOP: ESP + LockNPC + NoClip -------------------
 game:GetService("RunService").RenderStepped:Connect(function()
--- NoClip
-if noclip and localPlayer.Character and localPlayer.Character:FindFirstChild("HumanoidRootPart") then
-localPlayer.Character.Humanoid:ChangeState(11)
+-- ✅ Sửa NoClip chuẩn:
+if noclip and localPlayer.Character then
+    for _, part in pairs(localPlayer.Character:GetDescendants()) do
+        if part:IsA("BasePart") and part.CanCollide == true then
+            part.CanCollide = false
+        end
+    end
 end
 
 -- ESP Player
