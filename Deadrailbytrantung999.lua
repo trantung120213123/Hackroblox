@@ -73,31 +73,32 @@ end
 local TeleportTab = Window:CreateTab("Teleport", 4483362458)
 
 local savedPoints = {}
-local pointFolder = TeleportTab:CreateSection("Saved Points")
+local pointButtons = {}
+local teleportSection = TeleportTab:CreateSection("Saved Points")
 
-TeleportTab:CreateButton({
+TELEPORTTab:CreateButton({
     Name = "Save Point",
     Callback = function()
-        local pos = game.Players.LocalPlayer.Character:WaitForChild("HumanoidRootPart").Position
-        local index = #savedPoints + 1
-        savedPoints[index] = pos
+        local pos = game.Players.LocalPlayer.Character and game.Players.LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+        if pos then
+            local cf = pos.CFrame
+            table.insert(savedPoints, cf)
 
-        pointFolder:CreateButton({
-            Name = "Point " .. index,
-            Callback = function()
-                local hrp = game.Players.LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
-                if hrp then
-                    hrp.CFrame = CFrame.new(savedPoints[index])
-                    Rayfield:Notify({
-                        Title = "Dịch chuyển",
-                        Content = "Đã dịch đến Point " .. index,
-                        Duration = 2,
-                        Image = 4483362458
-                    })
-                end
-            end
-        })
-    end
+            -- Tạo button mới để teleport đến điểm vừa lưu
+            local index = #savedPoints
+            local newButton = TELEPORTTab:CreateButton({
+                Name = "Teleport to Point " .. index,
+                Callback = function()
+                    local char = game.Players.LocalPlayer.Character
+                    if char and char:FindFirstChild("HumanoidRootPart") then
+                        char.HumanoidRootPart.CFrame = savedPoints[index]
+                    end
+                end,
+            })
+
+            table.insert(pointButtons, newButton)
+        end
+    end,
 })
 
 ------------------ PLAYER TAB -------------------
