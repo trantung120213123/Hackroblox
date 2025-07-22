@@ -151,20 +151,22 @@ end
 local SkinTab = Window:CreateTab("Skin", 4483362458)
 
 SkinTab:CreateButton({
-	Name = "Xoá Quần Áo",
+	Name = "Xoá toàn bộ Skin",
 	Callback = function()
-		local plr = game.Players.LocalPlayer
-		local chr = plr.Character or plr.CharacterAdded:Wait()
-		for _, item in ipairs(chr:GetChildren()) do
-			if item:IsA("Accessory") or item:IsA("Shirt") or item:IsA("Pants") or item:IsA("ShirtGraphic") then
+		local player = game.Players.LocalPlayer
+		local character = player.Character or player.CharacterAdded:Wait()
+
+		for _, item in pairs(character:GetChildren()) do
+			if item:IsA("Accessory") or item:IsA("Clothing") or item:IsA("Shirt") or item:IsA("Pants") or item:IsA("ShirtGraphic") or item:IsA("BodyColors") or item:IsA("CharacterMesh") or item:IsA("Decal") or item:IsA("HumanoidDescription") then
 				item:Destroy()
 			end
 		end
+
 		Rayfield:Notify({
 			Title = "Skin",
-			Content = "Đã xoá toàn bộ quần áo!",
+			Content = "Đã xoá toàn bộ Skin, tóc, mặt...",
 			Duration = 3,
-			Image = 4483362458,
+			Image = 123456, -- thay bằng ID ảnh nếu muốn
 		})
 	end,
 })
