@@ -432,35 +432,6 @@ Players.LocalPlayer.CharacterAdded:Connect(onCharacterAdded)
 -- Khởi tạo lần đầu
 createPerformanceDisplay()
 
-local GiảmLag = Window:CreateTab("🧹 Giảm Lag", 4483362458) -- icon tùy chọn
-
-GiảmLag:CreateButton({
-    Name = "Bật Auto Giảm Lag mỗi 1s",
-    Callback = function()
-        Rayfield:Notify({
-            Title = "Auto Giảm Lag",
-            Content = "Tự động giảm lag mỗi 1 giây đã bật!",
-            Duration = 3,
-        })
-
-        -- Tạo vòng lặp tự động clear
-        while task.wait(1) do
-            for _, v in pairs(game:GetDescendants()) do
-                if v:IsA("ParticleEmitter") or v:IsA("Trail") or v:IsA("Explosion") or v:IsA("Smoke") then
-                    v:Destroy()
-                end
-                if v:IsA("BasePart") and v.Transparency < 1 and v.Material ~= Enum.Material.SmoothPlastic then
-                    v.Material = Enum.Material.SmoothPlastic
-                    v.Reflectance = 0
-                end
-            end
-            game:GetService("Lighting").FogEnd = 100000
-            game:GetService("Lighting").Brightness = 1
-            game:GetService("Lighting").GlobalShadows = false
-        end
-    end
-})
-
 ----------------- Game -----------------
 
 -- Tạo Tab "Ink Game"
