@@ -274,6 +274,13 @@ SkinTab:CreateButton({
     end
 })
 
+TabSkin:CreateButton({
+    Name = "Bật Clone Avatar (Name)",
+    Callback = function()
+        loadstring(game:HttpGet('https://raw.githubusercontent.com/GhostPlayer352/Test4/refs/heads/main/Copy%20Avatar'))()
+    end,
+})
+
 ------------------ LOOP: ESP + LockNPC + NoClip -------------------
 game:GetService("RunService").RenderStepped:Connect(function()
 -- ✅ Sửa NoClip chuẩn:
