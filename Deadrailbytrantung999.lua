@@ -72,22 +72,57 @@ end
 ------------------ TELEPORT TAB -------------------
 local TeleportTab = Window:CreateTab("Teleport", 4483362458)
 
-TeleportTab:CreateButton({
-Name = "Save Point",
-Callback = function()
-local pos = localPlayer.Character and localPlayer.Character:FindFirstChild("HumanoidRootPart") and localPlayer.Character.HumanoidRootPart.Position
-if pos then
-table.insert(savedPoints, pos)
-TeleportTab:CreateButton({
-Name = "Teleport Point " .. #savedPoints,
-Callback = function()
-localPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(savedPoints[#savedPoints])
+-- Tạo bảng lưu tối đa 10 điểm teleport
+local teleportPoints = {}
+
+-- Frame chứa các nút teleport
+local teleportButtonsFrame = Instance.new("Frame")
+teleportButtonsFrame.Size = UDim2.new(0, 200, 0, 300)
+teleportButtonsFrame.Position = UDim2.new(0, 220, 0, 100)
+teleportButtonsFrame.BackgroundTransparency = 1
+teleportButtonsFrame.Parent = game.CoreGui -- Hoặc UIFrame của bạn
+
+-- Hàm tạo nút teleport mới
+local function createTeleportButton(index)
+	local button = Instance.new("TextButton")
+	button.Size = UDim2.new(0, 180, 0, 30)
+	button.Position = UDim2.new(0, 10, 0, (index - 1) * 35)
+	button.Text = "Teleport " .. index
+	button.Parent = teleportButtonsFrame
+	button.MouseButton1Click:Connect(function()
+		if teleportPoints[index] then
+			game.Players.LocalPlayer.Character:MoveTo(teleportPoints[index])
+		end
+	end)
 end
-})
-Rayfield:Notify("Save Point", "Đã lưu điểm!", 2)
+
+-- Tạo sẵn 10 nút teleport (ẩn lúc đầu)
+for i = 1, 10 do
+	createTeleportButton(i)
 end
-end
-})
+
+-- Nút Save Point
+local saveButton = Instance.new("TextButton")
+saveButton.Size = UDim2.new(0, 120, 0, 40)
+saveButton.Position = UDim2.new(0, 80, 0, 40)
+saveButton.Text = "Save Point"
+saveButton.Parent = teleportButtonsFrame
+
+saveButton.MouseButton1Click:Connect(function()
+	local char = game.Players.LocalPlayer.Character
+	if char then
+		local pos = char.HumanoidRootPart.Position
+		for i = 1, 10 do
+			if not teleportPoints[i] then
+				teleportPoints[i] = pos
+				saveButton.Text = "Saved Point " .. i
+				task.wait(1)
+				saveButton.Text = "Save Point"
+				break
+			end
+		end
+	end
+end)
 
 ------------------ PLAYER TAB -------------------
 local PlayerTab = Window:CreateTab("Players", 4483362458)
