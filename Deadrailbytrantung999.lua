@@ -146,38 +146,26 @@ Rayfield:Notify("Lock NPC", Value and "Bật" or "Tắt", 2)
 end
 })
 
+----------------------- Skin ----------------------
 local SkinTab = Window:CreateTab("Skin", 4483362458)
 
--- Gắn vào bất kỳ tab hoặc section nào, ví dụ: MiscTab hoặc MainTab
-MiscTab:CreateButton({
-    Name = "🧼 Xoá toàn bộ quần áo",
-    Callback = function()
-        local character = game.Players.LocalPlayer.Character
-        if not character then return end
-
-        -- Xoá áo và quần
-        for _, item in ipairs({"Shirt", "Pants", "ShirtGraphic"}) do
-            local clothing = character:FindFirstChildOfClass(item)
-            if clothing then
-                clothing:Destroy()
-            end
-        end
-
-        -- Xoá phụ kiện (Accessories như mũ, mắt kính,...)
-        for _, accessory in ipairs(character:GetChildren()) do
-            if accessory:IsA("Accessory") then
-                accessory:Destroy()
-            end
-        end
-
-        -- Thông báo đã xoá
-        Rayfield:Notify({
-            Title = "Thành công",
-            Content = "Đã xoá sạch quần áo và phụ kiện!",
-            Duration = 3,
-            Image = 4483362458
-        })
-    end
+SkinTab:CreateButton({
+	Name = "Xoá Quần Áo",
+	Callback = function()
+		local plr = game.Players.LocalPlayer
+		local chr = plr.Character or plr.CharacterAdded:Wait()
+		for _, item in ipairs(chr:GetChildren()) do
+			if item:IsA("Accessory") or item:IsA("Shirt") or item:IsA("Pants") or item:IsA("ShirtGraphic") then
+				item:Destroy()
+			end
+		end
+		Rayfield:Notify({
+			Title = "Skin",
+			Content = "Đã xoá toàn bộ quần áo!",
+			Duration = 3,
+			Image = 4483362458,
+		})
+	end,
 })
 
 ------------------ LOOP: ESP + LockNPC + NoClip -------------------
