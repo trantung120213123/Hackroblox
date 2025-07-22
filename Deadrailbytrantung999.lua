@@ -89,18 +89,24 @@ TeleportTab:CreateButton({
             return
         end
 
+        -- Lấy vị trí hiện tại
         local pos = game.Players.LocalPlayer.Character.HumanoidRootPart.Position
         table.insert(savedPoints, pos)
 
+        -- Lưu lại chỉ số
+        local pointIndex = #savedPoints
+        local savedPos = pos  -- Dùng biến tách biệt để giữ đúng tọa độ
+
+        -- Tạo nút mới
         pointFolder:CreateButton({
-            Name = "Point " .. #savedPoints,
+            Name = "Point " .. pointIndex,
             Callback = function()
                 local hrp = game.Players.LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
                 if hrp then
-                    hrp.CFrame = CFrame.new(pos)
+                    hrp.CFrame = CFrame.new(savedPos)
                     Rayfield:Notify({
                         Title = "Dịch chuyển",
-                        Content = "Đã dịch đến Point " .. #savedPoints,
+                        Content = "Đã dịch đến Point " .. pointIndex,
                         Duration = 2,
                         Image = 4483362458
                     })
