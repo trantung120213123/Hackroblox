@@ -337,106 +337,73 @@ end
 end)
 
 ---------------- hỗ trợ chơi -----------------
+
 local RunService = game:GetService("RunService")
 local Players = game:GetService("Players")
 local StatsService = game:GetService("Stats")
-local LocalPlayer = Players.LocalPlayer
-local PlayerGui = LocalPlayer:WaitForChild("PlayerGui")
 
--- Cấu hình
-local HIGH_PING = 300 -- ms
-local LOW_FPS = 25 -- frames
-local WARNING_DURATION = 2 -- seconds
+local function createFPSDisplay()
+    local player = Players.LocalPlayer
+    local playerGui = player:WaitForChild("PlayerGui")
+    
+    -- Tạo ScreenGui với ResetOnSpawn = false
+    local gui = Instance.new("ScreenGui")
+    gui.Name = "FPSPingDisplay"
+    gui.ResetOnSpawn = false -- Quan trọng: Ngăn không bị reset khi chết
+    gui.Parent = playerGui
 
--- Tạo giao diện chính
-local screenGui = Instance.new("ScreenGui")
-screenGui.Name = "PerformanceMonitor"
-screenGui.Parent = PlayerGui
+    local frame = Instance.new("Frame")
+    frame.Size = UDim2.new(0, 150, 0, 40)
+    frame.Position = UDim2.new(0, 10, 0, 10)
+    frame.BackgroundTransparency = 0.7
+    frame.BackgroundColor3 = Color3.new(0, 0, 0)
+    frame.Parent = gui
 
--- Hiển thị FPS/Ping cơ bản
-local mainDisplay = Instance.new("TextLabel")
-mainDisplay.Size = UDim2.new(0, 120, 0, 40)
-mainDisplay.Position = UDim2.new(0, 10, 0, 10)
-mainDisplay.BackgroundTransparency = 0.7
-mainDisplay.BackgroundColor3 = Color3.new(0, 0, 0)
-mainDisplay.Text = "FPS: --\nPing: --ms"
-mainDisplay.Font = Enum.Font.Code
-mainDisplay.TextSize = 14
-mainDisplay.TextColor3 = Color3.new(1, 1, 1)
-mainDisplay.TextXAlignment = Enum.TextXAlignment.Left
-mainDisplay.Parent = screenGui
+    local label = Instance.new("TextLabel")
+    label.Size = UDim2.new(1, 0, 1, 0)
+    label.BackgroundTransparency = 1
+    label.Text = "FPS: -\nPing: -"
+    label.Font = Enum.Font.Code
+    label.TextSize = 14
+    label.TextColor3 = Color3.new(1, 1, 1)
+    label.TextXAlignment = Enum.TextXAlignment.Left
+    label.Parent = frame
 
--- Tạo cảnh báo
-local warningFrame = Instance.new("Frame")
-warningFrame.Size = UDim2.new(0, 200, 0, 50)
-warningFrame.Position = UDim2.new(1, -210, 1, -60)
-warningFrame.BackgroundTransparency = 0.5
-warningFrame.BackgroundColor3 = Color3.new(0.8, 0.2, 0.2)
-warningFrame.Visible = false
-warningFrame.Parent = screenGui
+    -- Biến đếm FPS
+    local lastUpdate = os.clock()
+    local frameCount = 0
 
-local warningText = Instance.new("TextLabel")
-warningText.Size = UDim2.new(1, 0, 1, 0)
-warningText.Text = "CẢNH BÁO!"
-warningText.Font = Enum.Font.SourceSansBold
-warningText.TextSize = 18
-warningText.TextColor3 = Color3.new(1, 1, 1)
-warningText.BackgroundTransparency = 1
-warningText.Parent = warningFrame
+    -- Hàm cập nhật
+    local function update()
+        frameCount = frameCount + 1
+        local currentTime = os.clock()
+        
+        if currentTime - lastUpdate >= 0.5 then
+            local fps = math.floor(frameCount / (currentTime - lastUpdate))
+            local ping = math.floor(StatsService.Network.ServerStatsItem["Data Ping"]:GetValue())
+            
+            label.Text = string.format("FPS: %d\nPing: %dms", fps, ping)
+            
+            -- Đổi màu theo hiệu suất
+            if fps < 25 or ping > 300 then
+                label.TextColor3 = Color3.new(1, 0.3, 0.3)
+            else
+                label.TextColor3 = Color3.new(1, 1, 1)
+            end
+            
+            frameCount = 0
+            lastUpdate = currentTime
+        end
+    end
 
--- Biến hệ thống
-local lastUpdate = os.clock()
-local frameCount = 0
-local warningEndTime = 0
-
--- Hiển thị cảnh báo
-local function showWarning(message)
-    warningText.Text = message
-    warningFrame.Visible = true
-    warningEndTime = os.clock() + WARNING_DURATION
+    RunService.RenderStepped:Connect(update)
 end
 
--- Ẩn cảnh báo khi hết thời gian
-local function updateWarning()
-    if warningFrame.Visible and os.clock() > warningEndTime then
-        warningFrame.Visible = false
-    end
-end
-
--- Hàm chính
-RunService.RenderStepped:Connect(function()
-    -- Cập nhật FPS
-    frameCount = frameCount + 1
-    local currentTime = os.clock()
-    local deltaTime = currentTime - lastUpdate
-    
-    if deltaTime >= 0.5 then
-        -- Tính toán FPS và Ping
-        local fps = math.floor(frameCount / deltaTime)
-        local ping = math.floor(StatsService.Network.ServerStatsItem["Data Ping"]:GetValue())
-        
-        -- Cập nhật hiển thị chính
-        mainDisplay.Text = string.format("FPS: %d\nPing: %dms", fps, ping)
-        
-        -- Đổi màu theo hiệu suất
-        if fps < LOW_FPS or ping > HIGH_PING then
-            mainDisplay.TextColor3 = Color3.new(1, 0.3, 0.3)
-        else
-            mainDisplay.TextColor3 = Color3.new(1, 1, 1)
-        end
-        
-        -- Kiểm tra cảnh báo
-        if fps < LOW_FPS then
-            showWarning(string.format("FPS THẤP: %d!", fps))
-        elseif ping > HIGH_PING then
-            showWarning(string.format("PING CAO: %dms!", ping))
-        end
-        
-        -- Reset bộ đếm
-        frameCount = 0
-        lastUpdate = currentTime
-    end
-    
-    -- Cập nhật trạng thái cảnh báo
-    updateWarning()
+-- Kết nối sự kiện respawn
+Players.LocalPlayer.CharacterAdded:Connect(function()
+    wait(1) -- Đợi 1 chút để đảm bảo PlayerGui tồn tại
+    createFPSDisplay()
 end)
+
+-- Khởi tạo lần đầu
+createFPSDisplay()
