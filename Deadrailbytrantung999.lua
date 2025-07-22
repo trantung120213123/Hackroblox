@@ -274,7 +274,7 @@ SkinTab:CreateButton({
     end
 })
 
-TabSkin:CreateButton({
+SkinTab:CreateButton({
     Name = "Bật Clone Avatar (Name)",
     Callback = function()
         loadstring(game:HttpGet('https://raw.githubusercontent.com/GhostPlayer352/Test4/refs/heads/main/Copy%20Avatar'))()
@@ -431,6 +431,7 @@ Players.LocalPlayer.CharacterAdded:Connect(onCharacterAdded)
 
 -- Khởi tạo lần đầu
 createPerformanceDisplay()
+
 ----------------- Game -----------------
 
 -- Tạo Tab "Ink Game"
