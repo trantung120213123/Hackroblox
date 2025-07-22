@@ -1,29 +1,16 @@
+-- Loader với kiểm tra key
 local key = "hhx44xhh"
 local url = "https://yeumoney.com/WTsRyATIY"
 local scriptUrl = "https://raw.githubusercontent.com/trantung120213123/Hackroblox/main/Deadrailbytrantung999.lua"
-local keyFile = "Trantung999Key.txt"
 
 local Notification = function(text)
-    pcall(function()
-        game.StarterGui:SetCore("SendNotification", {
-            Title = "Key System",
-            Text = text,
-            Duration = 5
-        })
-    end)
+game.StarterGui:SetCore("SendNotification", {
+Title = "Key System",
+Text = text,
+Duration = 5
+})
 end
 
--- Nếu đã có file key, tự động check
-if pcall(function() return readfile and isfile and isfile(keyFile) end) then
-    local savedKey = readfile(keyFile)
-    if savedKey == key then
-        Notification("Đã tự động xác minh key!")
-        loadstring(game:HttpGet(scriptUrl))()
-        return
-    end
-end
-
--- Giao diện nhập key
 local ScreenGui = Instance.new("ScreenGui", game.CoreGui)
 local Frame = Instance.new("Frame", ScreenGui)
 local UICorner = Instance.new("UICorner", Frame)
@@ -55,27 +42,17 @@ CheckButton.Text = "Submit"
 CheckButton.BackgroundColor3 = Color3.fromRGB(80, 80, 80)
 CheckButton.TextColor3 = Color3.new(1, 1, 1)
 
--- Button: Copy link
 GetKeyButton.MouseButton1Click:Connect(function()
-    setclipboard(url)
-    Notification("Đã copy link lấy key!")
+setclipboard(url)
+Notification("Đã copy link lấy key!")
 end)
 
--- Button: Check Key
 CheckButton.MouseButton1Click:Connect(function()
-    if TextBox.Text == key then
-        Notification("Đúng key!")
-
-        -- Lưu key nếu executor hỗ trợ
-        pcall(function()
-            if writefile then
-                writefile(keyFile, key)
-            end
-        end)
-
-        ScreenGui:Destroy()
-        loadstring(game:HttpGet(scriptUrl))()
-    else
-        Notification("Sai key, thử lại!")
-    end
+if TextBox.Text == key then
+Notification("Đúng key!")
+ScreenGui:Destroy()
+loadstring(game:HttpGet(scriptUrl))()
+else
+Notification("Sai key, thử lại!")
+end
 end)
