@@ -78,10 +78,9 @@ local pointFolder = TeleportTab:CreateSection("Saved Points")
 TeleportTab:CreateButton({
     Name = "Save Point",
     Callback = function()
-        local pos = game.Players.LocalPlayer.Character.HumanoidRootPart.Position
-        table.insert(savedPoints, pos)
-
-        local index = #savedPoints
+        local pos = game.Players.LocalPlayer.Character:WaitForChild("HumanoidRootPart").Position
+        local index = #savedPoints + 1
+        savedPoints[index] = pos
 
         pointFolder:CreateButton({
             Name = "Point " .. index,
@@ -96,7 +95,7 @@ TeleportTab:CreateButton({
                         Image = 4483362458
                     })
                 end
-            end,
+            end
         })
     end
 })
