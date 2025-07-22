@@ -337,19 +337,21 @@ end
 end)
 
 ---------------- fps ping -----------------
+
 local RunService = game:GetService("RunService")
 local Players = game:GetService("Players")
 local StatsService = game:GetService("Stats")
 local LocalPlayer = Players.LocalPlayer
 local PlayerGui = LocalPlayer:WaitForChild("PlayerGui")
 
--- Tạo màn hình hiển thị FPS và Ping
+-- Tạo màn hình hiển thị
 local screenGui = Instance.new("ScreenGui")
 screenGui.Name = "PerformanceCounter"
 screenGui.Parent = PlayerGui
+screenGui.ResetOnSpawn = false
 
 local frame = Instance.new("Frame")
-frame.Size = UDim2.new(0, 150, 0, 60)  -- Tăng kích thước để hiển thị thêm ping
+frame.Size = UDim2.new(0, 150, 0, 50)
 frame.Position = UDim2.new(0, 10, 0, 10)
 frame.BackgroundTransparency = 0.7
 frame.BackgroundColor3 = Color3.new(0, 0, 0)
@@ -363,62 +365,63 @@ textLabel.Text = "FPS: 0 (0ms)\nPing: 0ms"
 textLabel.Font = Enum.Font.Code
 textLabel.TextSize = 16
 textLabel.TextYAlignment = Enum.TextYAlignment.Top
+textLabel.TextXAlignment = Enum.TextXAlignment.Left
 textLabel.Parent = frame
 
 -- Biến để tính FPS
 local fps = 0
 local lastTime = os.clock()
 local frames = 0
-local updateInterval = 0.2 -- Khoảng thời gian cập nhật (giây)
+local updateInterval = 0.5 -- Giảm tần suất cập nhật
 
--- Hàm cập nhật thông tin hiệu suất
+-- Hàm lấy màu sắc dựa trên giá trị
+local function getColor(value, thresholds)
+    if value < thresholds.good then
+        return Color3.new(0.4, 1, 0.4) -- Xanh lá (tốt)
+    elseif value < thresholds.medium then
+        return Color3.new(1, 1, 0.4) -- Vàng (trung bình)
+    else
+        return Color3.new(1, 0.3, 0.3) -- Đỏ (kém)
+    end
+end
+
+-- Hàm cập nhật thông tin
 local function updatePerformance()
-    -- Tính FPS
     frames = frames + 1
     local currentTime = os.clock()
     
     if currentTime - lastTime >= updateInterval then
+        -- Tính FPS
         fps = math.floor(frames / (currentTime - lastTime) + 0.5)
         frames = 0
         lastTime = currentTime
         
-        -- Lấy thông tin ping
+        -- Lấy ping
         local ping = StatsService.Network.ServerStatsItem["Data Ping"]:GetValue()
-        ping = math.floor(ping + 0.5) -- Làm tròn ping
+        ping = math.floor(ping + 0.5)
         
-        -- Cập nhật hiển thị
-        textLabel.Text = string.format("FPS: %d (%.1fms)\nPing: %dms", fps, 1000/fps, ping)
+        -- Lấy màu sắc
+        local fpsColor = getColor(fps, {good = 45, medium = 20})
+        local pingColor = getColor(ping, {good = 150, medium = 300})
         
-        -- Đổi màu dựa trên FPS và Ping
-        local fpsColor, pingColor
-        
-        -- Màu cho FPS
-        if fps < 20 then
-            fpsColor = Color3.new(1, 0.3, 0.3) -- Đỏ nhạt
-        elseif fps < 45 then
-            fpsColor = Color3.new(1, 1, 0.4) -- Vàng
-        else
-            fpsColor = Color3.new(0.4, 1, 0.4) -- Xanh lá
-        end
-        
-        -- Màu cho Ping
-        if ping > 300 then
-            pingColor = Color3.new(1, 0.3, 0.3) -- Đỏ
-        elseif ping > 150 then
-            pingColor = Color3.new(1, 1, 0.4) -- Vàng
-        else
-            pingColor = Color3.new(0.4, 1, 0.4) -- Xanh lá
-        end
-        
-        -- Tạo text với màu sắc
+        -- Tạo text hiển thị
         textLabel.Text = string.format(
-            '<font color="rgb(%d,%d,%d)">FPS: %d (%.1fms)</font>\n<font color="rgb(%d,%d,%d)">Ping: %dms</font>',
-            fpsColor.R * 255, fpsColor.G * 255, fpsColor.B * 255, fps, 1000/fps,
-            pingColor.R * 255, pingColor.G * 255, pingColor.B * 255, ping
+            "FPS: %d (%.1fms)\nPing: %dms", 
+            fps, 1000/fps, ping
         )
+        
+        -- Đổi màu dựa trên FPS (ping sẽ cùng màu với FPS)
+        if fps < 20 then
+            textLabel.TextColor3 = Color3.new(1, 0.3, 0.3)
+        elseif fps < 45 then
+            textLabel.TextColor3 = Color3.new(1, 1, 0.4)
+        else
+            textLabel.TextColor3 = Color3.new(0.4, 1, 0.4)
+        end
     end
 end
 
--- Kết nối với RenderStepped để tính FPS và ping
+-- Kết nối sự kiện
 RunService.RenderStepped:Connect(updatePerformance)
+
 
