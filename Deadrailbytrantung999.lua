@@ -496,3 +496,12 @@ Tab_BloxFruits:CreateButton({
         loadstring(game:HttpGet("https://raw.githubusercontent.com/newredz/BloxFruits/refs/heads/main/Source.luau"))(Settings)
     end,
 })
+
+local MM2Tab = Window:CreateTab("Murder Mystery 2", 4483362458) -- Icon ID tùy chọn
+
+MM2Tab:CreateButton({
+    Name = "Xhub MM2",
+    Callback = function()
+        loadstring(game:HttpGet("https://raw.githubusercontent.com/Au0yX/Community/main/XhubMM2"))()
+    end,
+})
