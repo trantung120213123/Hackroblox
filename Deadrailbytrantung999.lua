@@ -76,7 +76,7 @@ local savedPoints = {}
 local pointButtons = {}
 local teleportSection = TeleportTab:CreateSection("Saved Points")
 
-TELEPORTTab:CreateButton({
+TeleportTab:CreateButton({
     Name = "Save Point",
     Callback = function()
         local pos = game.Players.LocalPlayer.Character and game.Players.LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
@@ -86,7 +86,7 @@ TELEPORTTab:CreateButton({
 
             -- Tạo button mới để teleport đến điểm vừa lưu
             local index = #savedPoints
-            local newButton = TELEPORTTab:CreateButton({
+            local newButton = TeleportTab:CreateButton({
                 Name = "Teleport to Point " .. index,
                 Callback = function()
                     local char = game.Players.LocalPlayer.Character
