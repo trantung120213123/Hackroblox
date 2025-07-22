@@ -474,3 +474,25 @@ GrowTab:CreateButton({
         end
     end,
 })
+
+local Tab_BloxFruits = Window:CreateTab("🍌 Blox Fruits", 4483362458) -- icon là emoji chuối
+
+-- Nút 1: Banana Cat Hub
+Tab_BloxFruits:CreateButton({
+    Name = "Banana Cat Hub 🍌",
+    Callback = function()
+        loadstring(game:HttpGet("https://raw.githubusercontent.com/Chiriku2013/BananaCatHub/refs/heads/main/BananaCatHub.lua"))()
+    end,
+})
+
+-- Nút 2: Redz Hub
+Tab_BloxFruits:CreateButton({
+    Name = "Redz Hub 🔴",
+    Callback = function()
+        local Settings = {
+            JoinTeam = "Pirates", -- hoặc "Marines"
+            Translator = true,
+        }
+        loadstring(game:HttpGet("https://raw.githubusercontent.com/newredz/BloxFruits/refs/heads/main/Source.luau"))(Settings)
+    end,
+})
