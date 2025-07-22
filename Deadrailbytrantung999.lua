@@ -169,40 +169,67 @@ SkinTab:CreateButton({
 	end,
 })
 
+-- Ô nhập tên người chơi
+SkinTab:CreateInput({
+    Name = "Tên người chơi",
+    PlaceholderText = "Nhập tên người chơi...",
+    RemoveTextAfterFocusLost = false,
+    Callback = function(Value)
+        ClonedPlayerName = Value
+    end,
+})
+
+-- Nút Clone Skin
 SkinTab:CreateButton({
-	Name = "Clone Skin",
-	Callback = function()
-		local player = game.Players.LocalPlayer
-		local character = player.Character or player.CharacterAdded:Wait()
+    Name = "Clone Skin",
+    Callback = function()
+        local Players = game:GetService("Players")
+        local LocalPlayer = Players.LocalPlayer
+        local TargetPlayer = Players:FindFirstChild(ClonedPlayerName)
 
-		-- Lưu danh sách các phụ kiện, quần áo...
-		local clonedItems = {}
+        if TargetPlayer and TargetPlayer.Character and LocalPlayer.Character then
+            local TargetChar = TargetPlayer.Character
+            local MyChar = LocalPlayer.Character
 
-		for _, item in ipairs(character:GetChildren()) do
-			if item:IsA("Accessory") or item:IsA("Shirt") or item:IsA("Pants") or item:IsA("ShirtGraphic") or item:IsA("CharacterMesh") then
-				local clone = item:Clone()
-				table.insert(clonedItems, clone)
-			end
-		end
+            -- Xoá phụ kiện cũ
+            for _, item in ipairs(MyChar:GetChildren()) do
+                if item:IsA("Accessory") or item:IsA("Shirt") or item:IsA("Pants") or item:IsA("CharacterMesh") or item:IsA("BodyColors") or item:IsA("ShirtGraphic") or item:IsA("Face") then
+                    item:Destroy()
+                end
+            end
 
-		-- Xoá tất cả skin hiện tại
-		for _, item in ipairs(character:GetChildren()) do
-			if item:IsA("Accessory") or item:IsA("Shirt") or item:IsA("Pants") or item:IsA("ShirtGraphic") or item:IsA("CharacterMesh") then
-				item:Destroy()
-			end
-		end
+            -- Clone phụ kiện
+            for _, item in ipairs(TargetChar:GetChildren()) do
+                if item:IsA("Accessory") or item:IsA("Shirt") or item:IsA("Pants") or item:IsA("CharacterMesh") or item:IsA("BodyColors") or item:IsA("ShirtGraphic") then
+                    local Clone = item:Clone()
+                    Clone.Parent = MyChar
+                end
+            end
 
-		-- Gắn lại skin đã clone
-		for _, clone in ipairs(clonedItems) do
-			clone.Parent = character
-		end
+            -- Clone mặt (face)
+            local Head = MyChar:FindFirstChild("Head")
+            local TargetHead = TargetChar:FindFirstChild("Head")
+            if Head and TargetHead then
+                local Face = TargetHead:FindFirstChild("face")
+                if Face then
+                    local Clone = Face:Clone()
+                    Clone.Parent = Head
+                end
+            end
 
-		Rayfield:Notify({
-			Title = "Clone Skin",
-			Content = "Đã clone lại toàn bộ skin!",
-			Duration = 3,
-		})
-	end,
+            Rayfield:Notify({
+                Title = "Clone Skin",
+                Content = "Đã sao chép skin thành công!",
+                Duration = 3,
+            })
+        else
+            Rayfield:Notify({
+                Title = "Lỗi",
+                Content = "Không tìm thấy người chơi hoặc nhân vật!",
+                Duration = 3,
+            })
+        end
+    end,
 })
 
 ------------------ LOOP: ESP + LockNPC + NoClip -------------------
