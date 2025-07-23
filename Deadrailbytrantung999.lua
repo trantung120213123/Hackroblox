@@ -634,6 +634,3 @@ KnifeTab:CreateButton({
         Knife.Parent = game.Players.LocalPlayer.Backpack
     end
 })
-
------------ Bật Lửa -----------
-
