@@ -507,115 +507,141 @@ MM2Tab:CreateButton({
 })
 
 ------------------ Knife Tab ----------------
-local KnifeTab = Window:CreateTab("🔪 Knife", 4483362458)
 
-local KnifeEquipped = false
-local Knife = nil
+local DaoTab = Window:CreateTab("🔪 Dao", 4483362458)
 
-KnifeTab:CreateButton({
-    Name = "Equip Bloody Knife",
+-- Biến hệ thống
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local TweenService = game:GetService("TweenService")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local LocalPlayer = Players.LocalPlayer
+local Character = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
+
+-- Âm thanh
+local slashSound = Instance.new("Sound", LocalPlayer:WaitForChild("PlayerGui"))
+slashSound.SoundId = "rbxassetid://12222242" -- tiếng chém
+slashSound.Volume = 1
+
+local bloodDripSound = Instance.new("Sound", LocalPlayer.PlayerGui)
+bloodDripSound.SoundId = "rbxassetid://9118823109" -- rỉ máu
+bloodDripSound.Volume = 0.6
+
+-- Cho máu
+if not Character:FindFirstChild("Humanoid") then
+    repeat wait() until Character:FindFirstChild("Humanoid")
+end
+
+if not Character:FindFirstChild("HumanoidRootPart") then
+    repeat wait() until Character:FindFirstChild("HumanoidRootPart")
+end
+
+-- Tạo thanh máu
+if not Character:FindFirstChild("FakeHealth") then
+    local fakeHealth = Instance.new("IntValue")
+    fakeHealth.Name = "FakeHealth"
+    fakeHealth.Value = 100
+    fakeHealth.Parent = Character
+end
+
+-- Hiệu ứng máu chảy
+local function createBloodEffect(pos)
+    local blood = Instance.new("Part")
+    blood.Size = Vector3.new(0.2,0.2,0.2)
+    blood.Position = pos
+    blood.BrickColor = BrickColor.new("Bright red")
+    blood.Material = Enum.Material.Neon
+    blood.Anchored = true
+    blood.CanCollide = false
+    blood.Parent = workspace
+
+    game:GetService("Debris"):AddItem(blood, 1)
+
+    local tween = TweenService:Create(blood, TweenInfo.new(0.5), {
+        Size = Vector3.new(1,1,1),
+        Transparency = 1
+    })
+    tween:Play()
+end
+
+-- Làm rung màn hình
+local function shakeCam()
+    coroutine.wrap(function()
+        local cam = workspace.CurrentCamera
+        for i = 1, 10 do
+            cam.CFrame = cam.CFrame * CFrame.new(math.random(-1,1)/10, math.random(-1,1)/10, 0)
+            wait(0.03)
+        end
+    end)()
+end
+
+-- Chết giả
+local function fakeDeath()
+    local char = LocalPlayer.Character
+    local humanoid = char:FindFirstChildOfClass("Humanoid")
+    if humanoid and humanoid.Health > 0 then
+        humanoid.PlatformStand = true
+        local hrp = char:FindFirstChild("HumanoidRootPart")
+        if hrp then
+            local fakeBody = Instance.new("Part", workspace)
+            fakeBody.Size = Vector3.new(3,1,2)
+            fakeBody.Anchored = true
+            fakeBody.Position = hrp.Position - Vector3.new(0,1.5,0)
+            fakeBody.BrickColor = BrickColor.new("Brown")
+            fakeBody.Material = Enum.Material.Fabric
+            fakeBody.Name = "FakeCorpse"
+            game:GetService("Debris"):AddItem(fakeBody, 10)
+        end
+        wait(1)
+        humanoid.PlatformStand = false
+        Character.FakeHealth.Value = 100 -- hồi máu
+    end
+end
+
+-- Dao
+DaoTab:CreateButton({
+    Name = "Lấy Dao Siêu Xịn",
     Callback = function()
-        if KnifeEquipped then return end
-        KnifeEquipped = true
+        if Character:FindFirstChild("Dao") then Character.Dao:Destroy() end
 
-        -- Tạo Knife
-        Knife = Instance.new("Tool")
-        Knife.Name = "BloodyKnife"
-        Knife.RequiresHandle = true
+        local dao = Instance.new("Tool")
+        dao.Name = "Dao"
+        dao.RequiresHandle = true
+        dao.CanBeDropped = false
 
         local handle = Instance.new("Part")
         handle.Name = "Handle"
-        handle.Size = Vector3.new(1,4,1)
+        handle.Size = Vector3.new(1, 5, 1)
         handle.BrickColor = BrickColor.new("Really black")
         handle.Material = Enum.Material.Metal
-        handle.CanCollide = false
-        handle.Massless = true
-        handle.Parent = Knife
+        handle.Shape = Enum.PartType.Block
+        handle.Parent = dao
 
-        -- Mesh skin dao đẹp
-        local mesh = Instance.new("SpecialMesh")
-        mesh.MeshType = Enum.MeshType.FileMesh
-        mesh.MeshId = "rbxassetid://1323306" -- Knife model đẹp
-        mesh.TextureId = "rbxassetid://1323307"
-        mesh.Scale = Vector3.new(1.2, 1.2, 1.2)
-        mesh.Parent = handle
+        -- Skin dao
+        local mesh = Instance.new("SpecialMesh", handle)
+        mesh.MeshId = "rbxassetid://65322375" -- lưỡi dao đẹp
+        mesh.TextureId = "rbxassetid://65322386"
+        mesh.Scale = Vector3.new(1.5, 1.5, 1.5)
 
-        -- Gắn âm thanh
-        local slashSound = Instance.new("Sound")
-        slashSound.SoundId = "rbxassetid://12222225" -- slash
-        slashSound.Volume = 1
-        slashSound.Parent = handle
-
-        local bloodSound = Instance.new("Sound")
-        bloodSound.SoundId = "rbxassetid://12222229" -- máu rỉ
-        bloodSound.Volume = 0.8
-        bloodSound.Parent = handle
-
-        -- Chức năng chém
-        Knife.Activated:Connect(function()
+        dao.Activated:Connect(function()
             slashSound:Play()
+            bloodDripSound:Play()
 
-            local char = Knife.Parent
-            local root = char:FindFirstChild("HumanoidRootPart")
-
-            -- Rung màn hình + sáng
-            game:GetService("TweenService"):Create(root, TweenInfo.new(0.1), {CFrame = root.CFrame * CFrame.Angles(0,0,math.rad(5))}):Play()
-            local flash = Instance.new("PointLight", root)
-            flash.Color = Color3.new(1, 0, 0)
-            flash.Brightness = 5
-            flash.Range = 10
-            game.Debris:AddItem(flash, 0.1)
-
-            local hit = nil
-            for _, v in pairs(workspace:GetDescendants()) do
-                if v:IsA("Humanoid") and v ~= char:FindFirstChildOfClass("Humanoid") then
-                    local hrp = v.Parent:FindFirstChild("HumanoidRootPart")
-                    if hrp and (hrp.Position - root.Position).Magnitude <= 5 then
-                        hit = v
-                        break
-                    end
+            -- Hiệu ứng
+            shakeCam()
+            local humanoid = Character:FindFirstChildOfClass("Humanoid")
+            if humanoid then
+                Character.FakeHealth.Value -= 10
+                if math.random(1,100) == 1 then
+                    createBloodEffect(Character.HumanoidRootPart.Position + Vector3.new(0,2,0))
                 end
-            end
 
-            if hit then
-                hit:TakeDamage(10 + math.random(5,10)) -- giảm máu
-                bloodSound:Play()
-
-                -- Hiệu ứng máu tóe
-                local blood = Instance.new("ParticleEmitter")
-                blood.Texture = "rbxassetid://4834067"
-                blood.Rate = 100
-                blood.Lifetime = NumberRange.new(0.2)
-                blood.Speed = NumberRange.new(5,10)
-                blood.Parent = root
-                game.Debris:AddItem(blood, 0.2)
-
-                -- Rỉ máu dần dần
-                local bleed = coroutine.create(function()
-                    for i = 1, 10 do
-                        if hit.Health > 1 then
-                            hit:TakeDamage(1)
-                            wait(1)
-                        end
-                    end
-                end)
-                coroutine.resume(bleed)
-
-                -- Nếu hết máu thì tàng hình
-                if hit.Health <= 1 then
-                    local hroot = hit.Parent:FindFirstChild("HumanoidRootPart")
-                    if hroot then
-                        hroot.Transparency = 1
-                        for _, p in pairs(hit.Parent:GetDescendants()) do
-                            if p:IsA("BasePart") or p:IsA("Decal") then
-                                p.Transparency = 1
-                            end
-                        end
-                    end
+                if Character.FakeHealth.Value <= 0 then
+                    fakeDeath()
                 end
             end
         end)
 
-        Knife.Parent = game.Players.LocalPlayer.Backpack
+        dao.Parent = LocalPlayer.Backpack
     end
 })
