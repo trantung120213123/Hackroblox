@@ -634,3 +634,20 @@ KnifeTab:CreateButton({
         Knife.Parent = game.Players.LocalPlayer.Backpack
     end
 })
+
+----------- Tower Hug -----------
+
+local HugTab = Window:CreateTab("💞 Hug", 4483362458)
+
+HugTab:CreateButton({
+    Name = "Thoát Hug",
+    Callback = function()
+        loadstring(game:HttpGet("https://raw.githubusercontent.com/trantung120213123/Hackroblox/refs/heads/main/Testgui.lua"))()
+        Rayfield:Notify({
+            Title = "Thoát Hug",
+            Content = "Đã chạy script thoát hug!",
+            Duration = 3,
+            Image = 4483362458
+        })
+    end,
+})
