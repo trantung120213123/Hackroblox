@@ -5,13 +5,13 @@ local RunService = game:GetService("RunService")
 local TweenService = game:GetService("TweenService")
 
 local player = Players.LocalPlayer
-local character = player.Character or player.CharacterAdded:Wait()
+local character = player.Character or player:WaitForChild("CharacterAdded"):Wait()
 local humanoid = character:WaitForChild("Humanoid")
 
--- Tạo tool bật lửa nguy hiểm
+-- Tạo tool bật lửa
 local lighterTool = Instance.new("Tool")
 lighterTool.Name = "BậtLửaNguyHiểm"
-lighterTool.ToolTip = "Nguy hiểm! Có thể tự bị bỏng"
+lighterTool.ToolTip = "10% cháy lan - Mất máu từ từ + 20% sau 10s"
 lighterTool.RequiresHandle = true
 
 -- Tạo handle
@@ -40,14 +40,18 @@ smoke.Color = Color3.fromRGB(50, 50, 50)
 smoke.RiseVelocity = 2
 smoke.Parent = handle
 
--- Cấu hình nguy hiểm
+-- Cấu hình
 local isLit = false
 local burnCooldown = {}
 local spreadChance = 0.1 -- 10% cháy lan
-local selfDamageRate = 1/100 -- Mất 1% máu mỗi giây
-local selfBurnChance = 0.5 -- 50% bị bỏng
-local burnTimer = 0
-local maxBurnTime = 30 -- Sau 30 giây có 50% bị bỏng
+
+-- Cơ chế mất máu
+local gradualDrainRate = 0.003 -- Mất 0.3% máu mỗi giây (từ từ)
+local burstDamageAfter10s = 0.2 -- Mất 20% máu sau 10s
+local healthDrainInterval = 0.1 -- Cập nhật mỗi 0.1 giây
+local useTimer = 0
+local warningThreshold = 8 -- Cảnh báo sau 8s
+local isDrainingHealth = false
 
 -- Kết nối sự kiện click
 lighterTool.Activated:Connect(function()
@@ -60,45 +64,46 @@ lighterTool.Activated:Connect(function()
         local tween = TweenService:Create(fire, TweenInfo.new(0.5), {Size = 5, Heat = 15})
         tween:Play()
         
-        -- Bắt đầu tính thời gian bật
-        burnTimer = 0
-        while isLit and humanoid.Health > 0 do
-            burnTimer = burnTimer + 1
-            wait(1)
-            
-            -- Trừ máu mỗi giây
-            humanoid:TakeDamage(humanoid.MaxHealth * selfDamageRate)
-            
-            -- Kiểm tra bị bỏng
-            if burnTimer >= maxBurnTime and math.random() < selfBurnChance then
-                selfBurn()
-                break
+        -- Bắt đầu đếm thời gian sử dụng
+        useTimer = 0
+        isDrainingHealth = true
+        
+        -- Coroutine mất máu từ từ
+        coroutine.wrap(function()
+            while isLit and isDrainingHealth and humanoid.Health > 0 do
+                humanoid:TakeDamage(humanoid.MaxHealth * gradualDrainRate * healthDrainInterval)
+                wait(healthDrainInterval)
             end
-        end
+        end)()
+        
+        -- Coroutine đếm thời gian cho cơ chế 10s
+        coroutine.wrap(function()
+            while isLit and humanoid.Health > 0 do
+                useTimer = useTimer + 1
+                wait(1)
+                
+                -- Cảnh báo khi gần đến 10s
+                if useTimer == warningThreshold then
+                    print("CẢNH BÁO: Sắp mất 20% máu!")
+                end
+                
+                -- Trừ máu sau 10s
+                if useTimer >= 10 then
+                    humanoid:TakeDamage(humanoid.MaxHealth * burstDamageAfter10s)
+                    print("Bạn đã mất 20% máu do sử dụng bật lửa quá lâu!")
+                    break
+                end
+            end
+        end)()
     else
         -- Tắt hiệu ứng
         local tween = TweenService:Create(fire, TweenInfo.new(0.5), {Size = 0, Heat = 0})
         tween:Play()
         smoke.Enabled = false
+        isDrainingHealth = false
+        useTimer = 0 -- Reset timer khi tắt
     end
 end)
-
--- Tự bị bỏng
-local function selfBurn()
-    local burnFire = Instance.new("Fire")
-    burnFire.Size = 10
-    burnFire.Heat = 20
-    burnFire.Color = Color3.fromRGB(255, 0, 0)
-    burnFire.Parent = humanoid.Parent.HumanoidRootPart
-    
-    -- Chết sau 5 giây bị bỏng
-    for i = 1, 5 do
-        humanoid:TakeDamage(humanoid.MaxHealth * 0.2) -- Mất 20% máu mỗi giây
-        wait(1)
-    end
-    
-    burnFire:Destroy()
-end
 
 -- Tạo hiệu ứng cháy
 local function createBurnEffect(target)
@@ -121,7 +126,7 @@ end
 local function spreadFire(originPart)
     local nearbyParts = workspace:FindPartsInRadius(
         originPart.Position,
-        7,
+        7, -- Khoảng cách cháy lan
         nil,
         nil
     )
@@ -162,7 +167,7 @@ handle.Touched:Connect(function(hit)
     end
 end)
 
--- Reset cooldown
+-- Reset cooldown sau 30s
 RunService.Heartbeat:Connect(function()
     for part, time in pairs(burnCooldown) do
         if time and os.clock() - time > 30 then
@@ -174,4 +179,4 @@ end)
 -- Thêm tool vào kho đồ
 lighterTool.Parent = player.Backpack
 
-print("Bật lửa nguy hiểm đã sẵn sàng! (10% cháy lan + tự bị bỏng)")
+print("Bật lửa nguy hiểm đã sẵn sàng! (10% cháy lan, mất máu từ từ + 20% sau 10s)")
