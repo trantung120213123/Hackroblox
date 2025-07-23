@@ -506,99 +506,98 @@ MM2Tab:CreateButton({
     end,
 })
 
-local GunsTab = Window:CreateTab("🔫 Guns", 4483362458) -- Tab mới tên là Guns
+-- Tab "Dao"
+local DaoTab = Window:CreateTab("🔪 Dao", 4483362458)
 
-local currentGun = nil
-local damagePerShot = 25
-local ammo = 20
+local Players = game:GetService("Players")
+local LocalPlayer = Players.LocalPlayer
 
--- Tạo súng
-local function CreateGun()
-    if currentGun then currentGun:Destroy() end
+-- Tạo máu cho người chơi nếu chưa có
+for _, player in pairs(Players:GetPlayers()) do
+    if not player:FindFirstChild("Health") then
+        local health = Instance.new("IntValue", player)
+        health.Name = "Health"
+        health.Value = 100
+    end
+end
 
-    local gun = Instance.new("Tool")
-    gun.Name = "RayfieldGun"
-    gun.RequiresHandle = true
-    gun.CanBeDropped = false
+-- Tạo hiệu ứng máu
+local function createBloodEffect(position)
+    local part = Instance.new("Part")
+    part.Size = Vector3.new(0.2, 0.2, 0.2)
+    part.Position = position
+    part.Anchored = false
+    part.CanCollide = false
+    part.BrickColor = BrickColor.Red()
+    part.Material = Enum.Material.Neon
+    part.Velocity = Vector3.new(math.random(-20,20), math.random(10,30), math.random(-20,20))
+    part.Parent = workspace
+    game.Debris:AddItem(part, 1.5)
+end
 
-    -- Tạo handle với skin đẹp
+-- Hàm tạo dao và gắn sự kiện chém
+local function createKnife()
+    if LocalPlayer.Character:FindFirstChild("SuperKnife") then
+        LocalPlayer.Character:FindFirstChild("SuperKnife"):Destroy()
+    end
+
+    local knife = Instance.new("Tool")
+    knife.Name = "SuperKnife"
+    knife.RequiresHandle = true
+
     local handle = Instance.new("Part")
     handle.Name = "Handle"
-    handle.Size = Vector3.new(1, 1, 3)
+    handle.Size = Vector3.new(1, 5, 1)
     handle.BrickColor = BrickColor.new("Really black")
     handle.Material = Enum.Material.Metal
-    handle.Reflectance = 0.3
-    handle.Mesh = Instance.new("SpecialMesh", handle)
-    handle.Mesh.MeshType = Enum.MeshType.FileMesh
-    handle.Mesh.MeshId = "rbxassetid://12221720" -- mẫu skin súng đẹp
-    handle.Mesh.TextureId = "rbxassetid://12221721"
-    handle.Mesh.Scale = Vector3.new(1.5, 1.5, 1.5)
-    handle.Parent = gun
+    handle.CanCollide = false
+    handle.Massless = true
+    handle.Parent = knife
 
-    gun.Parent = game.Players.LocalPlayer.Backpack
-    currentGun = gun
+    knife.GripForward = Vector3.new(-1, 0, 0)
+    knife.GripPos = Vector3.new(0, -1, 0)
+    knife.GripRight = Vector3.new(0, 0, 1)
+    knife.GripUp = Vector3.new(0, 1, 0)
 
-    -- Hiệu ứng bắn
-    gun.Activated:Connect(function()
-        if ammo <= 0 then
-            Rayfield:Notify({ Title = "Ammo", Content = "Hết đạn!", Duration = 2.5 })
-            return
+    knife.Activated:Connect(function()
+        local target = nil
+        local distance = 5
+        for _, player in pairs(Players:GetPlayers()) do
+            if player ~= LocalPlayer and player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
+                local magnitude = (LocalPlayer.Character.HumanoidRootPart.Position - player.Character.HumanoidRootPart.Position).Magnitude
+                if magnitude < distance then
+                    target = player
+                    break
+                end
+            end
         end
 
-        ammo -= 1
-
-        -- Âm thanh súng
-        local sound = Instance.new("Sound", handle)
-        sound.SoundId = "rbxassetid://2920959" -- tiếng súng
-        sound.Volume = 1
-        sound:Play()
-        game.Debris:AddItem(sound, 3)
-
-        -- Tia đạn
-        local ray = Ray.new(handle.Position, handle.CFrame.LookVector * 300)
-        local hit, pos = workspace:FindPartOnRay(ray, game.Players.LocalPlayer.Character, false, true)
-
-        -- Tạo hiệu ứng đạn
-        local bullet = Instance.new("Part")
-        bullet.Anchored = true
-        bullet.CanCollide = false
-        bullet.Size = Vector3.new(0.2, 0.2, (pos - handle.Position).Magnitude)
-        bullet.CFrame = CFrame.new(handle.Position, pos) * CFrame.new(0, 0, -bullet.Size.Z / 2)
-        bullet.BrickColor = BrickColor.new("Bright yellow")
-        bullet.Material = Enum.Material.Neon
-        bullet.Parent = workspace
-        game.Debris:AddItem(bullet, 0.1)
-
-        -- Trúng đối tượng
-        if hit and hit.Parent:FindFirstChild("Humanoid") then
-            local humanoid = hit.Parent:FindFirstChild("Humanoid")
-            humanoid:TakeDamage(damagePerShot)
-
-            if humanoid.Health <= 0 then
-                for _, part in pairs(hit.Parent:GetDescendants()) do
-                    if part:IsA("BasePart") then
-                        part.Transparency = 1
+        if target and target:FindFirstChild("Health") then
+            target.Health.Value -= 20
+            createBloodEffect(target.Character.HumanoidRootPart.Position + Vector3.new(0,2,0))
+            if target.Health.Value <= 0 then
+                if target.Character then
+                    for _, part in pairs(target.Character:GetChildren()) do
+                        if part:IsA("BasePart") then
+                            part.Transparency = 1
+                        end
                     end
                 end
             end
         end
     end)
+
+    knife.Parent = LocalPlayer.Backpack
 end
 
--- Nút tạo súng
-GunsTab:CreateButton({
-    Name = "🔫 Nhận Súng Skin Đẹp",
+DaoTab:CreateButton({
+    Name = "🗡️ Lấy Dao Cực Ngầu",
     Callback = function()
-        CreateGun()
-        Rayfield:Notify({ Title = "Guns", Content = "Đã nhận súng thành công!", Duration = 3 })
-    end,
-})
-
--- Nút nạp lại đạn
-GunsTab:CreateButton({
-    Name = "🔁 Nạp Đạn (20 viên)",
-    Callback = function()
-        ammo = 20
-        Rayfield:Notify({ Title = "Guns", Content = "Đã nạp lại 20 viên đạn!", Duration = 2.5 })
+        createKnife()
+        Rayfield:Notify({
+            Title = "Dao Đã Gắn!",
+            Content = "Sẵn sàng chém bọn ngu!",
+            Duration = 3,
+        })
     end,
 })
