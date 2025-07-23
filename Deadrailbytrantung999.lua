@@ -506,98 +506,116 @@ MM2Tab:CreateButton({
     end,
 })
 
--- Tab "Dao"
-local DaoTab = Window:CreateTab("🔪 Dao", 4483362458)
+------------------ Knife Tab ----------------
+local KnifeTab = Window:CreateTab("🔪 Knife", 4483362458)
 
-local Players = game:GetService("Players")
-local LocalPlayer = Players.LocalPlayer
+local KnifeEquipped = false
+local Knife = nil
 
--- Tạo máu cho người chơi nếu chưa có
-for _, player in pairs(Players:GetPlayers()) do
-    if not player:FindFirstChild("Health") then
-        local health = Instance.new("IntValue", player)
-        health.Name = "Health"
-        health.Value = 100
-    end
-end
+KnifeTab:CreateButton({
+    Name = "Equip Bloody Knife",
+    Callback = function()
+        if KnifeEquipped then return end
+        KnifeEquipped = true
 
--- Tạo hiệu ứng máu
-local function createBloodEffect(position)
-    local part = Instance.new("Part")
-    part.Size = Vector3.new(0.2, 0.2, 0.2)
-    part.Position = position
-    part.Anchored = false
-    part.CanCollide = false
-    part.BrickColor = BrickColor.Red()
-    part.Material = Enum.Material.Neon
-    part.Velocity = Vector3.new(math.random(-20,20), math.random(10,30), math.random(-20,20))
-    part.Parent = workspace
-    game.Debris:AddItem(part, 1.5)
-end
+        -- Tạo Knife
+        Knife = Instance.new("Tool")
+        Knife.Name = "BloodyKnife"
+        Knife.RequiresHandle = true
 
--- Hàm tạo dao và gắn sự kiện chém
-local function createKnife()
-    if LocalPlayer.Character:FindFirstChild("SuperKnife") then
-        LocalPlayer.Character:FindFirstChild("SuperKnife"):Destroy()
-    end
+        local handle = Instance.new("Part")
+        handle.Name = "Handle"
+        handle.Size = Vector3.new(1,4,1)
+        handle.BrickColor = BrickColor.new("Really black")
+        handle.Material = Enum.Material.Metal
+        handle.CanCollide = false
+        handle.Massless = true
+        handle.Parent = Knife
 
-    local knife = Instance.new("Tool")
-    knife.Name = "SuperKnife"
-    knife.RequiresHandle = true
+        -- Mesh skin dao đẹp
+        local mesh = Instance.new("SpecialMesh")
+        mesh.MeshType = Enum.MeshType.FileMesh
+        mesh.MeshId = "rbxassetid://1323306" -- Knife model đẹp
+        mesh.TextureId = "rbxassetid://1323307"
+        mesh.Scale = Vector3.new(1.2, 1.2, 1.2)
+        mesh.Parent = handle
 
-    local handle = Instance.new("Part")
-    handle.Name = "Handle"
-    handle.Size = Vector3.new(1, 5, 1)
-    handle.BrickColor = BrickColor.new("Really black")
-    handle.Material = Enum.Material.Metal
-    handle.CanCollide = false
-    handle.Massless = true
-    handle.Parent = knife
+        -- Gắn âm thanh
+        local slashSound = Instance.new("Sound")
+        slashSound.SoundId = "rbxassetid://12222225" -- slash
+        slashSound.Volume = 1
+        slashSound.Parent = handle
 
-    knife.GripForward = Vector3.new(-1, 0, 0)
-    knife.GripPos = Vector3.new(0, -1, 0)
-    knife.GripRight = Vector3.new(0, 0, 1)
-    knife.GripUp = Vector3.new(0, 1, 0)
+        local bloodSound = Instance.new("Sound")
+        bloodSound.SoundId = "rbxassetid://12222229" -- máu rỉ
+        bloodSound.Volume = 0.8
+        bloodSound.Parent = handle
 
-    knife.Activated:Connect(function()
-        local target = nil
-        local distance = 5
-        for _, player in pairs(Players:GetPlayers()) do
-            if player ~= LocalPlayer and player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
-                local magnitude = (LocalPlayer.Character.HumanoidRootPart.Position - player.Character.HumanoidRootPart.Position).Magnitude
-                if magnitude < distance then
-                    target = player
-                    break
+        -- Chức năng chém
+        Knife.Activated:Connect(function()
+            slashSound:Play()
+
+            local char = Knife.Parent
+            local root = char:FindFirstChild("HumanoidRootPart")
+
+            -- Rung màn hình + sáng
+            game:GetService("TweenService"):Create(root, TweenInfo.new(0.1), {CFrame = root.CFrame * CFrame.Angles(0,0,math.rad(5))}):Play()
+            local flash = Instance.new("PointLight", root)
+            flash.Color = Color3.new(1, 0, 0)
+            flash.Brightness = 5
+            flash.Range = 10
+            game.Debris:AddItem(flash, 0.1)
+
+            local hit = nil
+            for _, v in pairs(workspace:GetDescendants()) do
+                if v:IsA("Humanoid") and v ~= char:FindFirstChildOfClass("Humanoid") then
+                    local hrp = v.Parent:FindFirstChild("HumanoidRootPart")
+                    if hrp and (hrp.Position - root.Position).Magnitude <= 5 then
+                        hit = v
+                        break
+                    end
                 end
             end
-        end
 
-        if target and target:FindFirstChild("Health") then
-            target.Health.Value -= 20
-            createBloodEffect(target.Character.HumanoidRootPart.Position + Vector3.new(0,2,0))
-            if target.Health.Value <= 0 then
-                if target.Character then
-                    for _, part in pairs(target.Character:GetChildren()) do
-                        if part:IsA("BasePart") then
-                            part.Transparency = 1
+            if hit then
+                hit:TakeDamage(10 + math.random(5,10)) -- giảm máu
+                bloodSound:Play()
+
+                -- Hiệu ứng máu tóe
+                local blood = Instance.new("ParticleEmitter")
+                blood.Texture = "rbxassetid://4834067"
+                blood.Rate = 100
+                blood.Lifetime = NumberRange.new(0.2)
+                blood.Speed = NumberRange.new(5,10)
+                blood.Parent = root
+                game.Debris:AddItem(blood, 0.2)
+
+                -- Rỉ máu dần dần
+                local bleed = coroutine.create(function()
+                    for i = 1, 10 do
+                        if hit.Health > 1 then
+                            hit:TakeDamage(1)
+                            wait(1)
+                        end
+                    end
+                end)
+                coroutine.resume(bleed)
+
+                -- Nếu hết máu thì tàng hình
+                if hit.Health <= 1 then
+                    local hroot = hit.Parent:FindFirstChild("HumanoidRootPart")
+                    if hroot then
+                        hroot.Transparency = 1
+                        for _, p in pairs(hit.Parent:GetDescendants()) do
+                            if p:IsA("BasePart") or p:IsA("Decal") then
+                                p.Transparency = 1
+                            end
                         end
                     end
                 end
             end
-        end
-    end)
+        end)
 
-    knife.Parent = LocalPlayer.Backpack
-end
-
-DaoTab:CreateButton({
-    Name = "🗡️ Lấy Dao Cực Ngầu",
-    Callback = function()
-        createKnife()
-        Rayfield:Notify({
-            Title = "Dao Đã Gắn!",
-            Content = "Sẵn sàng chém bọn ngu!",
-            Duration = 3,
-        })
-    end,
+        Knife.Parent = game.Players.LocalPlayer.Backpack
+    end
 })
