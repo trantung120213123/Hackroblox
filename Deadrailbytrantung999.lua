@@ -506,89 +506,99 @@ MM2Tab:CreateButton({
     end,
 })
 
-local GunTab = Window:CreateTab("🔫 Gun", 4483362458)
+local GunsTab = Window:CreateTab("🔫 Guns", 4483362458) -- Tab mới tên là Guns
 
-GunTab:CreateButton({
-    Name = "Lấy Súng",
-    Callback = function()
-        -- Tạo mô hình súng
-        local tool = Instance.new("Tool")
-        tool.Name = "Gun"
-        tool.RequiresHandle = true
-        tool.CanBeDropped = true
+local currentGun = nil
+local damagePerShot = 25
+local ammo = 20
 
-        -- Tạo handle (phần cầm)
-        local handle = Instance.new("Part")
-        handle.Name = "Handle"
-        handle.Size = Vector3.new(1, 1, 3)
-        handle.BrickColor = BrickColor.new("Black")
-        handle.Material = Enum.Material.Metal
-        handle.TopSurface = Enum.SurfaceType.Smooth
-        handle.BottomSurface = Enum.SurfaceType.Smooth
-        handle.Parent = tool
+-- Tạo súng
+local function CreateGun()
+    if currentGun then currentGun:Destroy() end
 
-        -- Tạo âm thanh
+    local gun = Instance.new("Tool")
+    gun.Name = "RayfieldGun"
+    gun.RequiresHandle = true
+    gun.CanBeDropped = false
+
+    -- Tạo handle với skin đẹp
+    local handle = Instance.new("Part")
+    handle.Name = "Handle"
+    handle.Size = Vector3.new(1, 1, 3)
+    handle.BrickColor = BrickColor.new("Really black")
+    handle.Material = Enum.Material.Metal
+    handle.Reflectance = 0.3
+    handle.Mesh = Instance.new("SpecialMesh", handle)
+    handle.Mesh.MeshType = Enum.MeshType.FileMesh
+    handle.Mesh.MeshId = "rbxassetid://12221720" -- mẫu skin súng đẹp
+    handle.Mesh.TextureId = "rbxassetid://12221721"
+    handle.Mesh.Scale = Vector3.new(1.5, 1.5, 1.5)
+    handle.Parent = gun
+
+    gun.Parent = game.Players.LocalPlayer.Backpack
+    currentGun = gun
+
+    -- Hiệu ứng bắn
+    gun.Activated:Connect(function()
+        if ammo <= 0 then
+            Rayfield:Notify({ Title = "Ammo", Content = "Hết đạn!", Duration = 2.5 })
+            return
+        end
+
+        ammo -= 1
+
+        -- Âm thanh súng
         local sound = Instance.new("Sound", handle)
-        sound.SoundId = "rbxassetid://13114759" -- Âm thanh bắn
+        sound.SoundId = "rbxassetid://2920959" -- tiếng súng
         sound.Volume = 1
-        sound.Name = "GunShot"
+        sound:Play()
+        game.Debris:AddItem(sound, 3)
 
-        -- Chấm trắng ở giữa
-        local gui = Instance.new("ScreenGui", game.Players.LocalPlayer:WaitForChild("PlayerGui"))
-        gui.Name = "GunCrosshair"
-        local dot = Instance.new("Frame", gui)
-        dot.AnchorPoint = Vector2.new(0.5, 0.5)
-        dot.Position = UDim2.new(0.5, 0, 0.5, 0)
-        dot.Size = UDim2.new(0, 4, 0, 4)
-        dot.BackgroundColor3 = Color3.new(1, 1, 1)
-        dot.BorderSizePixel = 0
+        -- Tia đạn
+        local ray = Ray.new(handle.Position, handle.CFrame.LookVector * 300)
+        local hit, pos = workspace:FindPartOnRay(ray, game.Players.LocalPlayer.Character, false, true)
 
-        -- Khi cầm súng
-        tool.Equipped:Connect(function(mouse)
-            -- Khóa camera
-            game.Players.LocalPlayer.CameraMode = Enum.CameraMode.LockFirstPerson
+        -- Tạo hiệu ứng đạn
+        local bullet = Instance.new("Part")
+        bullet.Anchored = true
+        bullet.CanCollide = false
+        bullet.Size = Vector3.new(0.2, 0.2, (pos - handle.Position).Magnitude)
+        bullet.CFrame = CFrame.new(handle.Position, pos) * CFrame.new(0, 0, -bullet.Size.Z / 2)
+        bullet.BrickColor = BrickColor.new("Bright yellow")
+        bullet.Material = Enum.Material.Neon
+        bullet.Parent = workspace
+        game.Debris:AddItem(bullet, 0.1)
 
-            mouse.Button1Down:Connect(function()
-                sound:Play()
+        -- Trúng đối tượng
+        if hit and hit.Parent:FindFirstChild("Humanoid") then
+            local humanoid = hit.Parent:FindFirstChild("Humanoid")
+            humanoid:TakeDamage(damagePerShot)
 
-                -- Tạo raycast
-                local ray = Ray.new(handle.Position, mouse.Hit.Position - handle.Position)
-                local part, pos = workspace:FindPartOnRay(ray, game.Players.LocalPlayer.Character, false, true)
-
-                -- Nếu bắn trúng người
-                if part and part.Parent:FindFirstChild("Humanoid") then
-                    local hum = part.Parent:FindFirstChild("Humanoid")
-                    if hum then
-                        hum:TakeDamage(hum.MaxHealth / 7)
-
-                        -- Hiệu ứng chảy máu
-                        spawn(function()
-                            for i = 1, 20 do
-                                hum:TakeDamage(hum.MaxHealth / 20)
-                                wait(1)
-                            end
-                        end)
-
-                        -- Tạo toé máu
-                        local blood = Instance.new("ParticleEmitter", part)
-                        blood.Texture = "rbxassetid://4834067"
-                        blood.Lifetime = NumberRange.new(0.5)
-                        blood.Speed = NumberRange.new(5)
-                        blood.Rate = 500
-                        blood:Emit(20)
-                        game.Debris:AddItem(blood, 1)
+            if humanoid.Health <= 0 then
+                for _, part in pairs(hit.Parent:GetDescendants()) do
+                    if part:IsA("BasePart") then
+                        part.Transparency = 1
                     end
                 end
-            end)
-        end)
+            end
+        end
+    end)
+end
 
-        -- Gỡ chấm trắng khi bỏ súng
-        tool.Unequipped:Connect(function()
-            game.Players.LocalPlayer.CameraMode = Enum.CameraMode.Classic
-            if gui then gui:Destroy() end
-        end)
+-- Nút tạo súng
+GunsTab:CreateButton({
+    Name = "🔫 Nhận Súng Skin Đẹp",
+    Callback = function()
+        CreateGun()
+        Rayfield:Notify({ Title = "Guns", Content = "Đã nhận súng thành công!", Duration = 3 })
+    end,
+})
 
-        tool.Parent = game.Players.LocalPlayer.Backpack
-        Rayfield:Notify({Title = "Súng đã được lấy", Content = "Vào Backpack để sử dụng", Duration = 4})
+-- Nút nạp lại đạn
+GunsTab:CreateButton({
+    Name = "🔁 Nạp Đạn (20 viên)",
+    Callback = function()
+        ammo = 20
+        Rayfield:Notify({ Title = "Guns", Content = "Đã nạp lại 20 viên đạn!", Duration = 2.5 })
     end,
 })
