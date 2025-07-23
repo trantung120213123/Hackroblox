@@ -637,11 +637,3 @@ KnifeTab:CreateButton({
 
 ----------- Bật Lửa -----------
 
-local BậtLửaTab = Window:CreateTab("🔥 Bật lửa", 4483362458)
-
-BậtLửaTab:CreateButton({
-    Name = "Lấy bật lửa",
-    Callback = function()
-        loadstring(game:HttpGet("https://raw.githubusercontent.com/trantung120213123/Hackroblox/refs/heads/main/B%E1%BA%ADt%20l%E1%BB%ADa.lua"))()
-    end,
-})
