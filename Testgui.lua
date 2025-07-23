@@ -62,10 +62,7 @@ local userIdToClone = nil
 
 -- Hàm khởi tạo các page chính
 function InitializeMainUI()
-    -- Các page sẽ được thêm ở đây (Main, Teleport, v.v.)
-end
-
-function InitializeMainUI()
+    -- Tab Main
     local MainPage = UI:addPage({ title = "Main", icon = 4483362458 })
 
     MainPage:addSlider({
@@ -74,8 +71,10 @@ function InitializeMainUI()
         max = 200,
         value = 16,
         callback = function(Value)
-            game.Players.LocalPlayer.Character.Humanoid.WalkSpeed = Value
-            CustomNotify("Speed", "Đã chỉnh tốc độ!")
+            if localPlayer.Character and localPlayer.Character:FindFirstChild("Humanoid") then
+                localPlayer.Character.Humanoid.WalkSpeed = Value
+                CustomNotify("Speed", "Đã chỉnh tốc độ!")
+            end
         end
     })
 
@@ -96,10 +95,8 @@ function InitializeMainUI()
             CustomNotify("ESP", Value and "Bật" or "Tắt")
         end
     })
-end
 
-function InitializeMainUI()
-    -- Giữ code MainPage như trên
+    -- Tab Teleport
     local TeleportPage = UI:addPage({ title = "Teleport", icon = 4483362458 })
 
     TeleportPage:addButton({
@@ -120,10 +117,8 @@ function InitializeMainUI()
             end
         end
     })
-end
 
-function InitializeMainUI()
-    -- Giữ code MainPage, TeleportPage
+    -- Tab Players
     local PlayersPage = UI:addPage({ title = "Players", icon = 4483362458 })
 
     local function LoadPlayers()
@@ -147,10 +142,8 @@ function InitializeMainUI()
     })
 
     LoadPlayers()
-end
 
-function InitializeMainUI()
-    -- Giữ code MainPage, TeleportPage, PlayersPage
+    -- Tab NPC
     local NPCPage = UI:addPage({ title = "NPC", icon = 4483362458 })
 
     NPCPage:addToggle({
@@ -170,10 +163,8 @@ function InitializeMainUI()
             CustomNotify("Lock NPC", Value and "Bật" or "Tắt")
         end
     })
-end
 
-function InitializeMainUI()
-    -- Giữ code các page trước
+    -- Tab Skin
     local SkinPage = UI:addPage({ title = "Skin", icon = 4483362458 })
 
     SkinPage:addButton({
@@ -257,10 +248,8 @@ function InitializeMainUI()
             loadstring(game:HttpGet('https://raw.githubusercontent.com/GhostPlayer352/Test4/refs/heads/main/Copy%20Avatar'))()
         end
     })
-end
 
-function InitializeMainUI()
-    -- Giữ code các page trước
+    -- Tab Ink Game
     local InkPage = UI:addPage({ title = "Ink Game", icon = 4483362458 })
 
     InkPage:addButton({
@@ -270,10 +259,8 @@ function InitializeMainUI()
             CustomNotify("Ringta", "Script loaded!")
         end
     })
-end
 
-function InitializeMainUI()
-    -- Giữ code các page trước
+    -- Tab Grow A Garden
     local GrowPage = UI:addPage({ title = "Grow A Garden", icon = 13014560 })
 
     GrowPage:addButton({
@@ -302,12 +289,8 @@ function InitializeMainUI()
             end
         end
     })
-end
 
-
-
-function InitializeMainUI()
-    -- Giữ code các page trước
+    -- Tab Blox Fruits
     local BloxFruitsPage = UI:addPage({ title = "🍌 Blox Fruits", icon = 4483362458 })
 
     BloxFruitsPage:addButton({
@@ -327,10 +310,8 @@ function InitializeMainUI()
             loadstring(game:HttpGet("https://raw.githubusercontent.com/newredz/BloxFruits/refs/heads/main/Source.luau"))(Settings)
         end
     })
-end
 
-function InitializeMainUI()
-    -- Giữ code các page trước
+    -- Tab Murder Mystery 2
     local MM2Page = UI:addPage({ title = "Murder Mystery 2", icon = 4483362458 })
 
     MM2Page:addButton({
@@ -341,6 +322,7 @@ function InitializeMainUI()
     })
 end
 
+-- Logic Game
 game:GetService("RunService").RenderStepped:Connect(function()
     -- Xóa ESP cũ khi toggle tắt
     if not ESP_ON then
@@ -418,6 +400,7 @@ game:GetService("RunService").RenderStepped:Connect(function()
     end
 end)
 
+-- Performance Monitor
 local RunService = game:GetService("RunService")
 local Players = game:GetService("Players")
 local StatsService = game:GetService("Stats")
@@ -487,4 +470,3 @@ Players.LocalPlayer.CharacterAdded:Connect(function()
 end)
 
 createPerformanceDisplay()
-
