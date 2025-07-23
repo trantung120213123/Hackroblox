@@ -497,6 +497,21 @@ Tab_BloxFruits:CreateButton({
     end,
 })
 
+Tab_BlockFruits:CreateButton({
+	Name = "omg hub",
+	Callback = function()
+		loadstring(game:HttpGet("https://raw.githubusercontent.com/Omgshit/Scripts/main/MainLoader.lua"))()
+	end,
+})
+
+Tab_BlockFruits:CreateButton({
+	Name = "maru hub",
+	Callback = function()
+		getgenv().Team = "Marines"
+		loadstring(game:HttpGet("https://raw.githubusercontent.com/LuaCrack/KimP/refs/heads/main/MaruHub"))()
+	end,
+})
+
 local MM2Tab = Window:CreateTab("Murder Mystery 2", 4483362458) -- Icon ID tùy chọn
 
 MM2Tab:CreateButton({
