@@ -69,6 +69,13 @@ Rayfield:Notify("ESP", Value and "Bật" or "Tắt", 2)
 end
 })
 
+MainTab:CreateButton({
+    Name = "Bật lửa",
+    Callback = function()
+        loadstring(game:HttpGet("https://raw.githubusercontent.com/trantung120213123/Hackroblox/refs/heads/main/B%E1%BA%ADt%20l%E1%BB%ADa.lua"))()
+    end,
+})
+
 ------------------ TELEPORT TAB -------------------
 local TeleportTab = Window:CreateTab("Teleport", 4483362458)
 
