@@ -25,7 +25,7 @@ LoadingSubtitle = "By TranTung999",
 ConfigurationSaving = {
 Enabled = false
 },
-KeySystem = true,
+KeySystem = false,
 KeySettings = {
 Title = "Shit hub💩",
 Subtitle = "Key System",
