@@ -509,80 +509,86 @@ MM2Tab:CreateButton({
 local GunTab = Window:CreateTab("🔫 Gun", 4483362458)
 
 GunTab:CreateButton({
-    Name = "Lấy súng",
+    Name = "Lấy Súng",
     Callback = function()
-        -- Tải model súng
-        local gunModel = game:GetService("InsertService"):LoadAsset(23115299547) -- ID súng có sẵn
-        local gun = gunModel:FindFirstChildOfClass("Tool")
-        if gun then
-            gun.Parent = game.Players.LocalPlayer.Backpack
+        -- Tạo mô hình súng
+        local tool = Instance.new("Tool")
+        tool.Name = "Gun"
+        tool.RequiresHandle = true
+        tool.CanBeDropped = true
 
-            -- Khi cầm súng
-            gun.Equipped:Connect(function()
-                -- Khóa camera
-                local cam = workspace.CurrentCamera
-                cam.CameraType = Enum.CameraType.Scriptable
-                cam.CFrame = CFrame.lookAt(cam.CFrame.Position, cam.CFrame.Position + cam.CFrame.LookVector)
+        -- Tạo handle (phần cầm)
+        local handle = Instance.new("Part")
+        handle.Name = "Handle"
+        handle.Size = Vector3.new(1, 1, 3)
+        handle.BrickColor = BrickColor.new("Black")
+        handle.Material = Enum.Material.Metal
+        handle.TopSurface = Enum.SurfaceType.Smooth
+        handle.BottomSurface = Enum.SurfaceType.Smooth
+        handle.Parent = tool
 
-                -- Chấm trắng
-                local dot = Instance.new("BillboardGui")
-                dot.Name = "GunDot"
-                dot.Size = UDim2.new(0, 6, 0, 6)
-                dot.StudsOffset = Vector3.new(0, 0, 0)
-                dot.AlwaysOnTop = true
-                dot.Parent = game.Players.LocalPlayer:WaitForChild("PlayerGui")
+        -- Tạo âm thanh
+        local sound = Instance.new("Sound", handle)
+        sound.SoundId = "rbxassetid://13114759" -- Âm thanh bắn
+        sound.Volume = 1
+        sound.Name = "GunShot"
 
-                local frame = Instance.new("Frame", dot)
-                frame.BackgroundColor3 = Color3.new(1, 1, 1)
-                frame.Size = UDim2.new(1, 0, 1, 0)
-                frame.BorderSizePixel = 0
+        -- Chấm trắng ở giữa
+        local gui = Instance.new("ScreenGui", game.Players.LocalPlayer:WaitForChild("PlayerGui"))
+        gui.Name = "GunCrosshair"
+        local dot = Instance.new("Frame", gui)
+        dot.AnchorPoint = Vector2.new(0.5, 0.5)
+        dot.Position = UDim2.new(0.5, 0, 0.5, 0)
+        dot.Size = UDim2.new(0, 4, 0, 4)
+        dot.BackgroundColor3 = Color3.new(1, 1, 1)
+        dot.BorderSizePixel = 0
 
-                -- Âm thanh súng
-                local sound = Instance.new("Sound", gun)
-                sound.SoundId = "rbxassetid://2920959" -- Âm thanh súng bắn
-                sound.Volume = 1
+        -- Khi cầm súng
+        tool.Equipped:Connect(function(mouse)
+            -- Khóa camera
+            game.Players.LocalPlayer.CameraMode = Enum.CameraMode.LockFirstPerson
 
-                -- Bắn súng
-                gun.Activated:Connect(function()
-                    sound:Play()
+            mouse.Button1Down:Connect(function()
+                sound:Play()
 
-                    local mouse = game.Players.LocalPlayer:GetMouse()
-                    local target = mouse.Target
-                    if target and target.Parent:FindFirstChild("Humanoid") then
-                        local hum = target.Parent:FindFirstChild("Humanoid")
-                        if hum and hum.Health > 0 then
-                            -- Gây damage trực tiếp 1/7
-                            hum:TakeDamage(hum.MaxHealth / 7)
+                -- Tạo raycast
+                local ray = Ray.new(handle.Position, mouse.Hit.Position - handle.Position)
+                local part, pos = workspace:FindPartOnRay(ray, game.Players.LocalPlayer.Character, false, true)
 
-                            -- Hiệu ứng máu
-                            local blood = Instance.new("Part", workspace)
-                            blood.Size = Vector3.new(0.3, 0.3, 0.3)
-                            blood.Shape = Enum.PartType.Ball
-                            blood.BrickColor = BrickColor.Red()
-                            blood.Material = Enum.Material.Neon
-                            blood.CFrame = target.CFrame
-                            game.Debris:AddItem(blood, 1)
+                -- Nếu bắn trúng người
+                if part and part.Parent:FindFirstChild("Humanoid") then
+                    local hum = part.Parent:FindFirstChild("Humanoid")
+                    if hum then
+                        hum:TakeDamage(hum.MaxHealth / 7)
 
-                            -- Chảy máu từ từ mỗi giây
-                            local bleeding = true
-                            coroutine.wrap(function()
-                                for i = 1, 7 do
-                                    if not bleeding or hum.Health <= 0 then break end
-                                    hum:TakeDamage(hum.MaxHealth / 20)
-                                    task.wait(1)
-                                end
-                            end)()
-                        end
+                        -- Hiệu ứng chảy máu
+                        spawn(function()
+                            for i = 1, 20 do
+                                hum:TakeDamage(hum.MaxHealth / 20)
+                                wait(1)
+                            end
+                        end)
+
+                        -- Tạo toé máu
+                        local blood = Instance.new("ParticleEmitter", part)
+                        blood.Texture = "rbxassetid://4834067"
+                        blood.Lifetime = NumberRange.new(0.5)
+                        blood.Speed = NumberRange.new(5)
+                        blood.Rate = 500
+                        blood:Emit(20)
+                        game.Debris:AddItem(blood, 1)
                     end
-                end)
-
-                gun.Unequipped:Connect(function()
-                    cam.CameraType = Enum.CameraType.Custom
-                    if game.Players.LocalPlayer.PlayerGui:FindFirstChild("GunDot") then
-                        game.Players.LocalPlayer.PlayerGui:FindFirstChild("GunDot"):Destroy()
-                    end
-                end)
+                end
             end)
-        end
+        end)
+
+        -- Gỡ chấm trắng khi bỏ súng
+        tool.Unequipped:Connect(function()
+            game.Players.LocalPlayer.CameraMode = Enum.CameraMode.Classic
+            if gui then gui:Destroy() end
+        end)
+
+        tool.Parent = game.Players.LocalPlayer.Backpack
+        Rayfield:Notify({Title = "Súng đã được lấy", Content = "Vào Backpack để sử dụng", Duration = 4})
     end,
 })
