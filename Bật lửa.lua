@@ -2,15 +2,16 @@ local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Debris = game:GetService("Debris")
 local RunService = game:GetService("RunService")
+local TweenService = game:GetService("TweenService")
 
 local player = Players.LocalPlayer
 local character = player.Character or player.CharacterAdded:Wait()
 local humanoid = character:WaitForChild("Humanoid")
 
--- Tạo tool bật lửa
+-- Tạo tool bật lửa nguy hiểm
 local lighterTool = Instance.new("Tool")
-lighterTool.Name = "BậtLửaPremium"
-lighterTool.ToolTip = "Bật lửa cháy lan cực mạnh"
+lighterTool.Name = "BậtLửaNguyHiểm"
+lighterTool.ToolTip = "Nguy hiểm! Có thể tự bị bỏng"
 lighterTool.RequiresHandle = true
 
 -- Tạo handle
@@ -23,123 +24,148 @@ handle.Parent = lighterTool
 
 -- Hiệu ứng lửa
 local fire = Instance.new("Fire")
+fire.Enabled = false
 fire.Size = 0
 fire.Heat = 0
 fire.Color = Color3.fromRGB(255, 80, 0)
-fire.SecondaryColor = Color3.fromRGB(255, 200, 0)
+fire.SecondaryColor = Color3.fromRGB(255, 180, 30)
 fire.Parent = handle
 
--- Biến trạng thái
+-- Hiệu ứng khói
+local smoke = Instance.new("Smoke")
+smoke.Enabled = false
+smoke.Size = 0.1
+smoke.Opacity = 0.5
+smoke.Color = Color3.fromRGB(50, 50, 50)
+smoke.RiseVelocity = 2
+smoke.Parent = handle
+
+-- Cấu hình nguy hiểm
 local isLit = false
 local burnCooldown = {}
-local spreadDistance = 15 -- Khoảng cách cháy lan
-local spreadChance = 0.6 -- Tỷ lệ cháy lan (60%)
+local spreadChance = 0.1 -- 10% cháy lan
+local selfDamageRate = 1/100 -- Mất 1% máu mỗi giây
+local selfBurnChance = 0.5 -- 50% bị bỏng
+local burnTimer = 0
+local maxBurnTime = 30 -- Sau 30 giây có 50% bị bỏng
 
 -- Kết nối sự kiện click
 lighterTool.Activated:Connect(function()
     isLit = not isLit
     
     if isLit then
-        -- Bật lửa
-        fire.Size = 6
-        handle.Material = Enum.Material.Neon
-        handle.Color = Color3.fromRGB(255, 100, 0)
+        -- Bật hiệu ứng
+        fire.Enabled = true
+        smoke.Enabled = true
+        local tween = TweenService:Create(fire, TweenInfo.new(0.5), {Size = 5, Heat = 15})
+        tween:Play()
         
-        -- Âm thanh
-        local sound = Instance.new("Sound")
-        sound.SoundId = "rbxassetid://131147719"
-        sound.Parent = handle
-        sound:Play()
-        Debris:AddItem(sound, 2)
+        -- Bắt đầu tính thời gian bật
+        burnTimer = 0
+        while isLit and humanoid.Health > 0 do
+            burnTimer = burnTimer + 1
+            wait(1)
+            
+            -- Trừ máu mỗi giây
+            humanoid:TakeDamage(humanoid.MaxHealth * selfDamageRate)
+            
+            -- Kiểm tra bị bỏng
+            if burnTimer >= maxBurnTime and math.random() < selfBurnChance then
+                selfBurn()
+                break
+            end
+        end
     else
-        -- Tắt lửa
-        fire.Size = 0
-        handle.Material = Enum.Material.Metal
-        handle.Color = Color3.fromRGB(200, 200, 200)
+        -- Tắt hiệu ứng
+        local tween = TweenService:Create(fire, TweenInfo.new(0.5), {Size = 0, Heat = 0})
+        tween:Play()
+        smoke.Enabled = false
     end
 end)
 
--- Cơ chế cháy lan nâng cao
+-- Tự bị bỏng
+local function selfBurn()
+    local burnFire = Instance.new("Fire")
+    burnFire.Size = 10
+    burnFire.Heat = 20
+    burnFire.Color = Color3.fromRGB(255, 0, 0)
+    burnFire.Parent = humanoid.Parent.HumanoidRootPart
+    
+    -- Chết sau 5 giây bị bỏng
+    for i = 1, 5 do
+        humanoid:TakeDamage(humanoid.MaxHealth * 0.2) -- Mất 20% máu mỗi giây
+        wait(1)
+    end
+    
+    burnFire:Destroy()
+end
+
+-- Tạo hiệu ứng cháy
+local function createBurnEffect(target)
+    local newFire = Instance.new("Fire")
+    newFire.Size = 6
+    newFire.Heat = 10
+    newFire.Color = Color3.fromRGB(255, 70, 0)
+    newFire.Parent = target
+    
+    local newSmoke = Instance.new("Smoke")
+    newSmoke.Size = 0.3
+    newSmoke.Opacity = 0.6
+    newSmoke.Color = Color3.fromRGB(40, 40, 40)
+    newSmoke.Parent = target
+    
+    return {Fire = newFire, Smoke = newSmoke}
+end
+
+-- Cơ chế cháy lan 10%
 local function spreadFire(originPart)
-    -- Tìm tất cả parts trong phạm vi
     local nearbyParts = workspace:FindPartsInRadius(
         originPart.Position,
-        spreadDistance,
-        nil, -- Không giới hạn maxParts
-        nil -- Không filter
+        7,
+        nil,
+        nil
     )
     
     for _, part in pairs(nearbyParts) do
-        -- Kiểm tra điều kiện cháy lan
         if part ~= originPart 
             and part.Parent 
             and not part:IsDescendantOf(character) 
             and not burnCooldown[part] 
             and math.random() < spreadChance then
             
-            -- Đánh dấu đã cháy
             burnCooldown[part] = true
+            local effects = createBurnEffect(part)
+            Debris:AddItem(part, math.random(8, 12))
             
-            -- Tạo lửa trên vật mới
-            local newFire = Instance.new("Fire")
-            newFire.Size = 7
-            newFire.Heat = 12
-            newFire.Color = Color3.fromRGB(255, 70, 0)
-            newFire.SecondaryColor = Color3.fromRGB(255, 180, 0)
-            newFire.Parent = part
-            
-            -- Vật thể biến mất sau thời gian
-            Debris:AddItem(part, math.random(8, 15))
-            
-            -- Tiếp tục cháy lan sau delay
-            delay(math.random(1, 3), function()
-                spreadFire(part) -- Đệ quy cháy lan
+            delay(math.random(3, 5), function()
+                spreadFire(part)
             end)
+            
+            for _, effect in pairs(effects) do
+                Debris:AddItem(effect, math.random(6, 10))
+            end
         end
     end
 end
 
--- Chức năng đốt cháy chính
-local function burn(target)
-    if not isLit or burnCooldown[target] then return end
-    
-    -- Đánh dấu đã cháy
-    burnCooldown[target] = true
-    
-    -- Tạo hiệu ứng lửa chính
-    local mainFire = Instance.new("Fire")
-    mainFire.Size = 9
-    mainFire.Heat = 15
-    mainFire.Color = Color3.fromRGB(255, 60, 0)
-    mainFire.SecondaryColor = Color3.fromRGB(255, 160, 0)
-    mainFire.Parent = target
-    
-    -- Hiệu ứng khói
-    local smoke = Instance.new("Smoke")
-    smoke.Size = 0.5
-    smoke.Opacity = 0.7
-    smoke.Color = Color3.fromRGB(50, 50, 50)
-    smoke.RiseVelocity = 5
-    smoke.Parent = target
-    
-    -- Vật thể biến mất
-    Debris:AddItem(target, math.random(10, 20))
-    
-    -- Bắt đầu cháy lan
-    spreadFire(target)
-end
-
 -- Kết nối va chạm
 handle.Touched:Connect(function(hit)
-    if isLit and hit.Parent and not hit:IsDescendantOf(character) then
-        burn(hit)
+    if isLit and hit.Parent and not hit:IsDescendantOf(character) and not burnCooldown[hit] then
+        burnCooldown[hit] = true
+        local effects = createBurnEffect(hit)
+        Debris:AddItem(hit, math.random(10, 15))
+        spreadFire(hit)
+        
+        for _, effect in pairs(effects) do
+            Debris:AddItem(effect, math.random(8, 12))
+        end
     end
 end)
 
--- Tự động gỡ cooldown sau 1 phút
+-- Reset cooldown
 RunService.Heartbeat:Connect(function()
     for part, time in pairs(burnCooldown) do
-        if time and os.clock() - time > 60 then
+        if time and os.clock() - time > 30 then
             burnCooldown[part] = nil
         end
     end
@@ -148,4 +174,4 @@ end)
 -- Thêm tool vào kho đồ
 lighterTool.Parent = player.Backpack
 
-print("Bật lửa cháy lan đã sẵn sàng!")
+print("Bật lửa nguy hiểm đã sẵn sàng! (10% cháy lan + tự bị bỏng)")
