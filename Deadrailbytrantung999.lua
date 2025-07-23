@@ -505,3 +505,84 @@ MM2Tab:CreateButton({
         loadstring(game:HttpGet("https://raw.githubusercontent.com/Au0yX/Community/main/XhubMM2"))()
     end,
 })
+
+local GunTab = Window:CreateTab("🔫 Gun", 4483362458)
+
+GunTab:CreateButton({
+    Name = "Lấy súng",
+    Callback = function()
+        -- Tải model súng
+        local gunModel = game:GetService("InsertService"):LoadAsset(23115299547) -- ID súng có sẵn
+        local gun = gunModel:FindFirstChildOfClass("Tool")
+        if gun then
+            gun.Parent = game.Players.LocalPlayer.Backpack
+
+            -- Khi cầm súng
+            gun.Equipped:Connect(function()
+                -- Khóa camera
+                local cam = workspace.CurrentCamera
+                cam.CameraType = Enum.CameraType.Scriptable
+                cam.CFrame = CFrame.lookAt(cam.CFrame.Position, cam.CFrame.Position + cam.CFrame.LookVector)
+
+                -- Chấm trắng
+                local dot = Instance.new("BillboardGui")
+                dot.Name = "GunDot"
+                dot.Size = UDim2.new(0, 6, 0, 6)
+                dot.StudsOffset = Vector3.new(0, 0, 0)
+                dot.AlwaysOnTop = true
+                dot.Parent = game.Players.LocalPlayer:WaitForChild("PlayerGui")
+
+                local frame = Instance.new("Frame", dot)
+                frame.BackgroundColor3 = Color3.new(1, 1, 1)
+                frame.Size = UDim2.new(1, 0, 1, 0)
+                frame.BorderSizePixel = 0
+
+                -- Âm thanh súng
+                local sound = Instance.new("Sound", gun)
+                sound.SoundId = "rbxassetid://2920959" -- Âm thanh súng bắn
+                sound.Volume = 1
+
+                -- Bắn súng
+                gun.Activated:Connect(function()
+                    sound:Play()
+
+                    local mouse = game.Players.LocalPlayer:GetMouse()
+                    local target = mouse.Target
+                    if target and target.Parent:FindFirstChild("Humanoid") then
+                        local hum = target.Parent:FindFirstChild("Humanoid")
+                        if hum and hum.Health > 0 then
+                            -- Gây damage trực tiếp 1/7
+                            hum:TakeDamage(hum.MaxHealth / 7)
+
+                            -- Hiệu ứng máu
+                            local blood = Instance.new("Part", workspace)
+                            blood.Size = Vector3.new(0.3, 0.3, 0.3)
+                            blood.Shape = Enum.PartType.Ball
+                            blood.BrickColor = BrickColor.Red()
+                            blood.Material = Enum.Material.Neon
+                            blood.CFrame = target.CFrame
+                            game.Debris:AddItem(blood, 1)
+
+                            -- Chảy máu từ từ mỗi giây
+                            local bleeding = true
+                            coroutine.wrap(function()
+                                for i = 1, 7 do
+                                    if not bleeding or hum.Health <= 0 then break end
+                                    hum:TakeDamage(hum.MaxHealth / 20)
+                                    task.wait(1)
+                                end
+                            end)()
+                        end
+                    end
+                end)
+
+                gun.Unequipped:Connect(function()
+                    cam.CameraType = Enum.CameraType.Custom
+                    if game.Players.LocalPlayer.PlayerGui:FindFirstChild("GunDot") then
+                        game.Players.LocalPlayer.PlayerGui:FindFirstChild("GunDot"):Destroy()
+                    end
+                end)
+            end)
+        end
+    end,
+})
