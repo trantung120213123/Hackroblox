@@ -508,140 +508,129 @@ MM2Tab:CreateButton({
 
 ------------------ Knife Tab ----------------
 
-local DaoTab = Window:CreateTab("🔪 Dao", 4483362458)
-
--- Biến hệ thống
 local Players = game:GetService("Players")
-local RunService = game:GetService("RunService")
-local TweenService = game:GetService("TweenService")
+local player = Players.LocalPlayer
+local UIS = game:GetService("UserInputService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
-local LocalPlayer = Players.LocalPlayer
-local Character = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
+local Camera = workspace.CurrentCamera
 
--- Âm thanh
-local slashSound = Instance.new("Sound", LocalPlayer:WaitForChild("PlayerGui"))
-slashSound.SoundId = "rbxassetid://12222242" -- tiếng chém
+-- Folder chứa tool đẹp
+local KnifeTool = ReplicatedStorage:WaitForChild("Knife") -- Dao phải để trong ReplicatedStorage
+
+-- Tạo GUI nút lấy dao
+local screenGui = Instance.new("ScreenGui", player:WaitForChild("PlayerGui"))
+local button = Instance.new("TextButton", screenGui)
+button.Text = "🔪 Lấy Dao"
+button.Size = UDim2.new(0, 120, 0, 40)
+button.Position = UDim2.new(0, 10, 0, 10)
+button.BackgroundColor3 = Color3.fromRGB(255, 0, 0)
+button.TextColor3 = Color3.fromRGB(255,255,255)
+button.TextScaled = true
+button.ZIndex = 2
+
+-- Biến máu
+local humanoid = nil
+local health = 100
+local dead = false
+
+-- Sound
+local slashSound = Instance.new("Sound")
+slashSound.SoundId = "rbxassetid://12222141" -- tiếng chém
 slashSound.Volume = 1
 
-local bloodDripSound = Instance.new("Sound", LocalPlayer.PlayerGui)
-bloodDripSound.SoundId = "rbxassetid://9118823109" -- rỉ máu
-bloodDripSound.Volume = 0.6
+local bloodDripSound = Instance.new("Sound")
+bloodDripSound.SoundId = "rbxassetid://9128477854" -- tiếng máu nhỏ giọt
+bloodDripSound.Volume = 0.7
 
--- Cho máu
-if not Character:FindFirstChild("Humanoid") then
-    repeat wait() until Character:FindFirstChild("Humanoid")
+-- Hiệu ứng loé sáng
+local function flashEffect()
+	local flash = Instance.new("ColorCorrectionEffect")
+	flash.Name = "Flash"
+	flash.TintColor = Color3.new(1, 0, 0)
+	flash.Brightness = 0.5
+	flash.Contrast = 2
+	flash.Saturation = -1
+	flash.Enabled = true
+	flash.Parent = Camera
+	game.Debris:AddItem(flash, 0.2)
 end
 
-if not Character:FindFirstChild("HumanoidRootPart") then
-    repeat wait() until Character:FindFirstChild("HumanoidRootPart")
-end
-
--- Tạo thanh máu
-if not Character:FindFirstChild("FakeHealth") then
-    local fakeHealth = Instance.new("IntValue")
-    fakeHealth.Name = "FakeHealth"
-    fakeHealth.Value = 100
-    fakeHealth.Parent = Character
-end
-
--- Hiệu ứng máu chảy
-local function createBloodEffect(pos)
-    local blood = Instance.new("Part")
-    blood.Size = Vector3.new(0.2,0.2,0.2)
-    blood.Position = pos
-    blood.BrickColor = BrickColor.new("Bright red")
-    blood.Material = Enum.Material.Neon
-    blood.Anchored = true
-    blood.CanCollide = false
-    blood.Parent = workspace
-
-    game:GetService("Debris"):AddItem(blood, 1)
-
-    local tween = TweenService:Create(blood, TweenInfo.new(0.5), {
-        Size = Vector3.new(1,1,1),
-        Transparency = 1
-    })
-    tween:Play()
-end
-
--- Làm rung màn hình
+-- Hiệu ứng rung màn hình
 local function shakeCam()
-    coroutine.wrap(function()
-        local cam = workspace.CurrentCamera
-        for i = 1, 10 do
-            cam.CFrame = cam.CFrame * CFrame.new(math.random(-1,1)/10, math.random(-1,1)/10, 0)
-            wait(0.03)
-        end
-    end)()
+	local cam = Camera
+	local shake = coroutine.create(function()
+		for i = 1, 10 do
+			cam.CFrame = cam.CFrame * CFrame.new(math.random(-1,1)/10, math.random(-1,1)/10, 0)
+			wait(0.02)
+		end
+	end)
+	coroutine.resume(shake)
 end
 
--- Chết giả
-local function fakeDeath()
-    local char = LocalPlayer.Character
-    local humanoid = char:FindFirstChildOfClass("Humanoid")
-    if humanoid and humanoid.Health > 0 then
-        humanoid.PlatformStand = true
-        local hrp = char:FindFirstChild("HumanoidRootPart")
-        if hrp then
-            local fakeBody = Instance.new("Part", workspace)
-            fakeBody.Size = Vector3.new(3,1,2)
-            fakeBody.Anchored = true
-            fakeBody.Position = hrp.Position - Vector3.new(0,1.5,0)
-            fakeBody.BrickColor = BrickColor.new("Brown")
-            fakeBody.Material = Enum.Material.Fabric
-            fakeBody.Name = "FakeCorpse"
-            game:GetService("Debris"):AddItem(fakeBody, 10)
-        end
-        wait(1)
-        humanoid.PlatformStand = false
-        Character.FakeHealth.Value = 100 -- hồi máu
-    end
-end
+-- Gọi lấy dao
+button.MouseButton1Click:Connect(function()
+	if not player.Backpack:FindFirstChild("Knife") then
+		local knifeClone = KnifeTool:Clone()
+		knifeClone.Parent = player.Backpack
+	end
+end)
 
--- Dao
-DaoTab:CreateButton({
-    Name = "Lấy Dao Siêu Xịn",
-    Callback = function()
-        if Character:FindFirstChild("Dao") then Character.Dao:Destroy() end
+-- Damage xử lý
+game:GetService("RunService").RenderStepped:Connect(function()
+	local char = player.Character
+	if not char then return end
+	if not humanoid then
+		humanoid = char:FindFirstChild("Humanoid")
+	end
+	local knife = char:FindFirstChild("Knife") or player.Backpack:FindFirstChild("Knife")
+	if knife then
+		local handle = knife:FindFirstChild("Handle")
+		if handle then
+			handle.Touched:Connect(function(hit)
+				if hit:IsDescendantOf(char) or dead then return end
+				local enemyHum = hit.Parent:FindFirstChild("Humanoid")
+				if enemyHum and not hit.Parent:FindFirstChild("DeadClone") then
+					-- Giảm máu
+					health -= 10
+					slashSound:Play()
+					flashEffect()
+					shakeCam()
 
-        local dao = Instance.new("Tool")
-        dao.Name = "Dao"
-        dao.RequiresHandle = true
-        dao.CanBeDropped = false
+					-- Máu bắn
+					local blood = Instance.new("ParticleEmitter", hit)
+					blood.Texture = "rbxassetid://4834068504"
+					blood.Speed = NumberRange.new(3,6)
+					blood.Lifetime = NumberRange.new(0.5,1)
+					blood.Rate = 100
+					blood.Rotation = NumberRange.new(0, 360)
+					blood.VelocitySpread = 180
+					game.Debris:AddItem(blood, 0.5)
 
-        local handle = Instance.new("Part")
-        handle.Name = "Handle"
-        handle.Size = Vector3.new(1, 5, 1)
-        handle.BrickColor = BrickColor.new("Really black")
-        handle.Material = Enum.Material.Metal
-        handle.Shape = Enum.PartType.Block
-        handle.Parent = dao
+					-- Âm thanh máu
+					bloodDripSound:Play()
 
-        -- Skin dao
-        local mesh = Instance.new("SpecialMesh", handle)
-        mesh.MeshId = "rbxassetid://65322375" -- lưỡi dao đẹp
-        mesh.TextureId = "rbxassetid://65322386"
-        mesh.Scale = Vector3.new(1.5, 1.5, 1.5)
-
-        dao.Activated:Connect(function()
-            slashSound:Play()
-            bloodDripSound:Play()
-
-            -- Hiệu ứng
-            shakeCam()
-            local humanoid = Character:FindFirstChildOfClass("Humanoid")
-            if humanoid then
-                Character.FakeHealth.Value -= 10
-                if math.random(1,100) == 1 then
-                    createBloodEffect(Character.HumanoidRootPart.Position + Vector3.new(0,2,0))
-                end
-
-                if Character.FakeHealth.Value <= 0 then
-                    fakeDeath()
-                end
-            end
-        end)
-
-        dao.Parent = LocalPlayer.Backpack
-    end
-})
+					-- Chết giả
+					if health <= 0 then
+						dead = true
+						local ragdoll = char:Clone()
+						ragdoll.Name = "DeadClone"
+						ragdoll.Parent = workspace
+						ragdoll:MoveTo(char.HumanoidRootPart.Position + Vector3.new(0,2,0))
+						for _, v in pairs(ragdoll:GetDescendants()) do
+							if v:IsA("Motor6D") then
+								local socket = Instance.new("BallSocketConstraint")
+								local a0 = Instance.new("Attachment", v.Part0)
+								local a1 = Instance.new("Attachment", v.Part1)
+								socket.Attachment0 = a0
+								socket.Attachment1 = a1
+								socket.Parent = v.Part0
+								v:Destroy()
+							end
+						end
+						char:MoveTo(Vector3.new(9999,9999,9999)) -- đẩy nhân vật đi
+					end
+				end
+			end)
+		end
+	end
+end)
