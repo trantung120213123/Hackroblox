@@ -635,19 +635,13 @@ KnifeTab:CreateButton({
     end
 })
 
------------ Tower Hug -----------
+----------- Bật Lửa -----------
 
-local HugTab = Window:CreateTab("💞 Hug", 4483362458)
+local BậtLửaTab = Window:CreateTab("🔥 Bật lửa", 4483362458)
 
-HugTab:CreateButton({
-    Name = "Thoát Hug",
+BậtLửaTab:CreateButton({
+    Name = "Lấy bật lửa",
     Callback = function()
-        loadstring(game:HttpGet("https://raw.githubusercontent.com/trantung120213123/Hackroblox/refs/heads/main/Testgui.lua"))()
-        Rayfield:Notify({
-            Title = "Thoát Hug",
-            Content = "Đã chạy script thoát hug!",
-            Duration = 3,
-            Image = 4483362458
-        })
+        loadstring(game:HttpGet("https://raw.githubusercontent.com/trantung120213123/Hackroblox/refs/heads/main/B%E1%BA%ADt%20l%E1%BB%ADa.lua"))()
     end,
 })
