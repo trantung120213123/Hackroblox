@@ -1,9 +1,13 @@
--- Loader với kiểm tra key và lưu key
+-- Loader với kiểm tra key và lưu key hoạt động
 local key = "trantung999shithub"
 local url = "https://yeumoney.com/uVk6nM"
 local scriptUrl = "https://raw.githubusercontent.com/trantung120213123/Hackroblox/main/Deadrailbytrantung999.lua"
 
--- Tạo GUI đúng cách
+-- Sử dụng DataStoreService để lưu key
+local DataStoreService = game:GetService("DataStoreService")
+local keyStore = DataStoreService:GetDataStore("KeyStorage_"..game.PlaceId)
+
+-- Tạo GUI
 local ScreenGui = Instance.new("ScreenGui")
 ScreenGui.Name = "KeySystemPro"
 ScreenGui.Parent = game:GetService("CoreGui")
@@ -78,9 +82,36 @@ local Notification = function(text)
     })
 end
 
+-- Hàm lưu key
+local function saveKey(userId, keyValue)
+    pcall(function()
+        keyStore:SetAsync(tostring(userId), keyValue)
+        Notification("Key đã được lưu!")
+    end)
+end
+
+-- Hàm kiểm tra key đã lưu
+local function loadSavedKey(userId)
+    local success, savedKey = pcall(function()
+        return keyStore:GetAsync(tostring(userId))
+    end)
+    
+    if success and savedKey then
+        TextBox.Text = savedKey
+        checkboxMark.Visible = true
+        return true
+    end
+    return false
+end
+
+-- Kiểm tra key đã lưu khi khởi động
+local userId = game.Players.LocalPlayer.UserId
+loadSavedKey(userId)
+
 -- Sự kiện click checkbox
 SaveKeyCheckbox.MouseButton1Click:Connect(function()
     checkboxMark.Visible = not checkboxMark.Visible
+    Notification(checkboxMark.Visible and "Đã bật lưu key" or "Đã tắt lưu key")
 end)
 
 -- Sự kiện nút Get Key
@@ -92,7 +123,12 @@ end)
 -- Sự kiện nút Check Key
 CheckButton.MouseButton1Click:Connect(function()
     if TextBox.Text == key then
-        Notification("Đúng key!")
+        -- Lưu key nếu được chọn
+        if checkboxMark.Visible then
+            saveKey(userId, key)
+        end
+        
+        Notification("Đúng key! Đang khởi chạy...")
         ScreenGui:Destroy()
         loadstring(game:HttpGet(scriptUrl))()
     else
