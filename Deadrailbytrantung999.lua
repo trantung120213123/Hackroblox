@@ -537,19 +537,19 @@ KnifeTab:CreateButton({
         -- Mesh skin dao đẹp
         local mesh = Instance.new("SpecialMesh")
         mesh.MeshType = Enum.MeshType.FileMesh
-        mesh.MeshId = "rbxassetid://1323306" -- Knife model đẹp
+        mesh.MeshId = "rbxassetid://1323306"
         mesh.TextureId = "rbxassetid://1323307"
         mesh.Scale = Vector3.new(1.2, 1.2, 1.2)
         mesh.Parent = handle
 
         -- Gắn âm thanh
         local slashSound = Instance.new("Sound")
-        slashSound.SoundId = "rbxassetid://12222225" -- slash
+        slashSound.SoundId = "rbxassetid://12222225"
         slashSound.Volume = 1
         slashSound.Parent = handle
 
         local bloodSound = Instance.new("Sound")
-        bloodSound.SoundId = "rbxassetid://12222229" -- máu rỉ
+        bloodSound.SoundId = "rbxassetid://12222229"
         bloodSound.Volume = 0.8
         bloodSound.Parent = handle
 
@@ -580,10 +580,10 @@ KnifeTab:CreateButton({
             end
 
             if hit then
-                hit:TakeDamage(10 + math.random(5,10)) -- giảm máu
+                hit:TakeDamage(10 + math.random(5,10))
                 bloodSound:Play()
 
-                -- Hiệu ứng máu tóe
+                -- Hiệu ứng máu tóe cũ
                 local blood = Instance.new("ParticleEmitter")
                 blood.Texture = "rbxassetid://4834067"
                 blood.Rate = 100
@@ -591,6 +591,19 @@ KnifeTab:CreateButton({
                 blood.Speed = NumberRange.new(5,10)
                 blood.Parent = root
                 game.Debris:AddItem(blood, 0.2)
+
+                -- 🌟 Hiệu ứng máu tóe mới (thêm)
+                local bloodBurst = Instance.new("ParticleEmitter")
+                bloodBurst.Texture = "rbxassetid://19999895" -- máu dạng bụi toé
+                bloodBurst.Rate = 500
+                bloodBurst.Lifetime = NumberRange.new(0.1)
+                bloodBurst.Speed = NumberRange.new(20, 30)
+                bloodBurst.Rotation = NumberRange.new(0, 360)
+                bloodBurst.RotSpeed = NumberRange.new(-180, 180)
+                bloodBurst.Size = NumberSequence.new({NumberSequenceKeypoint.new(0, 1), NumberSequenceKeypoint.new(1, 0)})
+                bloodBurst.Transparency = NumberSequence.new(0)
+                bloodBurst.Parent = root
+                game.Debris:AddItem(bloodBurst, 0.2)
 
                 -- Rỉ máu dần dần
                 local bleed = coroutine.create(function()
