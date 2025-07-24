@@ -350,6 +350,113 @@ end
 end
 end)
 
+--------------- platform ----------------
+
+-- Biến lưu Platform và các cài đặt
+local platform
+local platformHeight = 45
+local tpDownHeight = 10
+
+local Window = Rayfield:CreateWindow({
+    Name = "Evade Platform GUI",
+    LoadingTitle = "Evade GUI - Tạo Platform",
+    LoadingSubtitle = "by Tien Tung",
+    ConfigurationSaving = {
+       Enabled = true,
+       FolderName = "EvadePlatform", -- Lưu config
+       FileName = "evadeplatform_gui"
+    },
+    Discord = {
+       Enabled = false
+    },
+    KeySystem = false
+})
+
+local MainTab = Window:CreateTab("🧱 Platform", 4483362458)
+
+-- Slider chỉnh độ cao Platform
+MainTab:CreateSlider({
+    Name = "Platform Height",
+    Range = {5, 100},
+    Increment = 1,
+    Suffix = " stud",
+    CurrentValue = 45,
+    Callback = function(Value)
+        platformHeight = Value
+    end,
+})
+
+-- Slider chỉnh độ cao teleport xuống
+MainTab:CreateSlider({
+    Name = "TP Down Height",
+    Range = {10, 100},
+    Increment = 1,
+    Suffix = " stud",
+    CurrentValue = 10,
+    Callback = function(Value)
+        tpDownHeight = Value
+    end,
+})
+
+-- Tạo Platform
+MainTab:CreateButton({
+    Name = "📦 Tạo Platform",
+    Callback = function()
+        local character = game.Players.LocalPlayer.Character
+        if character and character:FindFirstChild("HumanoidRootPart") then
+            if platform then platform:Destroy() end
+
+            local hrp = character.HumanoidRootPart
+            platform = Instance.new("Part")
+            platform.Size = Vector3.new(1000, 1, 1000)
+            platform.Position = hrp.Position + Vector3.new(0, platformHeight, 0)
+            platform.Anchored = true
+            platform.Transparency = 0.8
+            platform.Color = Color3.fromRGB(200, 200, 200)
+            platform.Name = "CustomPlatform"
+            platform.Parent = workspace
+
+            -- Teleport lên Platform
+            hrp.CFrame = CFrame.new(platform.Position + Vector3.new(0, 3, 0))
+        end
+    end,
+})
+
+-- Teleport lên Platform
+MainTab:CreateButton({
+    Name = "⬆️ Teleport lên Platform",
+    Callback = function()
+        local character = game.Players.LocalPlayer.Character
+        if character and character:FindFirstChild("HumanoidRootPart") and platform then
+            local hrp = character.HumanoidRootPart
+            hrp.CFrame = CFrame.new(platform.Position + Vector3.new(0, 3, 0))
+        end
+    end,
+})
+
+-- Teleport xuống
+MainTab:CreateButton({
+    Name = "⬇️ Teleport xuống",
+    Callback = function()
+        local character = game.Players.LocalPlayer.Character
+        if character and character:FindFirstChild("HumanoidRootPart") then
+            local hrp = character.HumanoidRootPart
+            hrp.CFrame = hrp.CFrame - Vector3.new(0, tpDownHeight, 0)
+        end
+    end,
+})
+
+-- Xoá Platform
+MainTab:CreateButton({
+    Name = "❌ Xoá Platform",
+    Callback = function()
+        if platform then
+            platform:Destroy()
+            platform = nil
+        end
+    end,
+})
+
 ---------------- hỗ trợ chơi -----------------
 
 local RunService = game:GetService("RunService")
