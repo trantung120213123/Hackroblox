@@ -357,21 +357,6 @@ local platform
 local platformHeight = 45
 local tpDownHeight = 10
 
-local Window = Rayfield:CreateWindow({
-    Name = "Evade Platform GUI",
-    LoadingTitle = "Evade GUI - Tạo Platform",
-    LoadingSubtitle = "by Tien Tung",
-    ConfigurationSaving = {
-       Enabled = true,
-       FolderName = "EvadePlatform", -- Lưu config
-       FileName = "evadeplatform_gui"
-    },
-    Discord = {
-       Enabled = false
-    },
-    KeySystem = false
-})
-
 local MainTab = Window:CreateTab("🧱 Platform", 4483362458)
 
 -- Slider chỉnh độ cao Platform
