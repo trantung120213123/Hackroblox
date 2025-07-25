@@ -612,7 +612,7 @@ local PlaneWarTab = Window:CreateTab("Plane war ✈️", 4483362458) -- Bạn c�
 PlaneWarTab:CreateButton({
 	Name = "Chạy Plane War Script ✈️",
 	Callback = function()
-		loadstring(game:HttpGet("https://raw.githubusercontent.com/trantung120213123/Hackroblox/refs/heads/main/redvsblueplanewarbydeepseekAI.txt"))()
+		loadstring(game:HttpGet("https://raw.githubusercontent.com/trantung120213123/Hackroblox/refs/heads/main/RedvsblueplanewarbydeepseekAI"))()
 	end,
 })
 
