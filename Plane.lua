@@ -1,21 +1,5 @@
--- GUI Script by Tien Tung (ngố) - ULTIMATE VERSION
-loadstring(game:HttpGet("https://sirius.menu/rayfield"))()
-local Rayfield = loadstring(game:HttpGet("https://sirius.menu/rayfield"))()
-
-local Window = Rayfield:CreateWindow({
-   Name = "🏆 Auto Sword ULTIMATE",
-   LoadingTitle = "Auto Sword ULTIMATE - Red vs Blue",
-   LoadingSubtitle = "by Tien Tung | TP + Auto Cầm Kiếm",
-   ConfigurationSaving = {
-      Enabled = false
-   },
-   Discord = {
-      Enabled = false,
-   },
-   KeySystem = false,
-})
-
-local MainTab = Window:CreateTab("Chiến Đấu", 4483362458)
+--------------- Red vs blue plane war ----------------
+local PlaneTab = Window:CreateTab("Chiến Đấu", 4483362458)  -- Chỉ thay đổi tên biến ở đây
 local AutoKillRunning = false
 local Team = game.Players.LocalPlayer.Team
 local CurrentTarget = nil
@@ -140,9 +124,9 @@ local function combatLoop()
     end
 end
 
--- Nút bật/tắt
+-- Nút bật/tắt (giờ nằm trong PlaneTab thay vì MainTab)
 local toggleState = false
-local ToggleBtn = MainTab:CreateButton({
+local ToggleBtn = PlaneTab:CreateButton({  -- Đổi từ MainTab sang PlaneTab
     Name = "⚔️ BẬT/TẮT AUTO KIẾM",
     Callback = function()
         toggleState = not toggleState
@@ -178,7 +162,7 @@ local ToggleBtn = MainTab:CreateButton({
     end
 })
 
--- Tab thông tin
+-- Tab thông tin (vẫn giữ nguyên)
 local InfoTab = Window:CreateTab("Thông Tin", 7733960981)
 InfoTab:CreateLabel("Cách hoạt động:")
 InfoTab:CreateLabel("- Tự động TP sau lưng địch")
@@ -186,4 +170,4 @@ InfoTab:CreateLabel("- Luôn hướng mặt vào mục tiêu")
 InfoTab:CreateLabel("- Hitbox mở rộng: "..SETTINGS.HITBOX_RANGE.." studs")
 InfoTab:CreateLabel("- Tự động cầm kiếm khi cần")
 InfoTab:CreateLabel("- Chờ địch hồi sinh nếu không có mục tiêu")
-InfoTab:CreateLabel("- lưu ý khi đổi team phải tắt đi bật lại")
+InfoTab:CreateLabel("- Lưu ý!: Khi đổi team (phản bội) thì phải tắt đi bật lại auto kill")
