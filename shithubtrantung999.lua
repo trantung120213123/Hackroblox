@@ -4,7 +4,7 @@ local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
 Rayfield:LoadConfiguration()
 
 local Window = Rayfield:CreateWindow({
-	Name = "Deadrail Hub by Trần Tùng",
+	Name = "Shit Hub💩 by Trần Tùng",
 	LoadingTitle = "Đang khởi động...",
 	LoadingSubtitle = "by Trần Tùng",
 	ConfigurationSaving = {
@@ -12,12 +12,12 @@ local Window = Rayfield:CreateWindow({
 	},
 	KeySystem = true,
 	KeySettings = {
-		Title = "Deadrail Key System",
+		Title = "Key System",
 		Subtitle = "Key cần để kích hoạt script",
-		Note = "Lấy key tại: https://yeumoney.com/uVk6nM",
+		Note = "Free key: trantungpilot999",
 		SaveKey = true,
 		GrabKeyFromSite = false,
-		Key = "trantung999shithub"
+		Key = "trantungpilot999"
 	}
 })
 
@@ -27,6 +27,6 @@ local MainTab = Window:CreateTab("Kích Hoạt", 4483362458)
 MainTab:CreateButton({
 	Name = "Kích hoạt Script",
 	Callback = function()
-		loadstring(game:HttpGet("https://raw.githubusercontent.com/trantung120213123/Hackroblox/refs/heads/main/Deadrailbytrantung999.lua"))()
+		loadstring(game:HttpGet("https://raw.githubusercontent.com/trantung120213123/Hackroblox/refs/heads/main/Realshithub.lua"))()
 	end,
 })
