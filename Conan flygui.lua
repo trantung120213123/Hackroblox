@@ -1,4 +1,4 @@
--- Phần 1: Thiết lập GUI Conan Fly (Màu xanh nước biển, kéo được, thu mở mượt)
+-- Phần 1: Thiết lập GUI Conan Fly (màu xanh nước biển trong suốt, nút thu nhỏ, animation)
 local TweenService = game:GetService("TweenService")
 local Players = game:GetService("Players")
 local player = Players.LocalPlayer
@@ -9,16 +9,16 @@ gui.Name = "ConanFlyGUI"
 gui.ResetOnSpawn = false
 gui.Parent = game.CoreGui
 
--- Nút toggle (Conan Fly)
+-- Nút toggle (Conan)
 local toggleBtn = Instance.new("TextButton")
 toggleBtn.Name = "ToggleBtn"
 toggleBtn.Size = UDim2.new(0, 100, 0, 30)
 toggleBtn.Position = UDim2.new(0, 10, 0, 10)
 toggleBtn.BackgroundColor3 = Color3.fromRGB(0, 150, 255)
-toggleBtn.Text = "Conan Fly"
+toggleBtn.Text = "Conan"
 toggleBtn.TextColor3 = Color3.new(1, 1, 1)
 toggleBtn.TextScaled = true
-toggleBtn.BackgroundTransparency = 0.3
+toggleBtn.BackgroundTransparency = 0.5
 toggleBtn.BorderSizePixel = 0
 toggleBtn.ZIndex = 10
 toggleBtn.Parent = gui
@@ -28,10 +28,10 @@ corner1.CornerRadius = UDim.new(0, 8)
 -- Khung chính (Main Frame)
 local frame = Instance.new("Frame")
 frame.Name = "MainFrame"
-frame.Size = UDim2.new(0, 200, 0, 150)
+frame.Size = UDim2.new(0, 200, 0, 200)
 frame.Position = UDim2.new(0, 10, 0, 50)
 frame.BackgroundColor3 = Color3.fromRGB(0, 100, 200)
-frame.BackgroundTransparency = 0.4
+frame.BackgroundTransparency = 0.5
 frame.BorderSizePixel = 0
 frame.Visible = false
 frame.Parent = gui
@@ -54,10 +54,10 @@ local flyBtn = Instance.new("TextButton")
 flyBtn.Name = "FlyBtn"
 flyBtn.Size = UDim2.new(0, 180, 0, 30)
 flyBtn.Position = UDim2.new(0, 10, 0, 40)
-flyBtn.Text = "Toggle Fly: OFF"
+flyBtn.Text = "Fly: OFF"
 flyBtn.TextColor3 = Color3.new(1, 1, 1)
 flyBtn.BackgroundColor3 = Color3.fromRGB(0, 150, 255)
-flyBtn.BackgroundTransparency = 0.3
+flyBtn.BackgroundTransparency = 0.5
 flyBtn.BorderSizePixel = 0
 flyBtn.TextScaled = true
 flyBtn.Parent = frame
@@ -69,11 +69,11 @@ local speedBox = Instance.new("TextBox")
 speedBox.Name = "SpeedBox"
 speedBox.Size = UDim2.new(0, 180, 0, 30)
 speedBox.Position = UDim2.new(0, 10, 0, 80)
-speedBox.Text = "16"
+speedBox.Text = "50"
 speedBox.PlaceholderText = "Fly Speed"
 speedBox.TextColor3 = Color3.new(1, 1, 1)
 speedBox.BackgroundColor3 = Color3.fromRGB(0, 150, 255)
-speedBox.BackgroundTransparency = 0.3
+speedBox.BackgroundTransparency = 0.5
 speedBox.BorderSizePixel = 0
 speedBox.ClearTextOnFocus = false
 speedBox.TextScaled = true
@@ -81,19 +81,19 @@ speedBox.Parent = frame
 local corner4 = Instance.new("UICorner", speedBox)
 corner4.CornerRadius = UDim.new(0, 8)
 
--- Nút đóng khung
-local closeBtn = Instance.new("TextButton")
-closeBtn.Name = "CloseBtn"
-closeBtn.Size = UDim2.new(0, 30, 0, 30)
-closeBtn.Position = UDim2.new(1, -30, 0, 0)
-closeBtn.Text = "X"
-closeBtn.TextColor3 = Color3.new(1, 1, 1)
-closeBtn.BackgroundColor3 = Color3.fromRGB(255, 50, 50)
-closeBtn.BackgroundTransparency = 0.3
-closeBtn.BorderSizePixel = 0
-closeBtn.TextScaled = true
-closeBtn.Parent = frame
-local corner5 = Instance.new("UICorner", closeBtn)
+-- Nút thu nhỏ (Minimize)
+local minimizeBtn = Instance.new("TextButton")
+minimizeBtn.Name = "MinimizeBtn"
+minimizeBtn.Size = UDim2.new(0, 30, 0, 30)
+minimizeBtn.Position = UDim2.new(1, -30, 0, 0)
+minimizeBtn.Text = "-"
+minimizeBtn.TextColor3 = Color3.new(1, 1, 1)
+minimizeBtn.BackgroundColor3 = Color3.fromRGB(255, 50, 50)
+minimizeBtn.BackgroundTransparency = 0.5
+minimizeBtn.BorderSizePixel = 0
+minimizeBtn.TextScaled = true
+minimizeBtn.Parent = frame
+local corner5 = Instance.new("UICorner", minimizeBtn)
 corner5.CornerRadius = UDim.new(0, 8)
 
 -- Cơ chế kéo thả cho frame
@@ -121,14 +121,14 @@ frame.InputEnded:Connect(function(input)
 	end
 end)
 
--- Animation thu mở cho frame
+-- Animation thu nhỏ/phóng to
 toggleBtn.MouseButton1Click:Connect(function()
 	if frame.Visible then
 		-- Thu nhỏ trước khi ẩn
 		local tweenInfo = TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
 		local tween = TweenService:Create(frame, tweenInfo, {
 			Size = UDim2.new(0, 0, 0, 0),
-			Position = UDim2.new(0, 110, 0, 125) -- Thu về tâm của frame
+			Position = UDim2.new(0, 110, 0, 150) -- Thu về tâm của frame
 		})
 		tween:Play()
 		tween.Completed:Connect(function()
@@ -138,22 +138,22 @@ toggleBtn.MouseButton1Click:Connect(function()
 		-- Hiện và phóng to
 		frame.Visible = true
 		frame.Size = UDim2.new(0, 0, 0, 0) -- Bắt đầu từ kích thước 0
-		frame.Position = UDim2.new(0, 110, 0, 125) -- Vị trí tâm
+		frame.Position = UDim2.new(0, 110, 0, 150) -- Vị trí tâm
 		local tweenInfo = TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
 		local tween = TweenService:Create(frame, tweenInfo, {
-			Size = UDim2.new(0, 200, 0, 150),
+			Size = UDim2.new(0, 200, 0, 200),
 			Position = UDim2.new(0, 10, 0, 50)
 		})
 		tween:Play()
 	end
 end)
 
--- Đóng khung bằng nút X
-closeBtn.MouseButton1Click:Connect(function()
+-- Thu nhỏ bằng nút Minimize
+minimizeBtn.MouseButton1Click:Connect(function()
 	local tweenInfo = TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
 	local tween = TweenService:Create(frame, tweenInfo, {
 		Size = UDim2.new(0, 0, 0, 0),
-		Position = UDim2.new(0, 110, 0, 125) -- Thu về tâm
+		Position = UDim2.new(0, 110, 0, 150) -- Thu về tâm
 	})
 	tween:Play()
 	tween.Completed:Connect(function()
@@ -161,173 +161,184 @@ closeBtn.MouseButton1Click:Connect(function()
 	end)
 end)
 
--- Phần 2: Logic bay cho Conan Fly GUI
+-- Phần 2: Logic bay từ FlyGuiV3 gốc, tích hợp với GUI Conan
 local UserInputService = game:GetService("UserInputService")
 local RunService = game:GetService("RunService")
 local Players = game:GetService("Players")
+local TweenService = game:GetService("TweenService")
 local player = Players.LocalPlayer
+local mouse = player:GetMouse()
 
--- Biến trạng thái bay
+-- Biến và hằng số
 local flying = false
-local velocity = Instance.new("BodyVelocity")
-velocity.MaxForce = Vector3.new(1e5, 1e5, 1e5)
-velocity.P = 1000
-velocity.Velocity = Vector3.zero
+local speed = 50
+local maxspeed = 150
+local ControlModule = require(player.PlayerScripts.PlayerModule.ControlModule)
+local LastSpeed = speed
+local BodyVelocity, BodyGyro
+local MobileButton
+local Keybinds = {
+	W = false, S = false, A = false, D = false, E = false, Q = false
+}
 
--- Hàm cập nhật vận tốc bay
-local function updateVelocity()
-	local speed = tonumber(speedBox.Text) or 16
-	local cam = workspace.CurrentCamera
-	local moveDir = Vector3.zero
+-- Tạo nút ảo cho mobile
+local function CreateMobileButton()
+	if MobileButton then MobileButton:Destroy() end
+	MobileButton = Instance.new("TextButton")
+	MobileButton.Size = UDim2.new(0, 50, 0, 50)
+	MobileButton.Position = UDim2.new(0, 10, 0, 100)
+	MobileButton.BackgroundColor3 = Color3.fromRGB(0, 150, 255)
+	MobileButton.Text = flying and "OFF" or "ON"
+	MobileButton.TextColor3 = Color3.new(1, 1, 1)
+	MobileButton.BackgroundTransparency = 0.5
+	MobileButton.BorderSizePixel = 0
+	MobileButton.TextScaled = true
+	MobileButton.Parent = gui
+	local corner = Instance.new("UICorner", MobileButton)
+	corner.CornerRadius = UDim.new(0, 8)
+end
 
-	if UserInputService:IsKeyDown(Enum.KeyCode.W) then
-		moveDir = moveDir + cam.CFrame.LookVector
-	end
-	if UserInputService:IsKeyDown(Enum.KeyCode.S) then
-		moveDir = moveDir - cam.CFrame.LookVector
-	end
-	if UserInputService:IsKeyDown(Enum.KeyCode.A) then
-		moveDir = moveDir - cam.CFrame.RightVector
-	end
-	if UserInputService:IsKeyDown(Enum.KeyCode.D) then
-		moveDir = moveDir + cam.CFrame.RightVector
-	end
-
-	if moveDir.Magnitude > 0 then
-		velocity.Velocity = moveDir.Unit * speed
-	else
-		velocity.Velocity = Vector3.zero
+-- Cập nhật trạng thái nút mobile
+local function UpdateMobileButton()
+	if MobileButton then
+		MobileButton.Text = flying and "OFF" or "ON"
 	end
 end
 
--- Kết nối sự kiện Heartbeat để cập nhật khi bay
-RunService.Heartbeat:Connect(function()
-	if flying then
-		local char = player.Character
-		if char and char:FindFirstChild("HumanoidRootPart") then
-			pcall(updateVelocity)
-		else
-			flying = false
-			velocity.Parent = nil
-			flyBtn.Text = "Toggle Fly: OFF"
-		end
+-- Xóa BodyVelocity và BodyGyro
+local function ClearPhysics()
+	if BodyVelocity then
+		BodyVelocity:Destroy()
+		BodyVelocity = nil
 	end
-end)
-
--- Xử lý sự kiện bật/tắt bay
-flyBtn.MouseButton1Click:Connect(function()
-	flying = not flying
-	flyBtn.Text = "Toggle Fly: " .. (flying and "ON" or "OFF")
-	flyBtn.BackgroundColor3 = flying and Color3.fromRGB(50, 200, 50) or Color3.fromRGB(0, 150, 255)
-	local char = player.Character
-	if char and char:FindFirstChild("HumanoidRootPart") then
-		if flying then
-			velocity.Parent = char.HumanoidRootPart
-		else
-			velocity.Parent = nil
-		end
+	if BodyGyro then
+		BodyGyro:Destroy()
+		BodyGyro = nil
 	end
-end)
+end
 
--- Xử lý khi nhân vật reset hoặc tái sinh
-player.CharacterAdded:Connect(function(newChar)
-	local hrp = newChar:WaitForChild("HumanoidRootPart")
+-- Tắt bay
+local function StopFlying()
 	flying = false
-	velocity.Parent = nil
-	flyBtn.Text = "Toggle Fly: OFF"
+	ClearPhysics()
+	flyBtn.Text = "Fly: OFF"
 	flyBtn.BackgroundColor3 = Color3.fromRGB(0, 150, 255)
-end)
+	UpdateMobileButton()
+end
 
--- Phần 3: Hiệu ứng ảo ảnh, phím tắt, và tối ưu cho Conan Fly GUI
-local UserInputService = game:GetService("UserInputService")
-local Players = game:GetService("Players")
-local player = Players.LocalPlayer
-
--- Tạo hiệu ứng ảo ảnh (Trail)
-local function createTrail(character)
+-- Bắt đầu bay
+local function StartFlying(character)
+	if not character then return end
 	local hrp = character:WaitForChild("HumanoidRootPart")
-	local trail = Instance.new("Trail")
-	trail.Color = ColorSequence.new({
-		ColorSequenceKeypoint.new(0, Color3.fromRGB(0, 150, 255)),
-		ColorSequenceKeypoint.new(1, Color3.fromRGB(0, 255, 255))
-	})
-	trail.Transparency = NumberSequence.new({
-		NumberSequenceKeypoint.new(0, 0.3),
-		NumberSequenceKeypoint.new(1, 1)
-	})
-	trail.Lifetime = 0.5
-	trail.WidthScale = NumberSequence.new(0.5)
-	trail.Attachment0 = Instance.new("Attachment", hrp)
-	trail.Attachment1 = Instance.new("Attachment", hrp)
-	trail.Attachment1.Position = Vector3.new(0, 0, -0.5)
-	trail.Parent = hrp
-	return trail
+	ClearPhysics()
+	
+	BodyVelocity = Instance.new("BodyVelocity")
+	BodyVelocity.MaxForce = Vector3.new(math.huge, math.huge, math.huge)
+	BodyVelocity.Velocity = Vector3.zero
+	BodyVelocity.Parent = hrp
+	
+	BodyGyro = Instance.new("BodyGyro")
+	BodyGyro.MaxTorque = Vector3.new(math.huge, math.huge, math.huge)
+	BodyGyro.P = 9000
+	BodyGyro.D = 500
+	BodyGyro.Parent = hrp
+	
+	flying = true
+	flyBtn.Text = "Fly: ON"
+	flyBtn.BackgroundColor3 = Color3.fromRGB(50, 200, 50)
+	UpdateMobileButton()
 end
 
--- Biến lưu trạng thái và hiệu ứng
-local trailEffect = nil
-
--- Cập nhật hiệu ứng ảo ảnh khi bay
-local function updateTrail()
-	local char = player.Character
-	if char and char:FindFirstChild("HumanoidRootPart") then
-		if flying and not trailEffect then
-			trailEffect = createTrail(char)
-		elseif not flying and trailEffect then
-			trailEffect:Destroy()
-			trailEffect = nil
-		end
+-- Xử lý bật/tắt bay
+local function ToggleFly()
+	local character = player.Character
+	if not character or not character:FindFirstChild("HumanoidRootPart") then return end
+	if flying then
+		StopFlying()
+	else
+		StartFlying(character)
 	end
 end
 
--- Thêm phím tắt (phím E) để bật/tắt bay
-UserInputService.InputBegan:Connect(function(input, gameProcessed)
-	if gameProcessed then return end
-	if input.KeyCode == Enum.KeyCode.E then
-		flying = not flying
-		flyBtn.Text = "Toggle Fly: " .. (flying and "ON" or "OFF")
-		flyBtn.BackgroundColor3 = flying and Color3.fromRGB(50, 200, 50) or Color3.fromRGB(0, 150, 255)
-		local char = player.Character
-		if char and char:FindFirstChild("HumanoidRootPart") then
-			if flying then
-				velocity.Parent = char.HumanoidRootPart
-			else
-				velocity.Parent = nil
-			end
-		end
-		updateTrail()
-	end
-end)
-
--- Lưu tốc độ bay (biến tạm, có thể thay bằng DataStore)
-local defaultSpeed = 16
+-- Cập nhật tốc độ từ speedBox
 speedBox.FocusLost:Connect(function(enterPressed)
 	if enterPressed then
-		local speed = tonumber(speedBox.Text)
-		if speed and speed > 0 then
-			defaultSpeed = speed
+		local newSpeed = tonumber(speedBox.Text)
+		if newSpeed and newSpeed >= 0 and newSpeed <= maxspeed then
+			speed = newSpeed
+			LastSpeed = speed
 		else
-			speedBox.Text = tostring(defaultSpeed)
+			speedBox.Text = tostring(LastSpeed)
 		end
 	end
 end)
 
--- Tối ưu khi nhân vật tái sinh
-player.CharacterAdded:Connect(function(newChar)
-	local hrp = newChar:WaitForChild("HumanoidRootPart")
-	flying = false
-	velocity.Parent = nil
-	if trailEffect then
-		trailEffect:Destroy()
-		trailEffect = nil
+-- Xử lý input bàn phím
+UserInputService.InputBegan:Connect(function(input, gameProcessed)
+	if gameProcessed then return end
+	local key = input.KeyCode
+	if key == Enum.KeyCode.W then Keybinds.W = true
+	elseif key == Enum.KeyCode.S then Keybinds.S = true
+	elseif key == Enum.KeyCode.A then Keybinds.A = true
+	elseif key == Enum.KeyCode.D then Keybinds.D = true
+	elseif key == Enum.KeyCode.E then Keybinds.E = true
+	elseif key == Enum.KeyCode.Q then Keybinds.Q = true
+	elseif key == Enum.KeyCode.F then ToggleFly()
 	end
-	flyBtn.Text = "Toggle Fly: OFF"
-	flyBtn.BackgroundColor3 = Color3.fromRGB(0, 150, 255)
-	-- Khôi phục tốc độ đã lưu
-	speedBox.Text = tostring(defaultSpeed)
 end)
 
--- Cập nhật trail trong Heartbeat
-RunService.Heartbeat:Connect(function()
-	updateTrail()
+UserInputService.InputEnded:Connect(function(input)
+	local key = input.KeyCode
+	if key == Enum.KeyCode.W then Keybinds.W = false
+	elseif key == Enum.KeyCode.S then Keybinds.S = false
+	elseif key == Enum.KeyCode.A then Keybinds.A = false
+	elseif key == Enum.KeyCode.D then Keybinds.D = false
+	elseif key == Enum.KeyCode.E then Keybinds.E = false
+	elseif key == Enum.KeyCode.Q then Keybinds.Q = false
+	end
+end)
+
+-- Xử lý điều khiển bay
+RunService.RenderStepped:Connect(function()
+	local character = player.Character
+	if not character or not character:FindFirstChild("HumanoidRootPart") or not flying then return end
+	local hrp = character.HumanoidRootPart
+	local camera = workspace.CurrentCamera
+	local moveDirection = Vector3.zero
+	
+	if Keybinds.W then moveDirection = moveDirection + camera.CFrame.LookVector end
+	if Keybinds.S then moveDirection = moveDirection - camera.CFrame.LookVector end
+	if Keybinds.A then moveDirection = moveDirection - camera.CFrame.RightVector end
+	if Keybinds.D then moveDirection = moveDirection + camera.CFrame.RightVector end
+	if Keybinds.E then moveDirection = moveDirection + Vector3.new(0, 1, 0) end
+	if Keybinds.Q then moveDirection = moveDirection - Vector3.new(0, 1, 0) end
+	
+	if moveDirection.Magnitude > 0 then
+		moveDirection = moveDirection.Unit * speed
+	end
+	
+	BodyVelocity.Velocity = moveDirection
+	BodyGyro.CFrame = camera.CFrame
+end)
+
+-- Xử lý nút flyBtn
+flyBtn.MouseButton1Click:Connect(ToggleFly)
+
+-- Xử lý nút mobile
+CreateMobileButton()
+MobileButton.MouseButton1Click:Connect(ToggleFly)
+
+-- Xử lý nhân vật tái sinh
+player.CharacterAdded:Connect(function(character)
+	StopFlying()
+	local hrp = character:WaitForChild("HumanoidRootPart")
+	if flying then
+		StartFlying(character)
+	end
+end)
+
+-- Xử lý thiết bị mobile
+UserInputService:GetPropertyChangedSignal("TouchEnabled"):Connect(function()
+	CreateMobileButton()
+	MobileButton.MouseButton1Click:Connect(ToggleFly)
 end)
