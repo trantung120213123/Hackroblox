@@ -1,235 +1,339 @@
---// Conan Hub - Console Chat GUI (hiện lệnh đã nhập)
+local Rayfield = loadstring(game:HttpGet("https://sirius.menu/rayfield"))()
 
-local Players = game:GetService("Players")
-local UIS = game:GetService("UserInputService")
-local TweenService = game:GetService("TweenService")
-local lp = Players.LocalPlayer
+local Window = Rayfield:CreateWindow({
+	Name = "Conan Hub",
+	LoadingTitle = "Conan Hub",
+	LoadingSubtitle = "by Tung",
+	ConfigurationSaving = {
+		Enabled = true,
+		FolderName = "ConanHubConfig",
+		FileName = "FlyToggle"
+	},
+	KeySystem = false
+})
 
--- GUI cha
-local gui = Instance.new("ScreenGui", game.CoreGui)
-gui.Name = "ConanHub"
-gui.ResetOnSpawn = false
+local FlyScript
+local FlyTab = Window:CreateTab("Fly", 4483362458)
 
--- Khung chính (khung cha)
-local mainFrame = Instance.new("Frame")
-mainFrame.Size = UDim2.new(0, 400, 0, 300)
-mainFrame.Position = UDim2.new(0.3, 0, 0.3, 0)
-mainFrame.BackgroundColor3 = Color3.fromRGB(255, 0, 0)
-mainFrame.BackgroundTransparency = 0.3
-mainFrame.BorderSizePixel = 0
-mainFrame.AnchorPoint = Vector2.new(0.5, 0.5)
-mainFrame.Parent = gui
-mainFrame.Visible = true
+FlyTab:CreateToggle({
+	Name = "Toggle Fly",
+	CurrentValue = false,
+	Flag = "FlyToggle",
+	Callback = function(Value)
+		if Value then
+			FlyScript = Instance.new("LocalScript")
+			FlyScript.Name = "ConanFlyScript"
+			FlyScript.Source = game:HttpGet("https://raw.githubusercontent.com/XNEOFF/FlyGuiV3/main/FlyGuiV3.txt")
+			FlyScript.Parent = game.Players.LocalPlayer:WaitForChild("PlayerGui")
+			Rayfield:Notify({
+				Title = "Fly Enabled",
+				Content = "Đã bật Fly GUI",
+				Duration = 3,
+			})
+		else
+			local gui = game.Players.LocalPlayer:FindFirstChild("PlayerGui")
+			if gui and gui:FindFirstChild("ConanFlyScript") then
+				gui:FindFirstChild("ConanFlyScript"):Destroy()
+			end
+			Rayfield:Notify({
+				Title = "Fly Disabled",
+				Content = "Đã tắt Fly GUI",
+				Duration = 3,
+			})
+		end
+	end,
+})
 
--- Bo góc
-local corner = Instance.new("UICorner", mainFrame)
-corner.CornerRadius = UDim.new(0, 12)
+local MainTab = Window:CreateTab("Main", 4483362458)
 
--- Avatar góc trái
-local avatar = Instance.new("ImageLabel", mainFrame)
-avatar.Size = UDim2.new(0, 40, 0, 40)
-avatar.Position = UDim2.new(0, 10, 0, 10)
-avatar.BackgroundTransparency = 1
-avatar.Image = "https://www.roblox.com/headshot-thumbnail/image?userId=" .. lp.UserId .. "&width=420&height=420&format=png"
+-- ESP Toggle
+local ESPEnabled = false
+local ESPObjects = {}
 
--- Tiêu đề
-local title = Instance.new("TextLabel", mainFrame)
-title.Text = "Conan Hub"
-title.Font = Enum.Font.GothamBold
-title.TextSize = 24
-title.TextColor3 = Color3.new(1, 1, 1)
-title.Size = UDim2.new(1, 0, 0, 40)
-title.BackgroundTransparency = 1
-title.Position = UDim2.new(0, 0, 0, 0)
+local function createESP(player)
+	if player.Character and player.Character:FindFirstChild("Head") then
+		local Billboard = Instance.new("BillboardGui")
+		Billboard.Name = "ConanESP"
+		Billboard.Adornee = player.Character.Head
+		Billboard.Size = UDim2.new(0, 100, 0, 20)
+		Billboard.StudsOffset = Vector3.new(0, 2, 0)
+		Billboard.AlwaysOnTop = true
 
--- Nút "..."
-local toggleBtn = Instance.new("TextButton", gui)
-toggleBtn.Size = UDim2.new(0, 40, 0, 40)
-toggleBtn.Position = UDim2.new(0.02, 0, 0.2, 0)
-toggleBtn.Text = "..."
-toggleBtn.BackgroundColor3 = Color3.fromRGB(255, 0, 0)
-toggleBtn.BackgroundTransparency = 0.3
-toggleBtn.TextColor3 = Color3.new(1, 1, 1)
-toggleBtn.Font = Enum.Font.GothamBold
-toggleBtn.TextSize = 22
+		local Label = Instance.new("TextLabel")
+		Label.Size = UDim2.new(1, 0, 1, 0)
+		Label.Text = player.Name
+		Label.TextColor3 = Color3.fromRGB(255, 0, 0)
+		Label.TextScaled = true
+		Label.BackgroundTransparency = 1
+		Label.Parent = Billboard
 
-local btnCorner = Instance.new("UICorner", toggleBtn)
-btnCorner.CornerRadius = UDim.new(0, 12)
-
--- Cho nút "..." di chuyển được
-local dragging, dragInput, dragStart, startPos
-local function update(input)
-	local delta = input.Position - dragStart
-	toggleBtn.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
+		Billboard.Parent = player.Character
+		table.insert(ESPObjects, Billboard)
+	end
 end
 
-toggleBtn.InputBegan:Connect(function(input)
-	if input.UserInputType == Enum.UserInputType.MouseButton1 then
-		dragging = true
-		dragStart = input.Position
-		startPos = toggleBtn.Position
-
-		input.Changed:Connect(function()
-			if input.UserInputState == Enum.UserInputState.End then
-				dragging = false
-			end
-		end)
-	end
-end)
-
-toggleBtn.InputChanged:Connect(function(input)
-	if input.UserInputType == Enum.UserInputType.MouseMovement then
-		dragInput = input
-	end
-end)
-
-UIS.InputChanged:Connect(function(input)
-	if input == dragInput and dragging then
-		update(input)
-	end
-end)
-
--- Toggle hiện / ẩn GUI
-toggleBtn.MouseButton1Click:Connect(function()
-	mainFrame.Visible = not mainFrame.Visible
-end)
-
--- Khung chat lệnh
-local chatFrame = Instance.new("ScrollingFrame", mainFrame)
-chatFrame.Size = UDim2.new(1, -20, 1, -100)
-chatFrame.Position = UDim2.new(0, 10, 0, 60)
-chatFrame.CanvasSize = UDim2.new(0, 0, 0, 0)
-chatFrame.ScrollBarThickness = 4
-chatFrame.BackgroundTransparency = 0.1
-chatFrame.BackgroundColor3 = Color3.fromRGB(255, 70, 70)
-chatFrame.BorderSizePixel = 0
-
-local chatCorner = Instance.new("UICorner", chatFrame)
-chatCorner.CornerRadius = UDim.new(0, 10)
-
--- Layout để tin nhắn tự xuống dòng
-local layout = Instance.new("UIListLayout", chatFrame)
-layout.SortOrder = Enum.SortOrder.LayoutOrder
-layout.Padding = UDim.new(0, 4)
-
--- Ô nhập lệnh
-local inputBox = Instance.new("TextBox", mainFrame)
-inputBox.PlaceholderText = "Nhập lệnh kiểu ;fly on, ;noclip off, ;kill all..."
-inputBox.Size = UDim2.new(1, -20, 0, 35)
-inputBox.Position = UDim2.new(0, 10, 1, -40)
-inputBox.BackgroundColor3 = Color3.fromRGB(255, 0, 0)
-inputBox.BackgroundTransparency = 0.15
-inputBox.TextColor3 = Color3.new(1,1,1)
-inputBox.Font = Enum.Font.Gotham
-inputBox.TextSize = 18
-inputBox.Text = ""
-inputBox.ClearTextOnFocus = false
-
-local inputCorner = Instance.new("UICorner", inputBox)
-inputCorner.CornerRadius = UDim.new(0, 8)
-
--- Gửi tin nhắn khi nhấn Enter
-inputBox.FocusLost:Connect(function(enter)
-	if enter and inputBox.Text ~= "" then
-		local msg = Instance.new("TextLabel", chatFrame)
-		msg.Size = UDim2.new(1, -10, 0, 25)
-		msg.BackgroundTransparency = 1
-		msg.Text = "[Conan Hub] " .. inputBox.Text
-		msg.Font = Enum.Font.Code
-		msg.TextColor3 = Color3.new(1, 1, 1)
-		msg.TextSize = 18
-		msg.TextXAlignment = Enum.TextXAlignment.Left
-
-		inputBox.Text = ""
-		task.wait()
-		chatFrame.CanvasSize = UDim2.new(0, 0, 0, layout.AbsoluteContentSize.Y + 10)
-	end
-end)
-
--- BẮT SỰ KIỆN KHI CÓ LỆNH
-function processCommand(input)
-	local args = string.lower(input):split(" ")
-	local cmd = args[1]
-	local arg1 = args[2]
-
-	-- Noclip
-	if cmd == ";noclip" and arg1 then
-		if arg1 == "on" then
-			noclipConn = game:GetService("RunService").Stepped:Connect(function()
-				if lp.Character and lp.Character:FindFirstChild("Humanoid") then
-					lp.Character.Humanoid:ChangeState(11)
-				end
-			end)
-		elseif arg1 == "off" and noclipConn then
-			noclipConn:Disconnect()
-		end
-
-	-- ESP
-	elseif cmd == ";esp" and arg1 then
-		if arg1 == "on" then
-			for _, p in pairs(game.Players:GetPlayers()) do
-				if p ~= lp and not p.Character:FindFirstChild("ESPBox") then
-					local b = Instance.new("BillboardGui", p.Character)
-					b.Name = "ESPBox"
-					b.Size = UDim2.new(0, 100, 0, 40)
-					b.AlwaysOnTop = true
-					b.StudsOffset = Vector3.new(0, 3, 0)
-
-					local text = Instance.new("TextLabel", b)
-					text.Size = UDim2.new(1, 0, 1, 0)
-					text.Text = p.Name
-					text.TextColor3 = Color3.new(1, 0, 0)
-					text.BackgroundTransparency = 1
-					text.Font = Enum.Font.GothamBold
-					text.TextScaled = true
-				end
-			end
-		elseif arg1 == "off" then
-			for _, p in pairs(game.Players:GetPlayers()) do
-				if p ~= lp and p.Character:FindFirstChild("ESPBox") then
-					p.Character.ESPBox:Destroy()
-				end
-			end
-		end
-
-	-- Fly (dán script m gửi)
-	elseif cmd == ";fly" and arg1 then
-		if arg1 == "on" then
-			loadstring([[-- fly script của mày dán vô đây]])()
-		elseif arg1 == "off" then
-			for _,v in pairs(getgc(true)) do
-				if type(v) == "function" and getfenv(v).script and getfenv(v).script.Name == "FlyScript" then
-					getfenv(v).script:Destroy()
-				end
-			end
-		end
-
-	-- Teleport đến người chơi (tìm gần đúng tên)
-	elseif cmd == ";tp" and arg1 then
+local function toggleESP(enable)
+	ESPEnabled = enable
+	if enable then
 		for _, p in pairs(game.Players:GetPlayers()) do
-			if p ~= lp and string.sub(string.lower(p.Name), 1, #arg1) == arg1 then
-				if p.Character and p.Character:FindFirstChild("HumanoidRootPart") then
-					lp.Character:MoveTo(p.Character.HumanoidRootPart.Position + Vector3.new(0, 3, 0))
-				end
+			if p ~= game.Players.LocalPlayer then
+				createESP(p)
 			end
 		end
-
-	-- Auto kill all (teleport sau lưng liên tục và xoay mặt)
-	elseif cmd == ";kill" and args[2] == "all" then
-		task.spawn(function()
-			for i = 1, 10 do
-				for _, p in pairs(game.Players:GetPlayers()) do
-					if p ~= lp and p.Character and p.Character:FindFirstChild("HumanoidRootPart") then
-						local target = p.Character.HumanoidRootPart
-						local char = lp.Character
-						if char and char:FindFirstChild("HumanoidRootPart") then
-							char:MoveTo(target.Position - (target.CFrame.LookVector * 2))
-							char:SetPrimaryPartCFrame(CFrame.new(char.PrimaryPart.Position, target.Position))
-						end
-					end
-				end
+		game.Players.PlayerAdded:Connect(function(p)
+			p.CharacterAdded:Connect(function()
 				wait(1)
-			end
+				createESP(p)
+			end)
 		end)
+	else
+		for _, esp in pairs(ESPObjects) do
+			if esp and esp.Parent then
+				esp:Destroy()
+			end
+		end
+		ESPObjects = {}
 	end
+end
+
+MainTab:CreateToggle({
+	Name = "ESP (Hiện tên người chơi)",
+	CurrentValue = false,
+	Flag = "ESPToggle",
+	Callback = function(Value)
+		toggleESP(Value)
+		Rayfield:Notify({
+			Title = "ESP",
+			Content = Value and "Đã bật ESP" or "Đã tắt ESP",
+			Duration = 2,
+		})
+	end,
+})
+
+-- Speed Slider
+MainTab:CreateSlider({
+	Name = "Speed",
+	Range = {16, 100},
+	Increment = 1,
+	Suffix = "WalkSpeed",
+	CurrentValue = 16,
+	Flag = "SpeedSlider",
+	Callback = function(Value)
+		game.Players.LocalPlayer.Character.Humanoid.WalkSpeed = Value
+	end,
+})
+
+-- ⚠️ PHẢI CHẠY SAU KHI ĐÃ LOAD RAYFIELD UI + CONAN HUB CHÍNH ⚠️
+
+local PlayerTab = Window:CreateTab("Player TP", 4483362458) -- icon Roblox nhân vật
+
+local tpSection = PlayerTab:CreateSection("Teleport to Player")
+
+local playerName = ""
+
+-- Ô nhập tên người chơi
+PlayerTab:CreateInput({
+    Name = "Nhập tên người chơi",
+    PlaceholderText = "VD: tung",
+    RemoveTextAfterFocusLost = false,
+    Callback = function(Text)
+        playerName = Text
+    end,
+})
+
+-- Nút TP đến người chơi gần đúng tên
+PlayerTab:CreateButton({
+    Name = "Teleport",
+    Callback = function()
+        local foundPlayer = nil
+        for _, plr in pairs(game.Players:GetPlayers()) do
+            if plr.Name:lower():find(playerName:lower()) then
+                foundPlayer = plr
+                break
+            end
+        end
+
+        if foundPlayer and foundPlayer.Character and foundPlayer.Character:FindFirstChild("HumanoidRootPart") then
+            local myChar = game.Players.LocalPlayer.Character
+            if myChar and myChar:FindFirstChild("HumanoidRootPart") then
+                myChar:MoveTo(foundPlayer.Character.HumanoidRootPart.Position + Vector3.new(0, 3, 0))
+            end
+        else
+            Rayfield:Notify({
+                Title = "Conan Hub",
+                Content = "Không tìm thấy người chơi!",
+                Duration = 3,
+                Image = 4483362458,
+            })
+        end
+    end,
+})
+
+local KillTab = Window:CreateTab("Player Kill", 4483362458)
+KillTab:CreateSection("Auto Kill Player")
+
+local autoKill = false
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local LocalPlayer = Players.LocalPlayer
+local selectedTargets = {}
+local oldCFrame
+
+local function getAlivePlayers()
+    local all = {}
+    for _, p in pairs(Players:GetPlayers()) do
+        if p ~= LocalPlayer and p.Character and p.Character:FindFirstChild("HumanoidRootPart") then
+            table.insert(all, p)
+        end
+    end
+    return all
+end
+
+local function teleportBehind(target)
+    local hrp = target.Character:FindFirstChild("HumanoidRootPart")
+    local myHRP = LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+    if hrp and myHRP then
+        local backPos = hrp.CFrame * CFrame.new(0, 0, 3) -- phía sau
+        myHRP.CFrame = CFrame.new(backPos.Position, hrp.Position)
+    end
+end
+
+KillTab:CreateToggle({
+    Name = "Auto Kill Player",
+    CurrentValue = false,
+    Callback = function(Value)
+        autoKill = Value
+        if autoKill then
+            Rayfield:Notify({ Title = "Conan Hub", Content = "Auto Kill Started", Duration = 2 })
+            oldCFrame = LocalPlayer.Character:FindFirstChild("HumanoidRootPart").CFrame
+            selectedTargets = {}
+            
+            task.spawn(function()
+                local available = getAlivePlayers()
+                while autoKill and #selectedTargets < #available do
+                    local target
+                    repeat
+                        local randomPlayer = available[math.random(1, #available)]
+                        if not table.find(selectedTargets, randomPlayer) then
+                            target = randomPlayer
+                        end
+                    until target or not autoKill
+                    
+                    if not target then break end
+                    table.insert(selectedTargets, target)
+
+                    local killTime = 10 -- giây
+                    local elapsed = 0
+
+                    while autoKill and elapsed < killTime do
+                        teleportBehind(target)
+                        task.wait(0.1)
+                        elapsed += 0.1
+                    end
+                end
+
+                -- Sau khi hết lượt
+                if autoKill then
+                    LocalPlayer.Character:FindFirstChild("HumanoidRootPart").CFrame = oldCFrame
+                    Rayfield:Notify({ Title = "Conan Hub", Content = "Đã trở lại vị trí ban đầu", Duration = 3 })
+                    autoKill = false
+                end
+            end)
+        else
+            Rayfield:Notify({ Title = "Conan Hub", Content = "Auto Kill Stopped", Duration = 2 })
+        end
+    end
+})
+
+local ConfigTab = Window:CreateTab("Config", 4483362458) -- icon gear
+local ConfigSection = ConfigTab:CreateSection("Cài đặt cấu hình")
+
+local ConfigName = ""
+local SelectedConfig = ""
+local AutoLoad = false
+local ConfigsFolder = "ConanHubConfigs"
+
+-- Tạo thư mục lưu nếu chưa có
+if not isfolder(ConfigsFolder) then
+    makefolder(ConfigsFolder)
+end
+
+-- Nhập tên để tạo config
+ConfigTab:CreateInput({
+    Name = "Tên Config",
+    PlaceholderText = "Nhập tên config...",
+    RemoveTextAfterFocusLost = false,
+    Callback = function(Value)
+        ConfigName = Value
+    end,
+})
+
+-- Nút tạo config
+ConfigTab:CreateButton({
+    Name = "Tạo Config",
+    Callback = function()
+        if ConfigName ~= "" then
+            local data = {
+                speed = SpeedValue or 16,
+                autoKill = _G.autoKill or false,
+                autoESP = _G.autoESP or false
+            }
+            writefile(ConfigsFolder.."/"..ConfigName..".json", game:GetService("HttpService"):JSONEncode(data))
+            Rayfield:Notify({Title = "Conan Hub", Content = "Đã lưu cấu hình!", Duration = 2})
+        end
+    end,
+})
+
+-- Dropdown chọn config đã tạo
+local ConfigDropdown = ConfigTab:CreateDropdown({
+    Name = "Chọn Config",
+    Options = listfiles(ConfigsFolder),
+    CurrentOption = "",
+    Callback = function(Option)
+        SelectedConfig = Option
+    end,
+})
+
+-- Nút load config
+ConfigTab:CreateButton({
+    Name = "Load Config",
+    Callback = function()
+        if SelectedConfig and isfile(SelectedConfig) then
+            local raw = readfile(SelectedConfig)
+            local data = game:GetService("HttpService"):JSONDecode(raw)
+
+            -- Gán lại giá trị tùy theo script chính
+            SpeedValue = data.speed or 16
+            _G.autoKill = data.autoKill
+            _G.autoESP = data.autoESP
+            Rayfield:Notify({Title = "Conan Hub", Content = "Đã tải cấu hình!", Duration = 2})
+        end
+    end,
+})
+
+-- Auto Load Toggle
+ConfigTab:CreateToggle({
+    Name = "Tự động tải Config khi vào game",
+    CurrentValue = false,
+    Callback = function(Value)
+        AutoLoad = Value
+        if Value and SelectedConfig then
+            writefile("ConanHubConfigs/autoload.txt", SelectedConfig)
+        elseif not Value and isfile("ConanHubConfigs/autoload.txt") then
+            delfile("ConanHubConfigs/autoload.txt")
+        end
+    end,
+})
+
+-- Tự động load nếu có autoload
+if isfile("ConanHubConfigs/autoload.txt") then
+    local auto = readfile("ConanHubConfigs/autoload.txt")
+    if isfile(auto) then
+        local raw = readfile(auto)
+        local data = game:GetService("HttpService"):JSONDecode(raw)
+        SpeedValue = data.speed or 16
+        _G.autoKill = data.autoKill
+        _G.autoESP = data.autoESP
+        Rayfield:Notify({Title = "Conan Hub", Content = "Auto Load Config thành công!", Duration = 2})
+    end
 end
