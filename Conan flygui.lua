@@ -165,48 +165,44 @@ end)
 local UserInputService = game:GetService("UserInputService")
 local RunService = game:GetService("RunService")
 local Players = game:GetService("Players")
-local TweenService = game:GetService("TweenService")
 local player = Players.LocalPlayer
 local mouse = player:GetMouse()
 
--- Biến và hằng số
 local flying = false
 local speed = 50
 local maxspeed = 150
 local ControlModule = require(player.PlayerScripts.PlayerModule.ControlModule)
 local LastSpeed = speed
-local BodyVelocity, BodyGyro
+local BodyVelocity = nil
+local BodyGyro = nil
 local MobileButton
-local Keybinds = {
-	W = false, S = false, A = false, D = false, E = false, Q = false
-}
+local Keys = { W = false, A = false, S = false, D = false, E = false, Q = false }
 
 -- Tạo nút ảo cho mobile
 local function CreateMobileButton()
-	if MobileButton then MobileButton:Destroy() end
 	MobileButton = Instance.new("TextButton")
-	MobileButton.Size = UDim2.new(0, 50, 0, 50)
 	MobileButton.Position = UDim2.new(0, 10, 0, 100)
+	MobileButton.Size = UDim2.new(0, 50, 0, 50)
 	MobileButton.BackgroundColor3 = Color3.fromRGB(0, 150, 255)
-	MobileButton.Text = flying and "OFF" or "ON"
-	MobileButton.TextColor3 = Color3.new(1, 1, 1)
+	MobileButton.TextColor3 = Color3.fromRGB(255, 255, 255)
 	MobileButton.BackgroundTransparency = 0.5
-	MobileButton.BorderSizePixel = 0
+	MobileButton.Text = flying and "OFF" or "ON"
 	MobileButton.TextScaled = true
 	MobileButton.Parent = gui
 	local corner = Instance.new("UICorner", MobileButton)
 	corner.CornerRadius = UDim.new(0, 8)
 end
 
--- Cập nhật trạng thái nút mobile
+-- Cập nhật nút mobile
 local function UpdateMobileButton()
 	if MobileButton then
 		MobileButton.Text = flying and "OFF" or "ON"
 	end
 end
 
--- Xóa BodyVelocity và BodyGyro
-local function ClearPhysics()
+-- Tắt bay
+local function StopFlying()
+	flying = false
 	if BodyVelocity then
 		BodyVelocity:Destroy()
 		BodyVelocity = nil
@@ -215,33 +211,30 @@ local function ClearPhysics()
 		BodyGyro:Destroy()
 		BodyGyro = nil
 	end
-end
-
--- Tắt bay
-local function StopFlying()
-	flying = false
-	ClearPhysics()
 	flyBtn.Text = "Fly: OFF"
 	flyBtn.BackgroundColor3 = Color3.fromRGB(0, 150, 255)
 	UpdateMobileButton()
 end
 
 -- Bắt đầu bay
-local function StartFlying(character)
-	if not character then return end
-	local hrp = character:WaitForChild("HumanoidRootPart")
-	ClearPhysics()
+local function StartFlying()
+	local character = player.Character
+	local rootPart = character and character:FindFirstChild("HumanoidRootPart")
+	if not rootPart then return end
+	
+	if BodyVelocity then BodyVelocity:Destroy() end
+	if BodyGyro then BodyGyro:Destroy() end
 	
 	BodyVelocity = Instance.new("BodyVelocity")
 	BodyVelocity.MaxForce = Vector3.new(math.huge, math.huge, math.huge)
-	BodyVelocity.Velocity = Vector3.zero
-	BodyVelocity.Parent = hrp
+	BodyVelocity.Velocity = Vector3.new(0, 0, 0)
+	BodyVelocity.Parent = rootPart
 	
 	BodyGyro = Instance.new("BodyGyro")
 	BodyGyro.MaxTorque = Vector3.new(math.huge, math.huge, math.huge)
 	BodyGyro.P = 9000
 	BodyGyro.D = 500
-	BodyGyro.Parent = hrp
+	BodyGyro.Parent = rootPart
 	
 	flying = true
 	flyBtn.Text = "Fly: ON"
@@ -249,69 +242,89 @@ local function StartFlying(character)
 	UpdateMobileButton()
 end
 
--- Xử lý bật/tắt bay
-local function ToggleFly()
-	local character = player.Character
-	if not character or not character:FindFirstChild("HumanoidRootPart") then return end
-	if flying then
-		StopFlying()
-	else
-		StartFlying(character)
-	end
-end
-
--- Cập nhật tốc độ từ speedBox
-speedBox.FocusLost:Connect(function(enterPressed)
-	if enterPressed then
-		local newSpeed = tonumber(speedBox.Text)
-		if newSpeed and newSpeed >= 0 and newSpeed <= maxspeed then
-			speed = newSpeed
-			LastSpeed = speed
+-- Xử lý input bàn phím
+UserInputService.InputBegan:Connect(function(input, gameProcessed)
+	if gameProcessed then return end
+	if input.KeyCode == Enum.KeyCode.W then
+		Keys.W = true
+	elseif input.KeyCode == Enum.KeyCode.A then
+		Keys.A = true
+	elseif input.KeyCode == Enum.KeyCode.S then
+		Keys.S = true
+	elseif input.KeyCode == Enum.KeyCode.D then
+		Keys.D = true
+	elseif input.KeyCode == Enum.KeyCode.E then
+		Keys.E = true
+	elseif input.KeyCode == Enum.KeyCode.Q then
+		Keys.Q = true
+	elseif input.KeyCode == Enum.KeyCode.F then
+		if flying then
+			StopFlying()
 		else
-			speedBox.Text = tostring(LastSpeed)
+			StartFlying()
 		end
 	end
 end)
 
--- Xử lý input bàn phím
-UserInputService.InputBegan:Connect(function(input, gameProcessed)
-	if gameProcessed then return end
-	local key = input.KeyCode
-	if key == Enum.KeyCode.W then Keybinds.W = true
-	elseif key == Enum.KeyCode.S then Keybinds.S = true
-	elseif key == Enum.KeyCode.A then Keybinds.A = true
-	elseif key == Enum.KeyCode.D then Keybinds.D = true
-	elseif key == Enum.KeyCode.E then Keybinds.E = true
-	elseif key == Enum.KeyCode.Q then Keybinds.Q = true
-	elseif key == Enum.KeyCode.F then ToggleFly()
+UserInputService.InputEnded:Connect(function(input, gameProcessed)
+	if input.KeyCode == Enum.KeyCode.W then
+		Keys.W = false
+	elseif input.KeyCode == Enum.KeyCode.A then
+		Keys.A = false
+	elseif input.KeyCode == Enum.KeyCode.S then
+		Keys.S = false
+	elseif input.KeyCode == Enum.KeyCode.D then
+		Keys.D = false
+	elseif input.KeyCode == Enum.KeyCode.E then
+		Keys.E = false
+	elseif input.KeyCode == Enum.KeyCode.Q then
+		Keys.Q = false
 	end
 end)
 
-UserInputService.InputEnded:Connect(function(input)
-	local key = input.KeyCode
-	if key == Enum.KeyCode.W then Keybinds.W = false
-	elseif key == Enum.KeyCode.S then Keybinds.S = false
-	elseif key == Enum.KeyCode.A then Keybinds.A = false
-	elseif key == Enum.KeyCode.D then Keybinds.D = false
-	elseif key == Enum.KeyCode.E then Keybinds.E = false
-	elseif key == Enum.KeyCode.Q then Keybinds.Q = false
+-- Cập nhật tốc độ từ speedBox
+speedBox.FocusLost:Connect(function(enterPressed)
+	if not enterPressed then return end
+	local value = tonumber(speedBox.Text)
+	if value then
+		if value > maxspeed then
+			value = maxspeed
+			speedBox.Text = tostring(maxspeed)
+		end
+		speed = value
+		LastSpeed = speed
+	else
+		speedBox.Text = tostring(LastSpeed)
 	end
 end)
 
 -- Xử lý điều khiển bay
 RunService.RenderStepped:Connect(function()
 	local character = player.Character
-	if not character or not character:FindFirstChild("HumanoidRootPart") or not flying then return end
-	local hrp = character.HumanoidRootPart
+	local rootPart = character and character:FindFirstChild("HumanoidRootPart")
 	local camera = workspace.CurrentCamera
-	local moveDirection = Vector3.zero
 	
-	if Keybinds.W then moveDirection = moveDirection + camera.CFrame.LookVector end
-	if Keybinds.S then moveDirection = moveDirection - camera.CFrame.LookVector end
-	if Keybinds.A then moveDirection = moveDirection - camera.CFrame.RightVector end
-	if Keybinds.D then moveDirection = moveDirection + camera.CFrame.RightVector end
-	if Keybinds.E then moveDirection = moveDirection + Vector3.new(0, 1, 0) end
-	if Keybinds.Q then moveDirection = moveDirection - Vector3.new(0, 1, 0) end
+	if not flying or not rootPart or not camera then return end
+	
+	local moveDirection = Vector3.new(0, 0, 0)
+	if Keys.W then
+		moveDirection = moveDirection + camera.CFrame.LookVector
+	end
+	if Keys.S then
+		moveDirection = moveDirection - camera.CFrame.LookVector
+	end
+	if Keys.A then
+		moveDirection = moveDirection - camera.CFrame.RightVector
+	end
+	if Keys.D then
+		moveDirection = moveDirection + camera.CFrame.RightVector
+	end
+	if Keys.E then
+		moveDirection = moveDirection + Vector3.new(0, 1, 0)
+	end
+	if Keys.Q then
+		moveDirection = moveDirection - Vector3.new(0, 1, 0)
+	end
 	
 	if moveDirection.Magnitude > 0 then
 		moveDirection = moveDirection.Unit * speed
@@ -322,23 +335,41 @@ RunService.RenderStepped:Connect(function()
 end)
 
 -- Xử lý nút flyBtn
-flyBtn.MouseButton1Click:Connect(ToggleFly)
-
--- Xử lý nút mobile
-CreateMobileButton()
-MobileButton.MouseButton1Click:Connect(ToggleFly)
+flyBtn.MouseButton1Click:Connect(function()
+	if flying then
+		StopFlying()
+	else
+		StartFlying()
+	end
+end)
 
 -- Xử lý nhân vật tái sinh
 player.CharacterAdded:Connect(function(character)
 	StopFlying()
-	local hrp = character:WaitForChild("HumanoidRootPart")
+	local rootPart = character:WaitForChild("HumanoidRootPart")
 	if flying then
-		StartFlying(character)
+		StartFlying()
+	end
+end)
+
+-- Tạo và xử lý nút mobile
+CreateMobileButton()
+MobileButton.MouseButton1Click:Connect(function()
+	if flying then
+		StopFlying()
+	else
+		StartFlying()
 	end
 end)
 
 -- Xử lý thiết bị mobile
-UserInputService:GetPropertyChangedSignal("TouchEnabled"):Connect(function()
+UserInputService.TouchEnabled:Connect(function()
 	CreateMobileButton()
-	MobileButton.MouseButton1Click:Connect(ToggleFly)
+	MobileButton.MouseButton1Click:Connect(function()
+		if flying then
+			StopFlying()
+		else
+			StartFlying()
+		end
+	end)
 end)
