@@ -1,339 +1,168 @@
-local Rayfield = loadstring(game:HttpGet("https://sirius.menu/rayfield"))()
+-- Conan Auto Kill GUI by ChatGPT x Tùng
+local Players = game:GetService("Players")
+local LocalPlayer = Players.LocalPlayer
+local Camera = workspace.CurrentCamera
 
-local Window = Rayfield:CreateWindow({
-	Name = "Conan Hub",
-	LoadingTitle = "Conan Hub",
-	LoadingSubtitle = "by Tung",
-	ConfigurationSaving = {
-		Enabled = true,
-		FolderName = "ConanHubConfig",
-		FileName = "FlyToggle"
-	},
-	KeySystem = false
-})
+local gui = Instance.new("ScreenGui", game.CoreGui)
+gui.Name = "ConanKillGui"
+gui.ResetOnSpawn = false
 
-local FlyScript
-local FlyTab = Window:CreateTab("Fly", 4483362458)
+local toggleBtn = Instance.new("TextButton")
+toggleBtn.Name = "ToggleBtn"
+toggleBtn.Size = UDim2.new(0, 100, 0, 30)
+toggleBtn.Position = UDim2.new(1, -110, 0, 10)
+toggleBtn.BackgroundColor3 = Color3.fromRGB(0, 191, 255)
+toggleBtn.Text = "Conan"
+toggleBtn.TextColor3 = Color3.new(1, 1, 1)
+toggleBtn.TextScaled = true
+toggleBtn.Parent = gui
+toggleBtn.AnchorPoint = Vector2.new(0.5, 0.5)
+toggleBtn.BorderSizePixel = 0
+toggleBtn.BackgroundTransparency = 0.3
+toggleBtn.AutoButtonColor = true
+toggleBtn.ClipsDescendants = true
+toggleBtn.ZIndex = 10
 
-FlyTab:CreateToggle({
-	Name = "Toggle Fly",
-	CurrentValue = false,
-	Flag = "FlyToggle",
-	Callback = function(Value)
-		if Value then
-			FlyScript = Instance.new("LocalScript")
-			FlyScript.Name = "ConanFlyScript"
-			FlyScript.Source = game:HttpGet("https://raw.githubusercontent.com/XNEOFF/FlyGuiV3/main/FlyGuiV3.txt")
-			FlyScript.Parent = game.Players.LocalPlayer:WaitForChild("PlayerGui")
-			Rayfield:Notify({
-				Title = "Fly Enabled",
-				Content = "Đã bật Fly GUI",
-				Duration = 3,
-			})
-		else
-			local gui = game.Players.LocalPlayer:FindFirstChild("PlayerGui")
-			if gui and gui:FindFirstChild("ConanFlyScript") then
-				gui:FindFirstChild("ConanFlyScript"):Destroy()
-			end
-			Rayfield:Notify({
-				Title = "Fly Disabled",
-				Content = "Đã tắt Fly GUI",
-				Duration = 3,
-			})
-		end
-	end,
-})
+local mainFrame = Instance.new("Frame")
+mainFrame.Name = "MainFrame"
+mainFrame.Size = UDim2.new(0, 300, 0, 200)
+mainFrame.Position = UDim2.new(0.5, -150, 0.5, -100)
+mainFrame.BackgroundColor3 = Color3.fromRGB(0, 191, 255)
+mainFrame.BackgroundTransparency = 0.2
+mainFrame.BorderSizePixel = 0
+mainFrame.Visible = false
+mainFrame.Parent = gui
+mainFrame.ClipsDescendants = true
 
-local MainTab = Window:CreateTab("Main", 4483362458)
+local UICorner1 = Instance.new("UICorner", mainFrame)
+UICorner1.CornerRadius = UDim.new(0, 12)
+local UICorner2 = Instance.new("UICorner", toggleBtn)
+UICorner2.CornerRadius = UDim.new(0, 12)
 
--- ESP Toggle
-local ESPEnabled = false
-local ESPObjects = {}
+local drag = false
+local dragInput, mousePos, framePos
 
-local function createESP(player)
-	if player.Character and player.Character:FindFirstChild("Head") then
-		local Billboard = Instance.new("BillboardGui")
-		Billboard.Name = "ConanESP"
-		Billboard.Adornee = player.Character.Head
-		Billboard.Size = UDim2.new(0, 100, 0, 20)
-		Billboard.StudsOffset = Vector3.new(0, 2, 0)
-		Billboard.AlwaysOnTop = true
-
-		local Label = Instance.new("TextLabel")
-		Label.Size = UDim2.new(1, 0, 1, 0)
-		Label.Text = player.Name
-		Label.TextColor3 = Color3.fromRGB(255, 0, 0)
-		Label.TextScaled = true
-		Label.BackgroundTransparency = 1
-		Label.Parent = Billboard
-
-		Billboard.Parent = player.Character
-		table.insert(ESPObjects, Billboard)
+mainFrame.InputBegan:Connect(function(input)
+	if input.UserInputType == Enum.UserInputType.MouseButton1 then
+		drag = true
+		mousePos = input.Position
+		framePos = mainFrame.Position
 	end
-end
+end)
 
-local function toggleESP(enable)
-	ESPEnabled = enable
-	if enable then
-		for _, p in pairs(game.Players:GetPlayers()) do
-			if p ~= game.Players.LocalPlayer then
-				createESP(p)
-			end
-		end
-		game.Players.PlayerAdded:Connect(function(p)
-			p.CharacterAdded:Connect(function()
-				wait(1)
-				createESP(p)
-			end)
-		end)
-	else
-		for _, esp in pairs(ESPObjects) do
-			if esp and esp.Parent then
-				esp:Destroy()
-			end
-		end
-		ESPObjects = {}
+mainFrame.InputChanged:Connect(function(input)
+	if drag and input.UserInputType == Enum.UserInputType.MouseMovement then
+		local delta = input.Position - mousePos
+		mainFrame.Position = UDim2.new(framePos.X.Scale, framePos.X.Offset + delta.X, framePos.Y.Scale, framePos.Y.Offset + delta.Y)
 	end
-end
+end)
 
-MainTab:CreateToggle({
-	Name = "ESP (Hiện tên người chơi)",
-	CurrentValue = false,
-	Flag = "ESPToggle",
-	Callback = function(Value)
-		toggleESP(Value)
-		Rayfield:Notify({
-			Title = "ESP",
-			Content = Value and "Đã bật ESP" or "Đã tắt ESP",
-			Duration = 2,
-		})
-	end,
-})
+mainFrame.InputEnded:Connect(function(input)
+	if input.UserInputType == Enum.UserInputType.MouseButton1 then
+		drag = false
+	end
+end)
 
--- Speed Slider
-MainTab:CreateSlider({
-	Name = "Speed",
-	Range = {16, 100},
-	Increment = 1,
-	Suffix = "WalkSpeed",
-	CurrentValue = 16,
-	Flag = "SpeedSlider",
-	Callback = function(Value)
-		game.Players.LocalPlayer.Character.Humanoid.WalkSpeed = Value
-	end,
-})
+toggleBtn.MouseButton1Click:Connect(function()
+	mainFrame:TweenPosition(mainFrame.Position, Enum.EasingDirection.Out, Enum.EasingStyle.Quad, 0.2, true)
+	mainFrame.Visible = not mainFrame.Visible
+end)
 
--- ⚠️ PHẢI CHẠY SAU KHI ĐÃ LOAD RAYFIELD UI + CONAN HUB CHÍNH ⚠️
+local title = Instance.new("TextLabel", mainFrame)
+title.Size = UDim2.new(1, 0, 0, 30)
+title.Position = UDim2.new(0, 0, 0, 0)
+title.BackgroundTransparency = 1
+title.Text = "🎯 Conan Auto Kill"
+title.TextColor3 = Color3.new(1, 1, 1)
+title.Font = Enum.Font.GothamSemibold
+title.TextScaled = true
 
-local PlayerTab = Window:CreateTab("Player TP", 4483362458) -- icon Roblox nhân vật
+local nameBox = Instance.new("TextBox", mainFrame)
+nameBox.Size = UDim2.new(0.8, 0, 0, 30)
+nameBox.Position = UDim2.new(0.1, 0, 0.3, 0)
+nameBox.PlaceholderText = "Enter player name..."
+nameBox.TextColor3 = Color3.new(1, 1, 1)
+nameBox.BackgroundColor3 = Color3.fromRGB(0, 160, 230)
+nameBox.BorderSizePixel = 0
+local corner3 = Instance.new("UICorner", nameBox)
+corner3.CornerRadius = UDim.new(0, 8)
 
-local tpSection = PlayerTab:CreateSection("Teleport to Player")
-
-local playerName = ""
-
--- Ô nhập tên người chơi
-PlayerTab:CreateInput({
-    Name = "Nhập tên người chơi",
-    PlaceholderText = "VD: tung",
-    RemoveTextAfterFocusLost = false,
-    Callback = function(Text)
-        playerName = Text
-    end,
-})
-
--- Nút TP đến người chơi gần đúng tên
-PlayerTab:CreateButton({
-    Name = "Teleport",
-    Callback = function()
-        local foundPlayer = nil
-        for _, plr in pairs(game.Players:GetPlayers()) do
-            if plr.Name:lower():find(playerName:lower()) then
-                foundPlayer = plr
-                break
-            end
-        end
-
-        if foundPlayer and foundPlayer.Character and foundPlayer.Character:FindFirstChild("HumanoidRootPart") then
-            local myChar = game.Players.LocalPlayer.Character
-            if myChar and myChar:FindFirstChild("HumanoidRootPart") then
-                myChar:MoveTo(foundPlayer.Character.HumanoidRootPart.Position + Vector3.new(0, 3, 0))
-            end
-        else
-            Rayfield:Notify({
-                Title = "Conan Hub",
-                Content = "Không tìm thấy người chơi!",
-                Duration = 3,
-                Image = 4483362458,
-            })
-        end
-    end,
-})
-
-local KillTab = Window:CreateTab("Player Kill", 4483362458)
-KillTab:CreateSection("Auto Kill Player")
+local toggleKill = Instance.new("TextButton", mainFrame)
+toggleKill.Size = UDim2.new(0.8, 0, 0, 40)
+toggleKill.Position = UDim2.new(0.1, 0, 0.55, 0)
+toggleKill.Text = "Auto Kill: OFF"
+toggleKill.TextScaled = true
+toggleKill.TextColor3 = Color3.new(1, 1, 1)
+toggleKill.BackgroundColor3 = Color3.fromRGB(255, 50, 50)
+toggleKill.BorderSizePixel = 0
+local corner4 = Instance.new("UICorner", toggleKill)
+corner4.CornerRadius = UDim.new(0, 8)
 
 local autoKill = false
-local Players = game:GetService("Players")
-local RunService = game:GetService("RunService")
-local LocalPlayer = Players.LocalPlayer
-local selectedTargets = {}
+local killed = {}
 local oldCFrame
 
-local function getAlivePlayers()
-    local all = {}
-    for _, p in pairs(Players:GetPlayers()) do
-        if p ~= LocalPlayer and p.Character and p.Character:FindFirstChild("HumanoidRootPart") then
-            table.insert(all, p)
-        end
-    end
-    return all
+local function findClosestMatch(inputName)
+	local closestPlayer = nil
+	local shortestDist = math.huge
+	for _, plr in pairs(Players:GetPlayers()) do
+		if plr ~= LocalPlayer and plr.Character and plr.Character:FindFirstChild("HumanoidRootPart") then
+			local nameLower = plr.Name:lower()
+			if nameLower:sub(1, #inputName:lower()) == inputName:lower() then
+				return plr
+			end
+		end
+	end
+	return nil
 end
 
-local function teleportBehind(target)
-    local hrp = target.Character:FindFirstChild("HumanoidRootPart")
-    local myHRP = LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
-    if hrp and myHRP then
-        local backPos = hrp.CFrame * CFrame.new(0, 0, 3) -- phía sau
-        myHRP.CFrame = CFrame.new(backPos.Position, hrp.Position)
-    end
+local function getBackCFrame(target)
+	local root = target.Character:FindFirstChild("HumanoidRootPart")
+	if not root then return end
+	local behind = root.CFrame * CFrame.new(0, 0, 2)
+	return behind, root.Position
 end
 
-KillTab:CreateToggle({
-    Name = "Auto Kill Player",
-    CurrentValue = false,
-    Callback = function(Value)
-        autoKill = Value
-        if autoKill then
-            Rayfield:Notify({ Title = "Conan Hub", Content = "Auto Kill Started", Duration = 2 })
-            oldCFrame = LocalPlayer.Character:FindFirstChild("HumanoidRootPart").CFrame
-            selectedTargets = {}
-            
-            task.spawn(function()
-                local available = getAlivePlayers()
-                while autoKill and #selectedTargets < #available do
-                    local target
-                    repeat
-                        local randomPlayer = available[math.random(1, #available)]
-                        if not table.find(selectedTargets, randomPlayer) then
-                            target = randomPlayer
-                        end
-                    until target or not autoKill
-                    
-                    if not target then break end
-                    table.insert(selectedTargets, target)
-
-                    local killTime = 10 -- giây
-                    local elapsed = 0
-
-                    while autoKill and elapsed < killTime do
-                        teleportBehind(target)
-                        task.wait(0.1)
-                        elapsed += 0.1
-                    end
-                end
-
-                -- Sau khi hết lượt
-                if autoKill then
-                    LocalPlayer.Character:FindFirstChild("HumanoidRootPart").CFrame = oldCFrame
-                    Rayfield:Notify({ Title = "Conan Hub", Content = "Đã trở lại vị trí ban đầu", Duration = 3 })
-                    autoKill = false
-                end
-            end)
-        else
-            Rayfield:Notify({ Title = "Conan Hub", Content = "Auto Kill Stopped", Duration = 2 })
-        end
-    end
-})
-
-local ConfigTab = Window:CreateTab("Config", 4483362458) -- icon gear
-local ConfigSection = ConfigTab:CreateSection("Cài đặt cấu hình")
-
-local ConfigName = ""
-local SelectedConfig = ""
-local AutoLoad = false
-local ConfigsFolder = "ConanHubConfigs"
-
--- Tạo thư mục lưu nếu chưa có
-if not isfolder(ConfigsFolder) then
-    makefolder(ConfigsFolder)
+local function rotateToTarget(target)
+	local myRoot = LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+	local targetRoot = target.Character:FindFirstChild("HumanoidRootPart")
+	if myRoot and targetRoot then
+		local direction = (targetRoot.Position - myRoot.Position).Unit
+		myRoot.CFrame = CFrame.new(myRoot.Position, myRoot.Position + Vector3.new(direction.X, 0, direction.Z))
+	end
 end
 
--- Nhập tên để tạo config
-ConfigTab:CreateInput({
-    Name = "Tên Config",
-    PlaceholderText = "Nhập tên config...",
-    RemoveTextAfterFocusLost = false,
-    Callback = function(Value)
-        ConfigName = Value
-    end,
-})
+task.spawn(function()
+	while true do
+		task.wait(0.1)
+		if autoKill then
+			local input = nameBox.Text
+			local target = findClosestMatch(input)
+			if target and target.Character and target.Character:FindFirstChild("HumanoidRootPart") then
+				if not killed[target] then
+					oldCFrame = LocalPlayer.Character.HumanoidRootPart.CFrame
+					killed[target] = true
+					local startTime = tick()
+					while tick() - startTime < 10 and autoKill and target and target.Character do
+						local cf = getBackCFrame(target)
+						if cf then
+							LocalPlayer.Character:MoveTo(cf.Position)
+							rotateToTarget(target)
+						end
+						task.wait(0.1)
+					end
+					LocalPlayer.Character:MoveTo(oldCFrame.Position)
+				end
+			end
+		end
+	end
+end)
 
--- Nút tạo config
-ConfigTab:CreateButton({
-    Name = "Tạo Config",
-    Callback = function()
-        if ConfigName ~= "" then
-            local data = {
-                speed = SpeedValue or 16,
-                autoKill = _G.autoKill or false,
-                autoESP = _G.autoESP or false
-            }
-            writefile(ConfigsFolder.."/"..ConfigName..".json", game:GetService("HttpService"):JSONEncode(data))
-            Rayfield:Notify({Title = "Conan Hub", Content = "Đã lưu cấu hình!", Duration = 2})
-        end
-    end,
-})
-
--- Dropdown chọn config đã tạo
-local ConfigDropdown = ConfigTab:CreateDropdown({
-    Name = "Chọn Config",
-    Options = listfiles(ConfigsFolder),
-    CurrentOption = "",
-    Callback = function(Option)
-        SelectedConfig = Option
-    end,
-})
-
--- Nút load config
-ConfigTab:CreateButton({
-    Name = "Load Config",
-    Callback = function()
-        if SelectedConfig and isfile(SelectedConfig) then
-            local raw = readfile(SelectedConfig)
-            local data = game:GetService("HttpService"):JSONDecode(raw)
-
-            -- Gán lại giá trị tùy theo script chính
-            SpeedValue = data.speed or 16
-            _G.autoKill = data.autoKill
-            _G.autoESP = data.autoESP
-            Rayfield:Notify({Title = "Conan Hub", Content = "Đã tải cấu hình!", Duration = 2})
-        end
-    end,
-})
-
--- Auto Load Toggle
-ConfigTab:CreateToggle({
-    Name = "Tự động tải Config khi vào game",
-    CurrentValue = false,
-    Callback = function(Value)
-        AutoLoad = Value
-        if Value and SelectedConfig then
-            writefile("ConanHubConfigs/autoload.txt", SelectedConfig)
-        elseif not Value and isfile("ConanHubConfigs/autoload.txt") then
-            delfile("ConanHubConfigs/autoload.txt")
-        end
-    end,
-})
-
--- Tự động load nếu có autoload
-if isfile("ConanHubConfigs/autoload.txt") then
-    local auto = readfile("ConanHubConfigs/autoload.txt")
-    if isfile(auto) then
-        local raw = readfile(auto)
-        local data = game:GetService("HttpService"):JSONDecode(raw)
-        SpeedValue = data.speed or 16
-        _G.autoKill = data.autoKill
-        _G.autoESP = data.autoESP
-        Rayfield:Notify({Title = "Conan Hub", Content = "Auto Load Config thành công!", Duration = 2})
-    end
-end
+toggleKill.MouseButton1Click:Connect(function()
+	autoKill = not autoKill
+	toggleKill.Text = "Auto Kill: " .. (autoKill and "ON" or "OFF")
+	toggleKill.BackgroundColor3 = autoKill and Color3.fromRGB(50, 200, 50) or Color3.fromRGB(255, 50, 50)
+	if not autoKill then
+		killed = {}
+	end
+end)
