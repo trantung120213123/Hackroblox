@@ -2,6 +2,7 @@
 local Players = game:GetService("Players")
 local LocalPlayer = Players.LocalPlayer
 local Camera = workspace.CurrentCamera
+local TweenService = game:GetService("TweenService")
 
 local gui = Instance.new("ScreenGui", game.CoreGui)
 gui.Name = "ConanKillGui"
@@ -63,9 +64,31 @@ mainFrame.InputEnded:Connect(function(input)
 	end
 end)
 
+-- Thêm animation phóng to/thu nhỏ
 toggleBtn.MouseButton1Click:Connect(function()
-	mainFrame:TweenPosition(mainFrame.Position, Enum.EasingDirection.Out, Enum.EasingStyle.Quad, 0.2, true)
-	mainFrame.Visible = not mainFrame.Visible
+	if mainFrame.Visible then
+		-- Thu nhỏ trước khi ẩn
+		local tweenInfo = TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
+		local tween = TweenService:Create(mainFrame, tweenInfo, {
+			Size = UDim2.new(0, 0, 0, 0),
+			Position = UDim2.new(0.5, 0, 0.5, 0) -- Thu về tâm
+		})
+		tween:Play()
+		tween.Completed:Connect(function()
+			mainFrame.Visible = false
+		end)
+	else
+		-- Hiện và phóng to
+		mainFrame.Visible = true
+		mainFrame.Size = UDim2.new(0, 0, 0, 0) -- Bắt đầu từ kích thước 0
+		mainFrame.Position = UDim2.new(0.5, 0, 0.5, 0) -- Vị trí tâm
+		local tweenInfo = TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
+		local tween = TweenService:Create(mainFrame, tweenInfo, {
+			Size = UDim2.new(0, 300, 0, 200),
+			Position = UDim2.new(0.5, -150, 0.5, -100)
+		})
+		tween:Play()
+	end
 end)
 
 local title = Instance.new("TextLabel", mainFrame)
