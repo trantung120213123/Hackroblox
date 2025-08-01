@@ -1,0 +1,235 @@
+--// Conan Hub - Console Chat GUI (hiện lệnh đã nhập)
+
+local Players = game:GetService("Players")
+local UIS = game:GetService("UserInputService")
+local TweenService = game:GetService("TweenService")
+local lp = Players.LocalPlayer
+
+-- GUI cha
+local gui = Instance.new("ScreenGui", game.CoreGui)
+gui.Name = "ConanHub"
+gui.ResetOnSpawn = false
+
+-- Khung chính (khung cha)
+local mainFrame = Instance.new("Frame")
+mainFrame.Size = UDim2.new(0, 400, 0, 300)
+mainFrame.Position = UDim2.new(0.3, 0, 0.3, 0)
+mainFrame.BackgroundColor3 = Color3.fromRGB(255, 0, 0)
+mainFrame.BackgroundTransparency = 0.3
+mainFrame.BorderSizePixel = 0
+mainFrame.AnchorPoint = Vector2.new(0.5, 0.5)
+mainFrame.Parent = gui
+mainFrame.Visible = true
+
+-- Bo góc
+local corner = Instance.new("UICorner", mainFrame)
+corner.CornerRadius = UDim.new(0, 12)
+
+-- Avatar góc trái
+local avatar = Instance.new("ImageLabel", mainFrame)
+avatar.Size = UDim2.new(0, 40, 0, 40)
+avatar.Position = UDim2.new(0, 10, 0, 10)
+avatar.BackgroundTransparency = 1
+avatar.Image = "https://www.roblox.com/headshot-thumbnail/image?userId=" .. lp.UserId .. "&width=420&height=420&format=png"
+
+-- Tiêu đề
+local title = Instance.new("TextLabel", mainFrame)
+title.Text = "Conan Hub"
+title.Font = Enum.Font.GothamBold
+title.TextSize = 24
+title.TextColor3 = Color3.new(1, 1, 1)
+title.Size = UDim2.new(1, 0, 0, 40)
+title.BackgroundTransparency = 1
+title.Position = UDim2.new(0, 0, 0, 0)
+
+-- Nút "..."
+local toggleBtn = Instance.new("TextButton", gui)
+toggleBtn.Size = UDim2.new(0, 40, 0, 40)
+toggleBtn.Position = UDim2.new(0.02, 0, 0.2, 0)
+toggleBtn.Text = "..."
+toggleBtn.BackgroundColor3 = Color3.fromRGB(255, 0, 0)
+toggleBtn.BackgroundTransparency = 0.3
+toggleBtn.TextColor3 = Color3.new(1, 1, 1)
+toggleBtn.Font = Enum.Font.GothamBold
+toggleBtn.TextSize = 22
+
+local btnCorner = Instance.new("UICorner", toggleBtn)
+btnCorner.CornerRadius = UDim.new(0, 12)
+
+-- Cho nút "..." di chuyển được
+local dragging, dragInput, dragStart, startPos
+local function update(input)
+	local delta = input.Position - dragStart
+	toggleBtn.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
+end
+
+toggleBtn.InputBegan:Connect(function(input)
+	if input.UserInputType == Enum.UserInputType.MouseButton1 then
+		dragging = true
+		dragStart = input.Position
+		startPos = toggleBtn.Position
+
+		input.Changed:Connect(function()
+			if input.UserInputState == Enum.UserInputState.End then
+				dragging = false
+			end
+		end)
+	end
+end)
+
+toggleBtn.InputChanged:Connect(function(input)
+	if input.UserInputType == Enum.UserInputType.MouseMovement then
+		dragInput = input
+	end
+end)
+
+UIS.InputChanged:Connect(function(input)
+	if input == dragInput and dragging then
+		update(input)
+	end
+end)
+
+-- Toggle hiện / ẩn GUI
+toggleBtn.MouseButton1Click:Connect(function()
+	mainFrame.Visible = not mainFrame.Visible
+end)
+
+-- Khung chat lệnh
+local chatFrame = Instance.new("ScrollingFrame", mainFrame)
+chatFrame.Size = UDim2.new(1, -20, 1, -100)
+chatFrame.Position = UDim2.new(0, 10, 0, 60)
+chatFrame.CanvasSize = UDim2.new(0, 0, 0, 0)
+chatFrame.ScrollBarThickness = 4
+chatFrame.BackgroundTransparency = 0.1
+chatFrame.BackgroundColor3 = Color3.fromRGB(255, 70, 70)
+chatFrame.BorderSizePixel = 0
+
+local chatCorner = Instance.new("UICorner", chatFrame)
+chatCorner.CornerRadius = UDim.new(0, 10)
+
+-- Layout để tin nhắn tự xuống dòng
+local layout = Instance.new("UIListLayout", chatFrame)
+layout.SortOrder = Enum.SortOrder.LayoutOrder
+layout.Padding = UDim.new(0, 4)
+
+-- Ô nhập lệnh
+local inputBox = Instance.new("TextBox", mainFrame)
+inputBox.PlaceholderText = "Nhập lệnh kiểu ;fly on, ;noclip off, ;kill all..."
+inputBox.Size = UDim2.new(1, -20, 0, 35)
+inputBox.Position = UDim2.new(0, 10, 1, -40)
+inputBox.BackgroundColor3 = Color3.fromRGB(255, 0, 0)
+inputBox.BackgroundTransparency = 0.15
+inputBox.TextColor3 = Color3.new(1,1,1)
+inputBox.Font = Enum.Font.Gotham
+inputBox.TextSize = 18
+inputBox.Text = ""
+inputBox.ClearTextOnFocus = false
+
+local inputCorner = Instance.new("UICorner", inputBox)
+inputCorner.CornerRadius = UDim.new(0, 8)
+
+-- Gửi tin nhắn khi nhấn Enter
+inputBox.FocusLost:Connect(function(enter)
+	if enter and inputBox.Text ~= "" then
+		local msg = Instance.new("TextLabel", chatFrame)
+		msg.Size = UDim2.new(1, -10, 0, 25)
+		msg.BackgroundTransparency = 1
+		msg.Text = "[Conan Hub] " .. inputBox.Text
+		msg.Font = Enum.Font.Code
+		msg.TextColor3 = Color3.new(1, 1, 1)
+		msg.TextSize = 18
+		msg.TextXAlignment = Enum.TextXAlignment.Left
+
+		inputBox.Text = ""
+		task.wait()
+		chatFrame.CanvasSize = UDim2.new(0, 0, 0, layout.AbsoluteContentSize.Y + 10)
+	end
+end)
+
+-- BẮT SỰ KIỆN KHI CÓ LỆNH
+function processCommand(input)
+	local args = string.lower(input):split(" ")
+	local cmd = args[1]
+	local arg1 = args[2]
+
+	-- Noclip
+	if cmd == ";noclip" and arg1 then
+		if arg1 == "on" then
+			noclipConn = game:GetService("RunService").Stepped:Connect(function()
+				if lp.Character and lp.Character:FindFirstChild("Humanoid") then
+					lp.Character.Humanoid:ChangeState(11)
+				end
+			end)
+		elseif arg1 == "off" and noclipConn then
+			noclipConn:Disconnect()
+		end
+
+	-- ESP
+	elseif cmd == ";esp" and arg1 then
+		if arg1 == "on" then
+			for _, p in pairs(game.Players:GetPlayers()) do
+				if p ~= lp and not p.Character:FindFirstChild("ESPBox") then
+					local b = Instance.new("BillboardGui", p.Character)
+					b.Name = "ESPBox"
+					b.Size = UDim2.new(0, 100, 0, 40)
+					b.AlwaysOnTop = true
+					b.StudsOffset = Vector3.new(0, 3, 0)
+
+					local text = Instance.new("TextLabel", b)
+					text.Size = UDim2.new(1, 0, 1, 0)
+					text.Text = p.Name
+					text.TextColor3 = Color3.new(1, 0, 0)
+					text.BackgroundTransparency = 1
+					text.Font = Enum.Font.GothamBold
+					text.TextScaled = true
+				end
+			end
+		elseif arg1 == "off" then
+			for _, p in pairs(game.Players:GetPlayers()) do
+				if p ~= lp and p.Character:FindFirstChild("ESPBox") then
+					p.Character.ESPBox:Destroy()
+				end
+			end
+		end
+
+	-- Fly (dán script m gửi)
+	elseif cmd == ";fly" and arg1 then
+		if arg1 == "on" then
+			loadstring([[-- fly script của mày dán vô đây]])()
+		elseif arg1 == "off" then
+			for _,v in pairs(getgc(true)) do
+				if type(v) == "function" and getfenv(v).script and getfenv(v).script.Name == "FlyScript" then
+					getfenv(v).script:Destroy()
+				end
+			end
+		end
+
+	-- Teleport đến người chơi (tìm gần đúng tên)
+	elseif cmd == ";tp" and arg1 then
+		for _, p in pairs(game.Players:GetPlayers()) do
+			if p ~= lp and string.sub(string.lower(p.Name), 1, #arg1) == arg1 then
+				if p.Character and p.Character:FindFirstChild("HumanoidRootPart") then
+					lp.Character:MoveTo(p.Character.HumanoidRootPart.Position + Vector3.new(0, 3, 0))
+				end
+			end
+		end
+
+	-- Auto kill all (teleport sau lưng liên tục và xoay mặt)
+	elseif cmd == ";kill" and args[2] == "all" then
+		task.spawn(function()
+			for i = 1, 10 do
+				for _, p in pairs(game.Players:GetPlayers()) do
+					if p ~= lp and p.Character and p.Character:FindFirstChild("HumanoidRootPart") then
+						local target = p.Character.HumanoidRootPart
+						local char = lp.Character
+						if char and char:FindFirstChild("HumanoidRootPart") then
+							char:MoveTo(target.Position - (target.CFrame.LookVector * 2))
+							char:SetPrimaryPartCFrame(CFrame.new(char.PrimaryPart.Position, target.Position))
+						end
+					end
+				end
+				wait(1)
+			end
+		end)
+	end
+end
