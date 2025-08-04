@@ -59,3 +59,55 @@ function Library:CreateWindow(config)
 end
 
 return Library
+
+-- Thêm vào Library.lua sau CreateWindow
+function Library:AddTab(window, tabName)
+    -- Tạo tab bên trái
+    local SideBar = window.Main:FindFirstChild("SideBar")
+    if not SideBar then
+        SideBar = Instance.new("Frame", window.Main)
+        SideBar.Name = "SideBar"
+        SideBar.Size = UDim2.new(0, 100, 1, -30)
+        SideBar.Position = UDim2.new(0, 0, 0, 30)
+        SideBar.BackgroundColor3 = Color3.fromRGB(60, 0, 0)
+        SideBar.BackgroundTransparency = 0.3
+    end
+
+    local TabButton = Instance.new("TextButton", SideBar)
+    TabButton.Size = UDim2.new(1, 0, 0, 30)
+    TabButton.Text = tabName
+    TabButton.BackgroundColor3 = Color3.fromRGB(90, 0, 0)
+    TabButton.TextColor3 = Color3.new(1, 1, 1)
+    TabButton.BorderSizePixel = 0
+    TabButton.Font = Enum.Font.GothamBold
+    TabButton.TextSize = 14
+    TabButton.Name = "Tab_" .. tabName
+
+    local ContentFrame = Instance.new("ScrollingFrame", window.Main)
+    ContentFrame.Size = UDim2.new(1, -100, 1, -30)
+    ContentFrame.Position = UDim2.new(0, 100, 0, 30)
+    ContentFrame.BackgroundColor3 = Color3.fromRGB(40, 0, 0)
+    ContentFrame.BackgroundTransparency = 0.4
+    ContentFrame.Visible = false
+    ContentFrame.Name = "Content_" .. tabName
+    ContentFrame.AutomaticCanvasSize = Enum.AutomaticSize.Y
+    ContentFrame.CanvasSize = UDim2.new(0, 0, 0, 0)
+    ContentFrame.ScrollBarThickness = 4
+
+    local UIList = Instance.new("UIListLayout", ContentFrame)
+    UIList.Padding = UDim.new(0, 6)
+    UIList.SortOrder = Enum.SortOrder.LayoutOrder
+
+    -- Bấm vào tab thì hiện content đúng
+    TabButton.MouseButton1Click:Connect(function()
+        for _, v in pairs(window.Main:GetChildren()) do
+            if v:IsA("ScrollingFrame") and v.Name:match("^Content_") then
+                v.Visible = false
+            end
+        end
+        ContentFrame.Visible = true
+    end)
+
+    return ContentFrame
+end
+
