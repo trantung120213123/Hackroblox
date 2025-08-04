@@ -60,19 +60,25 @@ end
 
 return Library
 
--- Thêm vào Library.lua sau CreateWindow
+-- AddTab(): tạo tab + khung nội dung tương ứng
 function Library:AddTab(window, tabName)
-    -- Tạo tab bên trái
+    -- 🔍 Kiểm tra hoặc tạo SideBar chứa các nút tab
     local SideBar = window.Main:FindFirstChild("SideBar")
     if not SideBar then
         SideBar = Instance.new("Frame", window.Main)
         SideBar.Name = "SideBar"
-        SideBar.Size = UDim2.new(0, 100, 1, -30)
+        SideBar.Size = UDim2.new(0, 100, 1, -30) -- Chiều rộng 100, trừ tiêu đề 30
         SideBar.Position = UDim2.new(0, 0, 0, 30)
         SideBar.BackgroundColor3 = Color3.fromRGB(60, 0, 0)
         SideBar.BackgroundTransparency = 0.3
+
+        -- Sắp xếp tab theo hàng dọc
+        local ListLayout = Instance.new("UIListLayout", SideBar)
+        ListLayout.SortOrder = Enum.SortOrder.LayoutOrder
+        ListLayout.Padding = UDim.new(0, 4)
     end
 
+    -- 🔘 Tạo nút tab (bên trái)
     local TabButton = Instance.new("TextButton", SideBar)
     TabButton.Size = UDim2.new(1, 0, 0, 30)
     TabButton.Text = tabName
@@ -83,22 +89,35 @@ function Library:AddTab(window, tabName)
     TabButton.TextSize = 14
     TabButton.Name = "Tab_" .. tabName
 
+    -- 📦 Tạo khung nội dung tương ứng cho tab
     local ContentFrame = Instance.new("ScrollingFrame", window.Main)
-    ContentFrame.Size = UDim2.new(1, -100, 1, -30)
+    ContentFrame.Size = UDim2.new(1, -100, 1, -30) -- Trừ phần tab bên trái và tiêu đề
     ContentFrame.Position = UDim2.new(0, 100, 0, 30)
     ContentFrame.BackgroundColor3 = Color3.fromRGB(40, 0, 0)
     ContentFrame.BackgroundTransparency = 0.4
-    ContentFrame.Visible = false
     ContentFrame.Name = "Content_" .. tabName
     ContentFrame.AutomaticCanvasSize = Enum.AutomaticSize.Y
     ContentFrame.CanvasSize = UDim2.new(0, 0, 0, 0)
     ContentFrame.ScrollBarThickness = 4
+    ContentFrame.Visible = false -- ẩn ban đầu
 
+    -- 📜 Tạo layout sắp xếp item trong nội dung
     local UIList = Instance.new("UIListLayout", ContentFrame)
     UIList.Padding = UDim.new(0, 6)
     UIList.SortOrder = Enum.SortOrder.LayoutOrder
 
-    -- Bấm vào tab thì hiện content đúng
+    -- ✅ Hiện tab đầu tiên mặc định
+    local currentTabs = 0
+    for _, child in ipairs(SideBar:GetChildren()) do
+        if child:IsA("TextButton") then
+            currentTabs += 1
+        end
+    end
+    if currentTabs == 1 then
+        ContentFrame.Visible = true
+    end
+
+    -- 🎯 Khi bấm tab thì hiện đúng nội dung
     TabButton.MouseButton1Click:Connect(function()
         for _, v in pairs(window.Main:GetChildren()) do
             if v:IsA("ScrollingFrame") and v.Name:match("^Content_") then
@@ -108,6 +127,6 @@ function Library:AddTab(window, tabName)
         ContentFrame.Visible = true
     end)
 
+    -- 📤 Trả về content frame để add button/toggle sau này
     return ContentFrame
 end
-
