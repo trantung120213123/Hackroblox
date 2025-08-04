@@ -55,3 +55,41 @@ for row = 1, 8 do
         end)
     end
 end
+
+-- PHẦN 2: Hàm chọn và di chuyển quân (gắn vào _G để dễ quản lý)
+_G.OnTileClick = function(tile)
+    local name = tile.Name
+    local piece = boardState[name]
+
+    if _G.SelectedTile == nil then
+        -- Nếu chưa chọn ô nào => chọn ô hiện tại nếu có quân
+        if piece ~= "" then
+            _G.SelectedTile = tile
+            tile.BackgroundColor3 = Color3.fromRGB(255, 255, 0) -- Tô vàng ô được chọn
+        end
+    else
+        local from = _G.SelectedTile
+        local fromName = from.Name
+        local fromPiece = boardState[fromName]
+
+        -- Di chuyển quân
+        boardState[name] = fromPiece
+        boardState[fromName] = ""
+
+        tile.Text = pieces[fromPiece]
+        from.Text = ""
+
+        -- Reset màu 2 ô
+        local row1, col1 = string.match(fromName, "(%d+),(%d+)")
+        from.BackgroundColor3 = ((tonumber(row1)+tonumber(col1))%2==0)
+            and Color3.fromRGB(240,217,181) or Color3.fromRGB(181,136,99)
+
+        local row2, col2 = string.match(name, "(%d+),(%d+)")
+        tile.BackgroundColor3 = ((tonumber(row2)+tonumber(col2))%2==0)
+            and Color3.fromRGB(240,217,181) or Color3.fromRGB(181,136,99)
+
+        -- Hủy chọn
+        _G.SelectedTile = nil
+    end
+end
+
