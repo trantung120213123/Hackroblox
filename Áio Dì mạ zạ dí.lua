@@ -10,7 +10,7 @@ local player = Players.LocalPlayer
 -- ===== config =====
 local BEHIND_STUDS = 5
 local TRASH_BEHIND_STUDS = 5
-local TELEPORT_OUT_INTERVAL = 0.1
+local TELEPORT_OUT_INTERVAL = 0.01
 local OUT_PHASE_DURATION = 1.0
 local TRASH_PHASE_DURATION = 1.0
 -- min/max size for resize
