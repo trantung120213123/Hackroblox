@@ -1,7 +1,11 @@
--- Auto Kill Thùng Rác (Trash Can) <-> Behind Target 5 studs
--- Flat Lua, dán vào executor (Synapse/krnl/other)
--- Chú ý: một số game chặn thay đổi CFrame -> có thể không chạy.
--- Tác giả: tự động cho mày, chỉnh tiếp nếu cần.
+-- AutoTrashKill (Rayfield-style flat Lua)
+-- Features:
+--  - Dropdown chọn target
+--  - Tìm tất cả Trash Can (theo tên chứa keywords)
+--  - Mỗi lần "về trash" chọn random trash can
+--  - Phase: 1s ở sau trash -> 1s OUT phase (teleport sau lưng target mỗi 0.3s) -> lặp
+--  - GUI có minimize / maximize, draggable
+-- WARNING: Một số game chặn việc thay đổi CFrame hoặc anti-cheat. Dùng tự chịu.
 
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
@@ -9,29 +13,76 @@ local UserInputService = game:GetService("UserInputService")
 
 local localPlayer = Players.LocalPlayer
 
--- Cấu hình mặc định
-local BEHIND_STUDS = 5          -- khoảng cách sau lưng target (mày set: 5)
-local TRASH_OFFSET_BACK = 2     -- offset sau trash can (ứng với "sau trash can 1 xíu")
-local TELEPORT_OUT_INTERVAL = 0.3 -- teleport ra sau target mỗi 0.3s (theo yêu cầu)
-local OUT_PHASE_DURATION = 1.0  -- thời lượng phase "ra sau target" (1s)
-local TRASH_PHASE_DURATION = 1.0 -- thời lượng phase "ở sau trash can" (1s)
+-- ======= Cấu hình =======
+local BEHIND_STUDS = 5               -- sau lưng target 5 studs
+local TRASH_OFFSET_BACK = 2          -- sau trash chút xíu
+local TELEPORT_OUT_INTERVAL = 0.3    -- teleport out mỗi 0.3s trong OUT phase
+local OUT_PHASE_DURATION = 1.0       -- thời lượng OUT phase (1s)
+local TRASH_PHASE_DURATION = 1.0     -- thời lượng ở sau trash (1s)
+local GUI_NAME = "AutoTrashKill_RayfieldLike"
+-- =========================
 
--- GUI tên
-local GUI_NAME = "AutoTrashKillGUI"
-
--- Remove GUI cũ nếu có
+-- Xóa GUI cũ nếu có
 if localPlayer:FindFirstChildOfClass("PlayerGui") then
     local old = localPlayer.PlayerGui:FindFirstChild(GUI_NAME)
     if old then old:Destroy() end
 end
 
--- ScreenGui
+-- Utility: get HRP
+local function getHRP(p)
+    if not p then return nil end
+    local ch = p.Character
+    if not ch then return nil end
+    return ch:FindFirstChild("HumanoidRootPart") or ch:FindFirstChild("Torso") or ch:FindFirstChild("UpperTorso")
+end
+
+-- Utility: find all trash cans in workspace (returns list of BaseParts)
+local function findAllTrashCans()
+    local keywords = {"trash", "trashcan", "trash can", "garbage", "bin"}
+    local results = {}
+    for _,obj in ipairs(workspace:GetDescendants()) do
+        if obj:IsA("BasePart") or obj:IsA("UnionOperation") or obj:IsA("MeshPart") or obj:IsA("Part") or obj:IsA("Model") then
+            local name = tostring(obj.Name or "")
+            local lname = string.lower(name)
+            for _,k in ipairs(keywords) do
+                if string.find(lname, k, 1, true) then
+                    -- if model, get primary part
+                    if obj:IsA("Model") then
+                        local primary = obj.PrimaryPart or obj:FindFirstChildWhichIsA("BasePart")
+                        if primary then
+                            table.insert(results, primary)
+                        end
+                    else
+                        table.insert(results, obj)
+                    end
+                    break
+                end
+            end
+        end
+    end
+    return results
+end
+
+-- Helper: safe teleport local player to cframe
+local function tpToCFrame(cf)
+    local hrp = getHRP(localPlayer)
+    if not hrp then return false end
+    pcall(function() hrp.CFrame = cf end)
+    return true
+end
+
+-- Helper: cframe lookAt
+local function cframeLookAt(fromPos, targetPos)
+    return CFrame.new(fromPos, targetPos)
+end
+
+-- ========= BUILD GUI (Rayfield-style look but flat) =========
 local screenGui = Instance.new("ScreenGui")
 screenGui.Name = GUI_NAME
 screenGui.ResetOnSpawn = false
 screenGui.Parent = localPlayer:WaitForChild("PlayerGui")
 
--- Small toggle (thu nhỏ)
+-- small toggle (minimized)
 local smallBtn = Instance.new("TextButton")
 smallBtn.Name = "SmallToggle"
 smallBtn.Size = UDim2.fromOffset(48,48)
@@ -43,24 +94,23 @@ smallBtn.BorderSizePixel = 0
 smallBtn.Visible = false
 smallBtn.Parent = screenGui
 
--- Main Frame
+-- main frame
 local main = Instance.new("Frame")
 main.Name = "Main"
 main.Size = UDim2.new(0,380,0,260)
 main.Position = UDim2.new(0,80,0,80)
-main.BackgroundColor3 = Color3.fromRGB(20,20,20)
+main.BackgroundColor3 = Color3.fromRGB(18,18,18)
 main.BorderSizePixel = 0
 main.Parent = screenGui
+main.Active = true
 
--- Header
-local header = Instance.new("Frame")
+-- header
+local header = Instance.new("Frame", main)
 header.Size = UDim2.new(1,0,0,36)
-header.Position = UDim2.new(0,0,0,0)
 header.BackgroundColor3 = Color3.fromRGB(35,35,35)
 header.BorderSizePixel = 0
-header.Parent = main
 
-local title = Instance.new("TextLabel")
+local title = Instance.new("TextLabel", header)
 title.Size = UDim2.new(1,-80,1,0)
 title.Position = UDim2.new(0,8,0,0)
 title.BackgroundTransparency = 1
@@ -69,9 +119,8 @@ title.Font = Enum.Font.SourceSansBold
 title.TextSize = 18
 title.TextColor3 = Color3.fromRGB(220,220,220)
 title.TextXAlignment = Enum.TextXAlignment.Left
-title.Parent = header
 
-local minBtn = Instance.new("TextButton")
+local minBtn = Instance.new("TextButton", header)
 minBtn.Size = UDim2.new(0,64,1,0)
 minBtn.Position = UDim2.new(1,-64,0,0)
 minBtn.BackgroundColor3 = Color3.fromRGB(28,28,28)
@@ -80,133 +129,120 @@ minBtn.Text = "—"
 minBtn.Font = Enum.Font.SourceSansBold
 minBtn.TextSize = 20
 minBtn.TextColor3 = Color3.fromRGB(255,255,255)
-minBtn.Parent = header
 
--- Left: Player list + Refresh
-local left = Instance.new("Frame")
-left.Size = UDim2.new(0,170,0,220)
-left.Position = UDim2.new(0,8,0,40)
+-- left column: dropdown player list
+local left = Instance.new("Frame", main)
+left.Size = UDim2.new(0,170,0,200)
+left.Position = UDim2.new(0,8,0,44)
 left.BackgroundColor3 = Color3.fromRGB(15,15,15)
 left.BorderSizePixel = 0
-left.Parent = main
 
-local playersLabel = Instance.new("TextLabel")
-playersLabel.Size = UDim2.new(1, -12, 0, 20)
+local playersLabel = Instance.new("TextLabel", left)
+playersLabel.Size = UDim2.new(1,-12,0,20)
 playersLabel.Position = UDim2.new(0,6,0,6)
 playersLabel.BackgroundTransparency = 1
-playersLabel.Text = "Players"
+playersLabel.Text = "Target"
 playersLabel.Font = Enum.Font.SourceSansBold
 playersLabel.TextSize = 14
 playersLabel.TextColor3 = Color3.fromRGB(200,200,200)
 playersLabel.TextXAlignment = Enum.TextXAlignment.Left
-playersLabel.Parent = left
 
-local refreshBtn = Instance.new("TextButton")
+-- Dropdown (custom)
+local dropdownBtn = Instance.new("TextButton", left)
+dropdownBtn.Size = UDim2.new(1,-12,0,32)
+dropdownBtn.Position = UDim2.new(0,6,0,30)
+dropdownBtn.BackgroundColor3 = Color3.fromRGB(40,40,40)
+dropdownBtn.BorderSizePixel = 0
+dropdownBtn.Text = "Chọn target..."
+dropdownBtn.Font = Enum.Font.SourceSans
+dropdownBtn.TextSize = 14
+dropdownBtn.TextColor3 = Color3.fromRGB(230,230,230)
+
+local dropdownFrame = Instance.new("Frame", left)
+dropdownFrame.Size = UDim2.new(1,-12,0,110)
+dropdownFrame.Position = UDim2.new(0,6,0,66)
+dropdownFrame.BackgroundColor3 = Color3.fromRGB(18,18,18)
+dropdownFrame.BorderSizePixel = 0
+dropdownFrame.Visible = false
+
+local dropdownLayout = Instance.new("UIListLayout", dropdownFrame)
+dropdownLayout.Padding = UDim.new(0,4)
+
+local refreshBtn = Instance.new("TextButton", left)
 refreshBtn.Size = UDim2.new(0,64,0,22)
-refreshBtn.Position = UDim2.new(1,-70,0,3)
+refreshBtn.Position = UDim2.new(1,-70,0,4)
 refreshBtn.Text = "Refresh"
 refreshBtn.Font = Enum.Font.SourceSans
 refreshBtn.TextSize = 12
-refreshBtn.Parent = left
 
-local playerListFrame = Instance.new("Frame")
-playerListFrame.Size = UDim2.new(1,-12,0,170)
-playerListFrame.Position = UDim2.new(0,6,0,32)
-playerListFrame.BackgroundColor3 = Color3.fromRGB(18,18,18)
-playerListFrame.BorderSizePixel = 0
-playerListFrame.Parent = left
-
-local listLayout = Instance.new("UIListLayout")
-listLayout.Padding = UDim.new(0,4)
-listLayout.Parent = playerListFrame
-
--- Right: Controls
-local right = Instance.new("Frame")
-right.Size = UDim2.new(0,190,0,220)
-right.Position = UDim2.new(0,190,0,40)
+-- right column: controls
+local right = Instance.new("Frame", main)
+right.Size = UDim2.new(0,190,0,200)
+right.Position = UDim2.new(0,190,0,44)
 right.BackgroundColor3 = Color3.fromRGB(15,15,15)
 right.BorderSizePixel = 0
-right.Parent = main
 
--- Selected target label
-local selLabel = Instance.new("TextLabel")
-selLabel.Size = UDim2.new(1,-12,0,24)
-selLabel.Position = UDim2.new(0,6,0,6)
-selLabel.BackgroundTransparency = 1
-selLabel.Text = "Target: (none)"
-selLabel.Font = Enum.Font.SourceSansBold
-selLabel.TextSize = 14
-selLabel.TextColor3 = Color3.fromRGB(220,220,220)
-selLabel.TextXAlignment = Enum.TextXAlignment.Left
-selLabel.Parent = right
-
--- Toggle AutoKill
-local toggleBtn = Instance.new("TextButton")
-toggleBtn.Size = UDim2.new(0,120,0,36)
-toggleBtn.Position = UDim2.new(0,6,0,40)
+local toggleBtn = Instance.new("TextButton", right)
+toggleBtn.Size = UDim2.new(0,140,0,36)
+toggleBtn.Position = UDim2.new(0,6,0,6)
 toggleBtn.Text = "AutoKill: OFF"
 toggleBtn.Font = Enum.Font.SourceSans
 toggleBtn.TextSize = 14
-toggleBtn.Parent = right
+toggleBtn.BackgroundColor3 = Color3.fromRGB(45,45,45)
+toggleBtn.BorderSizePixel = 0
 
--- Settings: studs
-local studsLabel = Instance.new("TextLabel")
+local studsLabel = Instance.new("TextLabel", right)
 studsLabel.Size = UDim2.new(1,-12,0,18)
-studsLabel.Position = UDim2.new(0,6,0,86)
+studsLabel.Position = UDim2.new(0,6,0,52)
 studsLabel.BackgroundTransparency = 1
 studsLabel.Text = "Behind studs: "..tostring(BEHIND_STUDS)
 studsLabel.Font = Enum.Font.SourceSans
 studsLabel.TextSize = 14
 studsLabel.TextColor3 = Color3.fromRGB(200,200,200)
 studsLabel.TextXAlignment = Enum.TextXAlignment.Left
-studsLabel.Parent = right
 
-local incBtn = Instance.new("TextButton")
-incBtn.Size = UDim2.new(0,28,0,20)
-incBtn.Position = UDim2.new(1,-70,0,82)
-incBtn.Text = "+"
-incBtn.Font = Enum.Font.SourceSansBold
-incBtn.TextSize = 14
-incBtn.Parent = right
-
-local decBtn = Instance.new("TextButton")
+local decBtn = Instance.new("TextButton", right)
 decBtn.Size = UDim2.new(0,28,0,20)
-decBtn.Position = UDim2.new(1,-36,0,82)
+decBtn.Position = UDim2.new(1,-70,0,50)
 decBtn.Text = "-"
 decBtn.Font = Enum.Font.SourceSansBold
 decBtn.TextSize = 14
-decBtn.Parent = right
+decBtn.BackgroundColor3 = Color3.fromRGB(40,40,40)
 
--- Status
-local status = Instance.new("TextLabel")
-status.Size = UDim2.new(1,-12,0,36)
-status.Position = UDim2.new(0,6,0,112)
-status.BackgroundTransparency = 1
-status.Text = "Status: Idle"
-status.Font = Enum.Font.SourceSans
-status.TextSize = 14
-status.TextColor3 = Color3.fromRGB(200,200,200)
-status.TextXAlignment = Enum.TextXAlignment.Left
-status.Parent = right
+local incBtn = Instance.new("TextButton", right)
+incBtn.Size = UDim2.new(0,28,0,20)
+incBtn.Position = UDim2.new(1,-36,0,50)
+incBtn.Text = "+"
+incBtn.Font = Enum.Font.SourceSansBold
+incBtn.TextSize = 14
+incBtn.BackgroundColor3 = Color3.fromRGB(40,40,40)
 
--- Footer small note
-local note = Instance.new("TextLabel")
-note.Size = UDim2.new(1,-12,0,36)
-note.Position = UDim2.new(0,6,0,156)
+local statusLabel = Instance.new("TextLabel", right)
+statusLabel.Size = UDim2.new(1,-12,0,40)
+statusLabel.Position = UDim2.new(0,6,0,84)
+statusLabel.BackgroundTransparency = 1
+statusLabel.Text = "Status: Idle"
+statusLabel.Font = Enum.Font.SourceSans
+statusLabel.TextSize = 13
+statusLabel.TextColor3 = Color3.fromRGB(200,200,200)
+statusLabel.TextXAlignment = Enum.TextXAlignment.Left
+
+local note = Instance.new("TextLabel", right)
+note.Size = UDim2.new(1,-12,0,40)
+note.Position = UDim2.new(0,6,0,130)
 note.BackgroundTransparency = 1
-note.Text = "Auto teleport every "..tostring(TELEPORT_OUT_INTERVAL).."s during OUT phase."
+note.Text = "Each OUT phase teleports every "..tostring(TELEPORT_OUT_INTERVAL).."s for "..tostring(OUT_PHASE_DURATION).."s."
 note.Font = Enum.Font.SourceSans
 note.TextSize = 12
-note.TextColor3 = Color3.fromRGB(160,160,160)
+note.TextColor3 = Color3.fromRGB(150,150,150)
 note.TextXAlignment = Enum.TextXAlignment.Left
-note.Parent = right
 
--- Make main and small draggable
-local UserInput = UserInputService
+-- draggable helper
 local function makeDraggable(gui)
     local dragging = false
     local dragStart
     local startPos
+    local dragInput
 
     gui.InputBegan:Connect(function(input)
         if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
@@ -227,8 +263,8 @@ local function makeDraggable(gui)
         end
     end)
 
-    UserInput.InputChanged:Connect(function(input)
-        if dragging and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
+    UserInputService.InputChanged:Connect(function(input)
+        if input == dragInput and dragging then
             local delta = input.Position - dragStart
             gui.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
         end
@@ -238,69 +274,63 @@ end
 makeDraggable(main)
 makeDraggable(smallBtn)
 
--- State variables
+-- ========= Dropdown logic =========
+local dropdownOpen = false
 local selectedTarget = nil
-local isRunning = false
+local playerButtons = {}
 
--- Utility: find trash can in workspace (search by name keywords)
-local function findTrashCan()
-    local keywords = {"Trash", "TrashCan", "Trash Can", "Garbage", "Bin"}
-    for _, obj in ipairs(workspace:GetDescendants()) do
-        if obj:IsA("BasePart") or obj:IsA("Model") or obj:IsA("UnionOperation") then
-            local name = obj.Name or ""
-            for _, k in ipairs(keywords) do
-                if string.find(string.lower(name), string.lower(k)) then
-                    -- If model, try to get primary part / primary bounding part
-                    if obj:IsA("Model") then
-                        local primary = obj.PrimaryPart or obj:FindFirstChildWhichIsA("BasePart")
-                        if primary then
-                            return primary
-                        end
-                    else
-                        return obj
-                    end
-                end
-            end
-        end
+local function clearDropdown()
+    for _,v in ipairs(dropdownFrame:GetChildren()) do
+        if v ~= dropdownLayout then v:Destroy() end
     end
-    return nil
+    playerButtons = {}
 end
 
--- UI: populate player list
-local function clearPlayerList()
-    for _, v in ipairs(playerListFrame:GetChildren()) do
-        if v ~= listLayout then v:Destroy() end
-    end
-end
-
-local function makePlayerButton(p)
-    local btn = Instance.new("TextButton")
-    btn.Size = UDim2.new(1, -8, 0, 28)
-    btn.BackgroundColor3 = Color3.fromRGB(40,40,40)
-    btn.BorderSizePixel = 0
-    btn.TextColor3 = Color3.fromRGB(230,230,230)
-    btn.Font = Enum.Font.SourceSans
-    btn.TextSize = 14
-    btn.Text = p.Name
-    btn.Parent = playerListFrame
-
-    btn.MouseButton1Click:Connect(function()
-        selectedTarget = p
-        selLabel.Text = "Target: "..p.Name
-    end)
-end
-
-local function populatePlayers()
-    clearPlayerList()
-    for _, p in ipairs(Players:GetPlayers()) do
+local function updateDropdown()
+    clearDropdown()
+    for _,p in ipairs(Players:GetPlayers()) do
         if p ~= localPlayer then
-            makePlayerButton(p)
+            local btn = Instance.new("TextButton", dropdownFrame)
+            btn.Size = UDim2.new(1,-8,0,28)
+            btn.BackgroundColor3 = Color3.fromRGB(40,40,40)
+            btn.BorderSizePixel = 0
+            btn.Text = p.Name
+            btn.Font = Enum.Font.SourceSans
+            btn.TextSize = 14
+            btn.TextColor3 = Color3.fromRGB(230,230,230)
+            btn.MouseButton1Click:Connect(function()
+                selectedTarget = p
+                dropdownBtn.Text = "Target: "..p.Name
+                dropdownFrame.Visible = false
+                dropdownOpen = false
+            end)
+            table.insert(playerButtons, btn)
         end
     end
 end
+
+dropdownBtn.MouseButton1Click:Connect(function()
+    dropdownOpen = not dropdownOpen
+    dropdownFrame.Visible = dropdownOpen
+    if dropdownOpen then
+        updateDropdown()
+    end
+end)
 
 refreshBtn.MouseButton1Click:Connect(function()
-    populatePlayers()
+    updateDropdown()
+end)
+
+-- auto update on join/leave
+Players.PlayerAdded:Connect(function()
+    updateDropdown()
+end)
+Players.PlayerRemoving:Connect(function()
+    updateDropdown()
+    if selectedTarget and not Players:FindFirstChild(selectedTarget.Name) then
+        selectedTarget = nil
+        dropdownBtn.Text = "Chọn target..."
+    end
 end)
 
 -- inc/dec studs
@@ -313,7 +343,7 @@ decBtn.MouseButton1Click:Connect(function()
     studsLabel.Text = "Behind studs: "..tostring(BEHIND_STUDS)
 end)
 
--- Toggle minimize / maximize
+-- minimize / maximize
 local minimized = false
 local function minimize()
     minimized = true
@@ -325,111 +355,108 @@ local function maximize()
     main.Visible = true
     smallBtn.Visible = false
 end
-
 minBtn.MouseButton1Click:Connect(minimize)
 smallBtn.MouseButton1Click:Connect(maximize)
 
--- Toggle AutoKill
+-- toggle running
+local isRunning = false
 toggleBtn.MouseButton1Click:Connect(function()
     isRunning = not isRunning
     if isRunning then
         toggleBtn.Text = "AutoKill: ON"
-        status.Text = "Status: Running..."
+        statusLabel.Text = "Status: Running..."
     else
         toggleBtn.Text = "AutoKill: OFF"
-        status.Text = "Status: Idle"
+        statusLabel.Text = "Status: Idle"
     end
 end)
 
--- Helper: safe get HRP
-local function getHRP(p)
-    if not p then return nil end
-    local ch = p.Character
-    if not ch then return nil end
-    local hrp = ch:FindFirstChild("HumanoidRootPart") or ch:FindFirstChild("Torso") or ch:FindFirstChild("UpperTorso")
-    return hrp
-end
+-- header drag via header frame
+header.InputBegan:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+        local start = input.Position
+        local sPos = main.Position
+        local conn
+        conn = input.Changed:Connect(function()
+            if input.UserInputState == Enum.UserInputState.End then
+                conn:Disconnect()
+            end
+        end)
+        -- drag loop
+        local dragging = true
+        local moveConn
+        moveConn = UserInputService.InputChanged:Connect(function(i)
+            if i.UserInputType == Enum.UserInputType.MouseMovement or i.UserInputType == Enum.UserInputType.Touch then
+                local delta = i.Position - start
+                main.Position = UDim2.new(sPos.X.Scale, sPos.X.Offset + delta.X, sPos.Y.Scale, sPos.Y.Offset + delta.Y)
+            end
+        end)
+        input.Changed:Connect(function()
+            if input.UserInputState == Enum.UserInputState.End then
+                moveConn:Disconnect()
+            end
+        end)
+    end
+end)
 
--- Helper: teleport local player to a CFrame (safe pcall)
-local function tpTo(cframe)
-    local char = localPlayer.Character
-    if not char then return end
-    local hrp = getHRP(localPlayer)
-    if not hrp then return end
-    pcall(function()
-        hrp.CFrame = cframe
-    end)
-end
-
--- Helper: face target from a position (returns CFrame that looks at targetPos)
-local function cframeLookAt(fromPos, targetPos)
-    return CFrame.new(fromPos, targetPos)
-end
-
--- Main loop coroutine
+-- ========= Main Auto Loop =========
+math.randomseed(tick())
 spawn(function()
     while true do
         if isRunning then
-            -- find trash can
-            local trashPart = findTrashCan()
-            if not trashPart then
-                status.Text = "Status: Không tìm thấy Trash Can"
+            -- find all trash cans
+            local trashList = findAllTrashCans()
+            if #trashList == 0 then
+                statusLabel.Text = "Status: Không tìm thấy trash can"
                 wait(1)
-                -- try again
             else
-                local target = selectedTarget
-                if not target or not target.Parent then
-                    status.Text = "Status: Chưa chọn target hoặc target không hợp lệ"
+                if not selectedTarget or not selectedTarget.Parent then
+                    statusLabel.Text = "Status: Chưa chọn target hợp lệ"
                     wait(0.5)
                 else
-                    local targetHRP = getHRP(target)
+                    local targetHRP = getHRP(selectedTarget)
                     if not targetHRP then
-                        status.Text = "Status: Target không có HRP"
+                        statusLabel.Text = "Status: Target chưa spawn"
                         wait(0.5)
                     else
-                        -- Phase 1: teleport đến sau Trash Can và hướng mặt vào trash (ở yên TRASH_PHASE_DURATION)
+                        -- chọn random trash can
+                        local trashPart = trashList[math.random(1,#trashList)]
                         local trashPos = trashPart.Position
-                        -- attempt to get "behind" relative to trash's lookVector (use trashPart.CFrame lookVector)
-                        local trashBackPos = trashPart.CFrame.Position - (trashPart.CFrame.LookVector * TRASH_OFFSET_BACK)
-                        local lookAtTrashCf = cframeLookAt(trashBackPos, trashPos)
-                        tpTo(lookAtTrashCf)
-                        status.Text = "Phase: At Trash ("..tostring(TRASH_PHASE_DURATION).."s)"
-                        -- keep facing trash for duration
+                        local trashBack = trashPart.CFrame.Position - (trashPart.CFrame.LookVector * TRASH_OFFSET_BACK)
+                        local trashCf = cframeLookAt(trashBack, trashPos)
+
+                        -- Phase 1: teleport đến sau trash và hướng mặt -> đứng TRASH_PHASE_DURATION
+                        tpToCFrame(trashCf)
+                        statusLabel.Text = "Phase: At trash ("..tostring(TRASH_PHASE_DURATION).."s)"
                         local t0 = tick()
                         while tick() - t0 < TRASH_PHASE_DURATION and isRunning do
-                            -- continuously ensure facing trash (some games may push)
                             pcall(function()
                                 local hrp = getHRP(localPlayer)
-                                if hrp then hrp.CFrame = cframeLookAt(trashBackPos, trashPos) end
+                                if hrp then hrp.CFrame = cframeLookAt(trashBack, trashPos) end
                             end)
                             RunService.Heartbeat:Wait()
                         end
 
                         if not isRunning then break end
 
-                        -- Phase 2: OUT phase -> trong OUT_PHASE_DURATION, every TELEPORT_OUT_INTERVAL teleport behind target và hướng mặt vào họ
-                        status.Text = "Phase: Attacking target "..target.Name
+                        -- Phase 2: OUT phase -> trong OUT_PHASE_DURATION, mỗi TELEPORT_OUT_INTERVAL teleport sau lưng target và hướng mặt
+                        statusLabel.Text = "Phase: OUT -> attacking "..selectedTarget.Name
                         local outStart = tick()
                         while tick() - outStart < OUT_PHASE_DURATION and isRunning do
-                            -- recompute target HRP (target may move)
-                            targetHRP = getHRP(target)
+                            targetHRP = getHRP(selectedTarget)
                             if not targetHRP then break end
-                            local targetPos = targetHRP.Position
-                            -- compute behind position relative to target look vector
-                            local behindPos = targetPos - (targetHRP.CFrame.LookVector * BEHIND_STUDS)
-                            -- set a small Y offset to match HRP height
-                            behindPos = Vector3.new(behindPos.X, targetPos.Y, behindPos.Z)
-                            local cf = cframeLookAt(behindPos, targetPos)
-                            tpTo(cf)
-                            -- wait TELEPORT_OUT_INTERVAL while maintaining facing (split into small waits)
+                            local tPos = targetHRP.Position
+                            local behindPos = tPos - (targetHRP.CFrame.LookVector * BEHIND_STUDS)
+                            behindPos = Vector3.new(behindPos.X, tPos.Y, behindPos.Z)
+                            local cf = cframeLookAt(behindPos, tPos)
+                            tpToCFrame(cf)
+                            -- maintain facing for TELEPORT_OUT_INTERVAL
                             local waited = 0
                             while waited < TELEPORT_OUT_INTERVAL and isRunning do
-                                -- keep facing target while waiting
                                 pcall(function()
                                     local hrp = getHRP(localPlayer)
-                                    if hrp and targetHRP and targetHRP.Parent then
-                                        hrp.CFrame = cframeLookAt(hrp.Position, targetHRP.Position)
-                                    end
+                                    local targetNow = getHRP(selectedTarget)
+                                    if hrp and targetNow then hrp.CFrame = cframeLookAt(hrp.Position, targetNow.Position) end
                                 end)
                                 local dt = RunService.Heartbeat:Wait()
                                 waited = waited + dt
@@ -438,11 +465,9 @@ spawn(function()
 
                         if not isRunning then break end
 
-                        -- Phase 3: teleport lại sau Trash Can immediately (loop continues)
-                        -- teleport back quickly and continue loop (next iteration will wait in phase)
-                        tpTo(cframeLookAt(trashBackPos, trashPos))
-                        -- small wait to avoid super tight loop before next iteration
-                        wait(0.05)
+                        -- Phase 3: teleport lại (vòng lặp tiếp tục) -> chọn trash can khác ngẫu nhiên ở đầu vòng
+                        -- nhỏ delay để tránh loop quá nhanh
+                        wait(0.03)
                     end
                 end
             end
@@ -453,19 +478,10 @@ spawn(function()
     end
 end)
 
--- Initial populate
-populatePlayers()
-
--- Keyboard M to minimize / maximize
-UserInputService.InputBegan:Connect(function(input, g)
-    if g then return end
-    if input.KeyCode == Enum.KeyCode.M then
-        if minimized then maximize() else minimize() end
-    end
-end)
-
--- Final visibility
+-- finale
+updateDropdown()
+main.Parent = screenGui
 main.Visible = true
 smallBtn.Visible = false
 
-print("[AutoTrashKill] Loaded.")
+print("[AutoTrashKill] Loaded (Rayfield-like GUI).")
