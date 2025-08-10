@@ -177,16 +177,45 @@ local smallBtn = Instance.new("TextButton")
 smallBtn.Name = "SmallToggle"
 smallBtn.Size = UDim2.fromOffset(64,64)
 smallBtn.Position = UDim2.new(0,20,0,22)
-smallBtn.Text = "💀"
-smallBtn.TextScaled = true
 smallBtn.BackgroundColor3 = Color3.fromRGB(18,18,18)
 smallBtn.BorderSizePixel = 0
 smallBtn.Visible = false
 smallBtn.Parent = screenGui
+
+-- UICorner và UIStroke cho nút
 local smallCorner = Instance.new("UICorner", smallBtn)
 smallCorner.CornerRadius = UDim.new(0,12)
 local smallStroke = Instance.new("UIStroke", smallBtn)
 smallStroke.Transparency = 0.7
+
+-- Tạo chữ "KK"
+local kkLabel = Instance.new("TextLabel")
+kkLabel.Parent = smallBtn
+kkLabel.Size = UDim2.new(1,0,1,0)
+kkLabel.BackgroundTransparency = 1
+kkLabel.Text = "KK"
+kkLabel.TextColor3 = Color3.new(1,1,1)
+kkLabel.Font = Enum.Font.GothamBold
+kkLabel.TextScaled = true
+kkLabel.TextStrokeTransparency = 0.7
+kkLabel.ZIndex = 2
+
+-- Tạo chấm vàng góc trên phải
+local yellowDot = Instance.new("Frame")
+yellowDot.Parent = smallBtn
+yellowDot.Size = UDim2.new(0,16,0,16)
+yellowDot.Position = UDim2.new(1,-18,0,2)
+yellowDot.BackgroundColor3 = Color3.fromRGB(255, 241, 133) -- màu vàng sáng
+yellowDot.BorderSizePixel = 0
+yellowDot.ZIndex = 3
+local dotCorner = Instance.new("UICorner", yellowDot)
+dotCorner.CornerRadius = UDim.new(1,0) -- tròn hoàn toàn
+
+-- Hiệu ứng to nhỏ (scale pulse) cho nút
+local TweenService = game:GetService("TweenService")
+local tweenInfo = TweenInfo.new(1, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut, -1, true) -- lặp vô tận, pingpong
+local tween = TweenService:Create(smallBtn, tweenInfo, {Size = UDim2.fromOffset(74,74)})
+tween:Play()
 
 -- resize grip (bottom-right)
 local resizeGrip = Instance.new("Frame", main)
