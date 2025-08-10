@@ -173,22 +173,91 @@ status.TextXAlignment = Enum.TextXAlignment.Left
 status.ZIndex = 3
 
 -- small minimize button (visible when main hidden)
+
+local TweenService = game:GetService("TweenService")
+local RunService = game:GetService("RunService")
+local UserInputService = game:GetService("UserInputService")
+
 local smallBtn = Instance.new("TextButton")
 smallBtn.Name = "SmallToggle"
 smallBtn.Size = UDim2.fromOffset(64,64)
 smallBtn.Position = UDim2.new(0,20,0,22)
-smallBtn.Text = "🚮"
+smallBtn.Text = "kk"
+smallBtn.TextColor3 = Color3.fromRGB(255,255,255)
+smallBtn.TextSize = 24
+smallBtn.Font = Enum.Font.GothamBold
 smallBtn.TextScaled = true
-smallBtn.BackgroundColor3 = Color3.fromRGB(18,18,18)
+smallBtn.BackgroundColor3 = Color3.fromRGB(0,100,0)
 smallBtn.BorderSizePixel = 0
 smallBtn.Visible = false
 smallBtn.Parent = screenGui
+
 local smallCorner = Instance.new("UICorner", smallBtn)
 smallCorner.CornerRadius = UDim.new(0,12)
+
 local smallStroke = Instance.new("UIStroke", smallBtn)
 smallStroke.Transparency = 0.7
 
--- resize grip (bottom-right)
+local glowStroke = Instance.new("UIStroke", smallBtn)
+glowStroke.Color = Color3.fromRGB(255,255,255)
+glowStroke.Transparency = 0.4
+glowStroke.Thickness = 2
+
+local moon = Instance.new("ImageLabel", smallBtn)
+moon.Size = UDim2.fromOffset(16,16)
+moon.BackgroundTransparency = 1
+moon.Image = "rbxassetid://259438880"
+moon.Position = UDim2.new(0.8, 0, 0.2, 0)
+moon.AnchorPoint = Vector2.new(0.5, 0.5)
+moon.ZIndex = 2
+
+-- Animate trăng xoay
+local center = Vector2.new(32, 32)
+local radius = 20
+local angle = 0
+RunService.Heartbeat:Connect(function(delta)
+    angle = angle + delta * 2
+    local offsetX = math.cos(angle) * radius
+    local offsetY = math.sin(angle) * radius
+    moon.Position = UDim2.new(0.5 + offsetX / 64, 0, 0.5 + offsetY / 64, 0)
+end)
+
+-- Hiệu ứng to nhỏ
+local tweenInfo = TweenInfo.new(1, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut, -1, true)
+local scaleTween = TweenService:Create(smallBtn, tweenInfo, {
+    Size = UDim2.fromOffset(68,68)
+})
+scaleTween:Play()
+
+-- Tính năng kéo thả
+local dragging = false
+local dragStart = nil
+local startPos = nil
+
+smallBtn.InputBegan:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 then
+        dragging = true
+        dragStart = input.Position
+        startPos = smallBtn.Position
+    end
+end)
+
+smallBtn.InputEnded:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 then
+        dragging = false
+    end
+end)
+
+UserInputService.InputChanged:Connect(function(input)
+    if dragging and input.UserInputType == Enum.UserInputType.MouseMovement then
+        local delta = input.Position - dragStart
+        local newPosX = startPos.X.Scale + (delta.X / screenGui.AbsoluteSize.X)
+        local newPosY = startPos.Y.Scale + (delta.Y / screenGui.AbsoluteSize.Y)
+        smallBtn.Position = UDim2.new(newPosX, startPos.X.Offset, newPosY, startPos.Y.Offset)
+    end
+end)
+
+-- Resize grip (giữ nguyên)
 local resizeGrip = Instance.new("Frame", main)
 resizeGrip.Size = UDim2.new(0,18,0,18)
 resizeGrip.Position = UDim2.new(1,-22,1,-22)
