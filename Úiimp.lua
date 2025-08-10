@@ -1,172 +1,157 @@
+-- Script: Ghi lại hành động bằng CFrame + nút thu nhỏ / phóng to
+-- Dán nguyên vào executor (ví dụ Synapse / Krnl / etc.)
+-- Lưu ý: một số game chặn thao tác thay đổi CFrame, dùng trong môi trường executor.
+
 local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
 local UserInputService = game:GetService("UserInputService")
 local TweenService = game:GetService("TweenService")
 
-local localPlayer = Players.LocalPlayer
-local playerGui = localPlayer:WaitForChild("PlayerGui")
+local player = Players.LocalPlayer
+local character = player.Character or player.CharacterAdded:Wait()
+local hrp = character:WaitForChild("HumanoidRootPart") -- dùng HumanoidRootPart
+
+-- Cấu hình
+local SAMPLE_INTERVAL = 1/120 -- giây giữa 2 sample
+local LERP_STEPS = 20 -- số bước nội suy giữa 2 frame khi phát lại (cao hơn mượt hơn)
+local GUI_NAME = "CFrameRecorderGUI"
+
+-- Xóa GUI cũ nếu có
+if player:FindFirstChildOfClass("PlayerGui") then
+    local existing = player.PlayerGui:FindFirstChild(GUI_NAME)
+    if existing then existing:Destroy() end
+end
 
 -- Tạo ScreenGui
 local screenGui = Instance.new("ScreenGui")
-screenGui.Name = "PinkWhiteUI"
+screenGui.Name = GUI_NAME
 screenGui.ResetOnSpawn = false
-screenGui.Parent = playerGui
+screenGui.Parent = player:WaitForChild("PlayerGui")
 
--- Main Frame
+-- Small toggle button (nút thu nhỏ) - ban đầu ẩn
+local smallBtn = Instance.new("TextButton")
+smallBtn.Name = "SmallToggle"
+smallBtn.Size = UDim2.fromOffset(48,48)
+smallBtn.Position = UDim2.new(0,10,0,10) -- góc trái trên, có thể kéo
+smallBtn.Text = "💀"
+smallBtn.TextScaled = true
+smallBtn.BackgroundColor3 = Color3.fromRGB(25,25,25)
+smallBtn.BorderSizePixel = 0
+smallBtn.Visible = false
+smallBtn.Parent = screenGui
+
+-- Main GUI frame
 local mainFrame = Instance.new("Frame")
-mainFrame.Size = UDim2.new(0, 480, 0, 360)
-mainFrame.Position = UDim2.new(0.5, -240, 0.5, -180)
-mainFrame.BackgroundColor3 = Color3.fromRGB(255, 240, 245)
-mainFrame.BackgroundTransparency = 0.15
+mainFrame.Name = "MainFrame"
+mainFrame.Size = UDim2.new(0,360,0,220)
+mainFrame.Position = UDim2.new(0,80,0,80)
+mainFrame.BackgroundColor3 = Color3.fromRGB(20,20,20)
 mainFrame.BorderSizePixel = 0
-mainFrame.Active = true
 mainFrame.Parent = screenGui
 
-local uiStroke = Instance.new("UIStroke")
-uiStroke.Color = Color3.fromRGB(255, 105, 180)
-uiStroke.Thickness = 2
-uiStroke.Parent = mainFrame
+-- Header (title + minimize button)
+local header = Instance.new("Frame")
+header.Name = "Header"
+header.Size = UDim2.new(1,0,0,36)
+header.BackgroundColor3 = Color3.fromRGB(35,35,35)
+header.BorderSizePixel = 0
+header.Parent = mainFrame
 
--- Title Bar
-local titleBar = Instance.new("Frame")
-titleBar.Size = UDim2.new(1, 0, 0, 36)
-titleBar.BackgroundColor3 = Color3.fromRGB(255, 182, 193)
-titleBar.BackgroundTransparency = 0.25
-titleBar.BorderSizePixel = 0
-titleBar.Parent = mainFrame
+local title = Instance.new("TextLabel")
+title.Size = UDim2.new(1,-80,1,0)
+title.Position = UDim2.new(0,8,0,0)
+title.BackgroundTransparency = 1
+title.Text = "CFrame Recorder"
+title.Font = Enum.Font.SourceSansBold
+title.TextSize = 18
+title.TextColor3 = Color3.fromRGB(220,220,220)
+title.TextXAlignment = Enum.TextXAlignment.Left
+title.Parent = header
 
-local titleLabel = Instance.new("TextLabel")
-titleLabel.Size = UDim2.new(1, -100, 1, 0)
-titleLabel.Position = UDim2.new(0, 12, 0, 0)
-titleLabel.BackgroundTransparency = 1
-titleLabel.Font = Enum.Font.GothamBold
-titleLabel.TextSize = 20
-titleLabel.TextColor3 = Color3.fromRGB(255, 105, 180)
-titleLabel.Text = "Pink White UI"
-titleLabel.TextXAlignment = Enum.TextXAlignment.Left
-titleLabel.Parent = titleBar
-
--- Minimize Button
 local minimizeBtn = Instance.new("TextButton")
-minimizeBtn.Size = UDim2.new(0, 50, 0, 30)
-minimizeBtn.Position = UDim2.new(1, -90, 0, 3)
-minimizeBtn.BackgroundColor3 = Color3.fromRGB(255, 105, 180)
-minimizeBtn.TextColor3 = Color3.new(1, 1, 1)
-minimizeBtn.Font = Enum.Font.GothamBold
-minimizeBtn.TextSize = 25
+minimizeBtn.Name = "Minimize"
+minimizeBtn.Size = UDim2.new(0,64,1,0)
+minimizeBtn.Position = UDim2.new(1,-64,0,0)
+minimizeBtn.BackgroundColor3 = Color3.fromRGB(28,28,28)
+minimizeBtn.BorderSizePixel = 0
 minimizeBtn.Text = "—"
-minimizeBtn.AutoButtonColor = false
-minimizeBtn.Parent = titleBar
+minimizeBtn.Font = Enum.Font.SourceSansBold
+minimizeBtn.TextSize = 20
+minimizeBtn.TextColor3 = Color3.fromRGB(255,255,255)
+minimizeBtn.Parent = header
 
--- Close Button
-local closeBtn = Instance.new("TextButton")
-closeBtn.Size = UDim2.new(0, 50, 0, 30)
-closeBtn.Position = UDim2.new(1, -40, 0, 3)
-closeBtn.BackgroundColor3 = Color3.fromRGB(255, 105, 180)
-closeBtn.TextColor3 = Color3.new(1, 1, 1)
-closeBtn.Font = Enum.Font.GothamBold
-closeBtn.TextSize = 25
-closeBtn.Text = "×"
-closeBtn.AutoButtonColor = false
-closeBtn.Parent = titleBar
+-- Content area
+local content = Instance.new("Frame")
+content.Name = "Content"
+content.Position = UDim2.new(0,0,0,36)
+content.Size = UDim2.new(1,0,1,-36)
+content.BackgroundTransparency = 1
+content.Parent = mainFrame
 
--- Container Frame
-local container = Instance.new("Frame")
-container.Size = UDim2.new(1, 0, 1, -36)
-container.Position = UDim2.new(0, 0, 0, 36)
-container.BackgroundTransparency = 1
-container.Parent = mainFrame
-
--- Tab Buttons Frame
-local tabButtonsFrame = Instance.new("ScrollingFrame")
-tabButtonsFrame.Size = UDim2.new(0, 120, 1, 0)
-tabButtonsFrame.BackgroundColor3 = Color3.fromRGB(255, 182, 193)
-tabButtonsFrame.BackgroundTransparency = 0.15
-tabButtonsFrame.BorderSizePixel = 0
-tabButtonsFrame.ScrollBarThickness = 5
-tabButtonsFrame.Parent = container
-
-local tabListLayout = Instance.new("UIListLayout")
-tabListLayout.Padding = UDim.new(0, 10)
-tabListLayout.SortOrder = Enum.SortOrder.LayoutOrder
-tabListLayout.Parent = tabButtonsFrame
-
-tabButtonsFrame.CanvasSize = UDim2.new(0, 0, 0, 0)
-tabListLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
-    tabButtonsFrame.CanvasSize = UDim2.new(0, 0, 0, tabListLayout.AbsoluteContentSize.Y + 10)
-end)
-
--- Content Frame
-local contentFrame = Instance.new("ScrollingFrame")
-contentFrame.Size = UDim2.new(1, -120, 1, 0)
-contentFrame.Position = UDim2.new(0, 120, 0, 0)
-contentFrame.BackgroundColor3 = Color3.fromRGB(255, 240, 245)
-contentFrame.BackgroundTransparency = 0.25
-contentFrame.BorderSizePixel = 0
-contentFrame.ScrollBarThickness = 6
-contentFrame.Parent = container
-
-local contentListLayout = Instance.new("UIListLayout")
-contentListLayout.Padding = UDim.new(0, 12)
-contentListLayout.SortOrder = Enum.SortOrder.LayoutOrder
-contentListLayout.Parent = contentFrame
-
-contentFrame.CanvasSize = UDim2.new(0, 0, 0, 0)
-contentListLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
-    contentFrame.CanvasSize = UDim2.new(0, 0, 0, contentListLayout.AbsoluteContentSize.Y + 15)
-end)
-
--- Tabs management
-local tabs = {}
-local currentTab = nil
-
-local function createTab(name)
-    local tabButton = Instance.new("TextButton")
-    tabButton.Size = UDim2.new(1, 0, 0, 40)
-    tabButton.BackgroundColor3 = Color3.fromRGB(255, 182, 193)
-    tabButton.BackgroundTransparency = 0.15
-    tabButton.BorderSizePixel = 0
-    tabButton.Font = Enum.Font.GothamBold
-    tabButton.TextSize = 18
-    tabButton.TextColor3 = Color3.fromRGB(255, 105, 180)
-    tabButton.Text = name
-    tabButton.TextXAlignment = Enum.TextXAlignment.Left
-    tabButton.Parent = tabButtonsFrame
-
-    local tabContent = Instance.new("Frame")
-    tabContent.Size = UDim2.new(1, 0, 1, 0)
-    tabContent.BackgroundTransparency = 1
-    tabContent.Visible = false
-    tabContent.Parent = contentFrame
-
-    local tab = {
-        button = tabButton,
-        content = tabContent
-    }
-    table.insert(tabs, tab)
-
-    tabButton.MouseButton1Click:Connect(function()
-        if currentTab then
-            currentTab.content.Visible = false
-            currentTab.button.TextColor3 = Color3.fromRGB(255, 105, 180)
-        end
-        currentTab = tab
-        currentTab.content.Visible = true
-        currentTab.button.TextColor3 = Color3.fromRGB(255, 182, 193)
-    end)
-
-    return tabContent
+-- Buttons
+local function makeButton(name, text, posY)
+    local b = Instance.new("TextButton")
+    b.Name = name
+    b.Size = UDim2.new(0,100,0,36)
+    b.Position = UDim2.new(0,12,0,posY)
+    b.BackgroundColor3 = Color3.fromRGB(45,45,45)
+    b.BorderSizePixel = 0
+    b.Text = text
+    b.Font = Enum.Font.SourceSans
+    b.TextSize = 16
+    b.TextColor3 = Color3.fromRGB(230,230,230)
+    b.Parent = content
+    return b
 end
 
--- Chức năng kéo thả GUI
-do
+local recordBtn = makeButton("Record", "Record", 6)
+local stopBtn = makeButton("Stop", "Stop", 46)
+local playBtn = makeButton("Play", "Play", 86)
+local clearBtn = makeButton("Clear", "Clear", 126)
+local saveBtn = makeButton("SavePoint", "Save Point", 166)
+
+-- Status label
+local statusLabel = Instance.new("TextLabel")
+statusLabel.Size = UDim2.new(0,220,0,36)
+statusLabel.Position = UDim2.new(0,128,0,6)
+statusLabel.BackgroundTransparency = 1
+statusLabel.Text = "Status: Idle"
+statusLabel.Font = Enum.Font.SourceSans
+statusLabel.TextSize = 16
+statusLabel.TextColor3 = Color3.fromRGB(200,200,200)
+statusLabel.TextXAlignment = Enum.TextXAlignment.Left
+statusLabel.Parent = content
+
+-- Saved points list
+local savedPoints = Instance.new("Frame")
+savedPoints.Name = "SavedPoints"
+savedPoints.Position = UDim2.new(0,128,0,48)
+savedPoints.Size = UDim2.new(0,220,0,150)
+savedPoints.BackgroundColor3 = Color3.fromRGB(18,18,18)
+savedPoints.BorderSizePixel = 0
+savedPoints.Parent = content
+
+local uiList = Instance.new("UIListLayout")
+uiList.Parent = savedPoints
+uiList.SortOrder = Enum.SortOrder.LayoutOrder
+uiList.Padding = UDim.new(0,6)
+
+-- Draggable behaviour for mainFrame and smallBtn
+local function makeDraggable(guiElement)
     local dragging = false
     local dragInput, dragStart, startPos
 
-    titleBar.InputBegan:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1 then
+    local function update(input)
+        local delta = input.Position - dragStart
+        guiElement.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X,
+                                        startPos.Y.Scale, startPos.Y.Offset + delta.Y)
+    end
+
+    guiElement.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
             dragging = true
             dragStart = input.Position
-            startPos = mainFrame.Position
+            startPos = guiElement.Position
 
             input.Changed:Connect(function()
                 if input.UserInputState == Enum.UserInputState.End then
@@ -176,322 +161,203 @@ do
         end
     end)
 
-    titleBar.InputChanged:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseMovement then
+    guiElement.InputChanged:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
             dragInput = input
         end
     end)
 
     UserInputService.InputChanged:Connect(function(input)
-        if dragging and input == dragInput then
-            local delta = input.Position - dragStart
-            mainFrame.Position = UDim2.new(
-                startPos.X.Scale,
-                startPos.X.Offset + delta.X,
-                startPos.Y.Scale,
-                startPos.Y.Offset + delta.Y
-            )
+        if input == dragInput and dragging then
+            update(input)
         end
     end)
 end
 
--- Nút thu nhỏ
-local minimized = false
-minimizeBtn.MouseButton1Click:Connect(function()
-    if minimized then
-        mainFrame.Size = UDim2.new(0, 480, 0, 360)
-        container.Visible = true
-        minimized = false
-    else
-        mainFrame.Size = UDim2.new(0, 480, 0, 36)
-        container.Visible = false
-        minimized = true
+makeDraggable(mainFrame)
+makeDraggable(smallBtn)
+
+-- Playback / Recording data
+local recordings = {} -- list of CFrames
+local isRecording = false
+local recordConn
+
+-- Record function
+local function startRecording()
+    if isRecording then return end
+    isRecording = true
+    recordings = {}
+    statusLabel.Text = "Status: Recording..."
+    recordBtn.BackgroundColor3 = Color3.fromRGB(80,30,30)
+    recordConn = RunService.Heartbeat:Connect(function(dt)
+        -- sample theo interval
+        -- we'll use tick() to control interval
+    end)
+
+    -- use a timer loop separate for better control
+    spawn(function()
+        local last = tick()
+        while isRecording do
+            local now = tick()
+            if now - last >= SAMPLE_INTERVAL then
+                last = now
+                local char = player.Character
+                if char and char:FindFirstChild("HumanoidRootPart") then
+                    table.insert(recordings, char.HumanoidRootPart.CFrame)
+                end
+            end
+            RunService.Stepped:Wait()
+        end
+    end)
+end
+
+local function stopRecording()
+    if not isRecording then return end
+    isRecording = false
+    if recordConn then recordConn:Disconnect() recordConn = nil end
+    statusLabel.Text = "Status: Idle (Recorded ".. tostring(#recordings) .." frames)"
+    recordBtn.BackgroundColor3 = Color3.fromRGB(45,45,45)
+end
+
+-- Playback function (nội suy)
+local function playRecording()
+    if isRecording then
+        statusLabel.Text = "Status: Stop recording trước khi phát lại"
+        return
     end
-end)
+    if #recordings == 0 then
+        statusLabel.Text = "Status: Không có bản ghi"
+        return
+    end
 
--- Nút đóng
-closeBtn.MouseButton1Click:Connect(function()
-    screenGui:Destroy()
-end)
+    statusLabel.Text = "Status: Playing..."
+    playBtn.BackgroundColor3 = Color3.fromRGB(30,80,30)
 
--- Các Control cơ bản
+    -- đảm bảo character hiện tại
+    local char = player.Character or player.CharacterAdded:Wait()
+    local hrpPlay = char:FindFirstChild("HumanoidRootPart")
+    if not hrpPlay then
+        statusLabel.Text = "Status: Không tìm thấy HumanoidRootPart"
+        playBtn.BackgroundColor3 = Color3.fromRGB(45,45,45)
+        return
+    end
 
-local function createButton(parent, text, callback)
+    -- disable humanoid physics? chúng ta vẫn sẽ đặt CFrame trực tiếp
+    -- Phát từng đoạn
+    for i = 1, #recordings-1 do
+        local a = recordings[i]
+        local b = recordings[i+1]
+        for step = 1, LERP_STEPS do
+            local alpha = step / LERP_STEPS
+            local newCFrame = a:Lerp(b, alpha)
+            -- đặt CFrame trực tiếp
+            if hrpPlay and hrpPlay.Parent then
+                pcall(function() hrpPlay.CFrame = newCFrame end)
+            end
+            RunService.Heartbeat:Wait()
+        end
+    end
+
+    -- đặt về cuối cùng
+    pcall(function() if hrpPlay then hrpPlay.CFrame = recordings[#recordings] end end)
+
+    statusLabel.Text = "Status: Done playing"
+    playBtn.BackgroundColor3 = Color3.fromRGB(45,45,45)
+end
+
+-- Save point (luu vị trí hiện tại)
+local function createSavedPoint(cframe)
+    local idx = #savedPoints:GetChildren() + 1
     local btn = Instance.new("TextButton")
-    btn.Size = UDim2.new(1, 0, 0, 40)
-    btn.BackgroundColor3 = Color3.fromRGB(255, 182, 193)
-    btn.BackgroundTransparency = 0.2
+    btn.Size = UDim2.new(1,-12,0,28)
+    btn.BackgroundColor3 = Color3.fromRGB(40,40,40)
     btn.BorderSizePixel = 0
-    btn.Text = text or "Button"
-    btn.Font = Enum.Font.GothamBold
-    btn.TextSize = 18
-    btn.TextColor3 = Color3.fromRGB(255, 105, 180)
-    btn.AutoButtonColor = false
-    btn.Parent = parent
+    btn.TextColor3 = Color3.fromRGB(230,230,230)
+    btn.Font = Enum.Font.SourceSans
+    btn.TextSize = 14
+    btn.Text = "Point ".. tostring(idx)
+    btn.Parent = savedPoints
 
-    btn.MouseEnter:Connect(function()
-        btn.BackgroundTransparency = 0
-    end)
-    btn.MouseLeave:Connect(function()
-        btn.BackgroundTransparency = 0.2
-    end)
     btn.MouseButton1Click:Connect(function()
-        if callback then pcall(callback) end
+        -- teleport đến điểm đã lưu
+        local char = player.Character
+        local hrpPlay = char and char:FindFirstChild("HumanoidRootPart")
+        if hrpPlay then
+            pcall(function() hrpPlay.CFrame = cframe end)
+        end
     end)
-
-    return btn
 end
 
-local function createToggle(parent, text, default, callback)
-    local frame = Instance.new("Frame")
-    frame.Size = UDim2.new(1, 0, 0, 40)
-    frame.BackgroundTransparency = 1
-    frame.Parent = parent
+-- Button events
+recordBtn.MouseButton1Click:Connect(function()
+    startRecording()
+end)
 
-    local label = Instance.new("TextLabel")
-    label.Text = text or "Toggle"
-    label.Font = Enum.Font.GothamBold
-    label.TextSize = 18
-    label.TextColor3 = Color3.fromRGB(255, 105, 180)
-    label.BackgroundTransparency = 1
-    label.Size = UDim2.new(0.7, 0, 1, 0)
-    label.TextXAlignment = Enum.TextXAlignment.Left
-    label.Parent = frame
+stopBtn.MouseButton1Click:Connect(function()
+    stopRecording()
+end)
 
-    local toggleBtn = Instance.new("TextButton")
-    toggleBtn.Size = UDim2.new(0, 40, 0, 25)
-    toggleBtn.Position = UDim2.new(0.85, 0, 0.2, 0)
-    toggleBtn.BackgroundColor3 = default and Color3.fromRGB(255, 105, 180) or Color3.fromRGB(200, 200, 200)
-    toggleBtn.BorderSizePixel = 0
-    toggleBtn.AutoButtonColor = false
-    toggleBtn.Parent = frame
-    toggleBtn.Text = ""
+playBtn.MouseButton1Click:Connect(function()
+    spawn(function() playRecording() end)
+end)
 
-    local toggled = default or false
-    local function update()
-        if toggled then
-            toggleBtn.BackgroundColor3 = Color3.fromRGB(255, 105, 180)
-        else
-            toggleBtn.BackgroundColor3 = Color3.fromRGB(200, 200, 200)
-        end
-        if callback then pcall(callback, toggled) end
+clearBtn.MouseButton1Click:Connect(function()
+    recordings = {}
+    -- xóa saved recordings nếu muốn
+    statusLabel.Text = "Status: Cleared"
+end)
+
+saveBtn.MouseButton1Click:Connect(function()
+    local char = player.Character
+    if char and char:FindFirstChild("HumanoidRootPart") then
+        local cf = char.HumanoidRootPart.CFrame
+        createSavedPoint(cf)
+        statusLabel.Text = "Saved point ".. tostring(#savedPoints:GetChildren())
+    else
+        statusLabel.Text = "Không tìm thấy HumanoidRootPart"
     end
+end)
 
-    toggleBtn.MouseButton1Click:Connect(function()
-        toggled = not toggled
-        update()
-    end)
+-- Minimize / Small button behavior
+local minimized = false
 
-    update()
-    return frame
+local function minimize()
+    minimized = true
+    mainFrame.Visible = false
+    smallBtn.Visible = true
 end
 
-local function createSlider(parent, text, min, max, default, callback)
-    local frame = Instance.new("Frame")
-    frame.Size = UDim2.new(1, 0, 0, 50)
-    frame.BackgroundTransparency = 1
-    frame.Parent = parent
-
-    local label = Instance.new("TextLabel")
-    label.Text = (text or "Slider")..": "..tostring(default)
-    label.Font = Enum.Font.GothamBold
-    label.TextColor3 = Color3.fromRGB(255, 105, 180)
-    label.BackgroundTransparency = 1
-    label.Size = UDim2.new(1, 0, 0, 20)
-    label.TextXAlignment = Enum.TextXAlignment.Left
-    label.Parent = frame
-
-    local sliderFrame = Instance.new("Frame")
-    sliderFrame.Size = UDim2.new(1, 0, 0, 20)
-    sliderFrame.Position = UDim2.new(0, 0, 0, 25)
-    sliderFrame.BackgroundColor3 = Color3.fromRGB(255, 182, 193)
-    sliderFrame.BackgroundTransparency = 0.3
-    sliderFrame.BorderSizePixel = 0
-    sliderFrame.Parent = frame
-
-    local sliderBar = Instance.new("Frame")
-    sliderBar.Size = UDim2.new((default - min) / (max - min), 0, 1, 0)
-    sliderBar.BackgroundColor3 = Color3.fromRGB(255, 105, 180)
-    sliderBar.BorderSizePixel = 0
-    sliderBar.Parent = sliderFrame
-
-    local dragging = false
-
-    sliderFrame.InputBegan:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1 then
-            dragging = true
-        end
-    end)
-
-    sliderFrame.InputEnded:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1 then
-            dragging = false
-        end
-    end)
-
-    sliderFrame.InputChanged:Connect(function(input)
-        if dragging and input.UserInputType == Enum.UserInputType.MouseMovement then
-            local relativeX = math.clamp(input.Position.X - sliderFrame.AbsolutePosition.X, 0, sliderFrame.AbsoluteSize.X)
-            local value = min + (relativeX / sliderFrame.AbsoluteSize.X) * (max - min)
-            sliderBar.Size = UDim2.new(relativeX / sliderFrame.AbsoluteSize.X, 0, 1, 0)
-            label.Text = (text or "Slider")..": "..string.format("%.1f", value)
-            if callback then pcall(callback, value) end
-        end
-    end)
-
-    return frame
+local function maximize()
+    minimized = false
+    mainFrame.Visible = true
+    smallBtn.Visible = false
 end
 
-local function createDropdown(parent, text, options, default, callback)
-    local frame = Instance.new("Frame")
-    frame.Size = UDim2.new(1, 0, 0, 40)
-    frame.BackgroundTransparency = 1
-    frame.Parent = parent
+minimizeBtn.MouseButton1Click:Connect(function()
+    minimize()
+end)
 
-    local label = Instance.new("TextLabel")
-    label.Text = text or "Dropdown"
-    label.Font = Enum.Font.GothamBold
-    label.TextSize = 18
-    label.TextColor3 = Color3.fromRGB(255, 105, 180)
-    label.BackgroundTransparency = 1
-    label.Size = UDim2.new(0.7, 0, 1, 0)
-    label.TextXAlignment = Enum.TextXAlignment.Left
-    label.Parent = frame
+smallBtn.MouseButton1Click:Connect(function()
+    maximize()
+end)
 
-    local dropdownBtn = Instance.new("TextButton")
-    dropdownBtn.Size = UDim2.new(0.3, -10, 1, 0)
-    dropdownBtn.Position = UDim2.new(0.7, 10, 0, 0)
-    dropdownBtn.BackgroundColor3 = Color3.fromRGB(255, 182, 193)
-    dropdownBtn.BorderSizePixel = 0
-    dropdownBtn.TextColor3 = Color3.fromRGB(255, 105, 180)
-    dropdownBtn.Font = Enum.Font.GothamBold
-    dropdownBtn.TextSize = 18
-    dropdownBtn.Text = default or options[1] or ""
-    dropdownBtn.AutoButtonColor = false
-    dropdownBtn.Parent = frame
+-- Make header draggable only (so user có thể kéo GUI)
+header.Active = true
+header.Draggable = false -- we'll use custom draggable for mainFrame already
 
-    local dropdownList = Instance.new("ScrollingFrame")
-    dropdownList.Size = UDim2.new(1, 0, 0, 0)
-    dropdownList.Position = UDim2.new(0, 0, 1, 0)
-    dropdownList.BackgroundColor3 = Color3.fromRGB(255, 182, 193)
-    dropdownList.BackgroundTransparency = 0.15
-    dropdownList.BorderSizePixel = 0
-    dropdownList.Visible = false
-    dropdownList.Parent = frame
-    dropdownList.CanvasSize = UDim2.new(0, 0, 0, 0)
+-- Save/Load GUI position when moved? (simple: keep as-is during session)
 
-    local listLayout = Instance.new("UIListLayout")
-    listLayout.Padding = UDim.new(0, 4)
-    listLayout.SortOrder = Enum.SortOrder.LayoutOrder
-    listLayout.Parent = dropdownList
-
-    listLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
-        dropdownList.CanvasSize = UDim2.new(0, 0, 0, listLayout.AbsoluteContentSize.Y)
-    end)
-
-    local expanded = false
-
-    dropdownBtn.MouseButton1Click:Connect(function()
-        expanded = not expanded
-        dropdownList.Visible = expanded
-        if expanded then
-            dropdownList.Size = UDim2.new(1, 0, 0, math.min(150, listLayout.AbsoluteContentSize.Y))
-        else
-            dropdownList.Size = UDim2.new(1, 0, 0, 0)
-        end
-    end)
-
-    for i, option in ipairs(options) do
-        local optionBtn = Instance.new("TextButton")
-        optionBtn.Size = UDim2.new(1, 0, 0, 30)
-        optionBtn.BackgroundColor3 = Color3.fromRGB(255, 182, 193)
-        optionBtn.BackgroundTransparency = 0.2
-        optionBtn.BorderSizePixel = 0
-        optionBtn.Font = Enum.Font.GothamBold
-        optionBtn.TextSize = 18
-        optionBtn.TextColor3 = Color3.fromRGB(255, 105, 180)
-        optionBtn.Text = option
-        optionBtn.AutoButtonColor = false
-        optionBtn.Parent = dropdownList
-
-        optionBtn.MouseEnter:Connect(function()
-            optionBtn.BackgroundTransparency = 0
-        end)
-        optionBtn.MouseLeave:Connect(function()
-            optionBtn.BackgroundTransparency = 0.2
-        end)
-
-        optionBtn.MouseButton1Click:Connect(function()
-            dropdownBtn.Text = option
-            expanded = false
-            dropdownList.Visible = false
-            dropdownList.Size = UDim2.new(1, 0, 0, 0)
-            if callback then pcall(callback, option) end
-        end)
+-- Optional: hotkey M để thu nhỏ / phóng to
+UserInputService.InputBegan:Connect(function(input, gameProcessed)
+    if gameProcessed then return end
+    if input.KeyCode == Enum.KeyCode.M then
+        if minimized then maximize() else minimize() end
     end
-
-    return frame
-end
-
-local function createTextbox(parent, text, placeholder, callback)
-    local frame = Instance.new("Frame")
-    frame.Size = UDim2.new(1, 0, 0, 40)
-    frame.BackgroundTransparency = 1
-    frame.Parent = parent
-
-    local label = Instance.new("TextLabel")
-    label.Text = text or "Textbox"
-    label.Font = Enum.Font.GothamBold
-    label.TextSize = 18
-    label.TextColor3 = Color3.fromRGB(255, 105, 180)
-    label.BackgroundTransparency = 1
-    label.Size = UDim2.new(0.7, 0, 1, 0)
-    label.TextXAlignment = Enum.TextXAlignment.Left
-    label.Parent = frame
-
-    local textbox = Instance.new("TextBox")
-    textbox.Size = UDim2.new(0.3, -10, 1, 0)
-    textbox.Position = UDim2.new(0.7, 10, 0, 0)
-    textbox.BackgroundColor3 = Color3.fromRGB(255, 182, 193)
-    textbox.BorderSizePixel = 0
-    textbox.TextColor3 = Color3.fromRGB(255, 105, 180)
-    textbox.Font = Enum.Font.GothamBold
-    textbox.TextSize = 18
-    textbox.PlaceholderText = placeholder or ""
-    textbox.ClearTextOnFocus = false
-    textbox.Parent = frame
-
-    textbox.FocusLost:Connect(function(enterPressed)
-        if enterPressed and callback then
-            pcall(callback, textbox.Text)
-        end
-    end)
-
-    return frame
-end
-
--- Tạo một tab mẫu để test control
-local tabTest = createTab("Test Controls")
-
-createButton(tabTest, "Button Example", function()
-    print("Button clicked!")
 end)
 
-createToggle(tabTest, "Toggle Example", false, function(state)
-    print("Toggle state:", state)
-end)
+-- Final touch: initial visible
+mainFrame.Visible = true
+smallBtn.Visible = false
 
-createSlider(tabTest, "Slider Example", 0, 100, 50, function(value)
-    print("Slider value:", math.floor(value))
-end)
-
-createDropdown(tabTest, "Dropdown Example", {"Option 1", "Option 2", "Option 3"}, "Option 1", function(selection)
-    print("Dropdown selected:", selection)
-end)
-
-createTextbox(tabTest, "Textbox Example", "Type here...", function(text)
-    print("Textbox entered:", text)
-end)
-
--- Mặc định chọn tab đầu tiên
-tabs[1].button:MouseButton1Click():Wait()
+-- Thông báo nhỏ ở console
+print("[CFrame Recorder] Loaded. Use the GUI to record and play back.")
