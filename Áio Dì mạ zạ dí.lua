@@ -26,7 +26,7 @@ if EXIST then EXIST:Destroy() end
 
 -- ===== GUI =====
 local screenGui = Instance.new("ScreenGui")
-screenGui.Name = "AutoTrashKillGUI"
+screenGui.Name = "KK trash can"
 screenGui.ResetOnSpawn = false
 screenGui.Parent = player:WaitForChild("PlayerGui")
 
@@ -177,7 +177,7 @@ local smallBtn = Instance.new("TextButton")
 smallBtn.Name = "SmallToggle"
 smallBtn.Size = UDim2.fromOffset(64,64)
 smallBtn.Position = UDim2.new(0,20,0,22)
-smallBtn.Text = "💀"
+smallBtn.Text = "kk"
 smallBtn.TextScaled = true
 smallBtn.BackgroundColor3 = Color3.fromRGB(18,18,18)
 smallBtn.BorderSizePixel = 0
