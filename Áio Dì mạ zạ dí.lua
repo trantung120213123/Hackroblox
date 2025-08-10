@@ -1,17 +1,17 @@
--- AutoTrashCanKill (GUI tự tạo, textbox chọn player, TELEPORT_OUT_INTERVAL = 0.1s)
--- Dán vào executor. WARNING: một số game chặn CFrame/anti-cheat -> tự chịu.
+-- AutoTrashCanKill (GUI tự tạo, nhẹ, draggable, minimize)
+-- Dán vào executor, chạy ở client. Một số game có anti-cheat -> tự chịu.
 
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local player = Players.LocalPlayer
 
--- ===== config (chỉnh nếu cần) =====
+-- ===== config =====
 local BEHIND_STUDS = 5
 local TRASH_BEHIND_STUDS = 5
-local TELEPORT_OUT_INTERVAL = 0.1   -- <- đã đổi theo yêu cầu
+local TELEPORT_OUT_INTERVAL = 0.1
 local OUT_PHASE_DURATION = 1.0
 local TRASH_PHASE_DURATION = 1.0
--- ===================================
+-- ===================
 
 -- Remove old gui
 local EXIST = player:FindFirstChildOfClass("PlayerGui") and player.PlayerGui:FindFirstChild("AutoTrashKillGUI")
@@ -25,7 +25,7 @@ screenGui.Parent = player:WaitForChild("PlayerGui")
 
 local main = Instance.new("Frame")
 main.Name = "Main"
-main.Size = UDim2.new(0, 340, 0, 200)
+main.Size = UDim2.new(0, 300, 0, 180)
 main.Position = UDim2.new(0, 80, 0, 80)
 main.BackgroundColor3 = Color3.fromRGB(20,20,20)
 main.BorderSizePixel = 0
@@ -33,11 +33,11 @@ main.Parent = screenGui
 main.Active = true
 
 local header = Instance.new("Frame", main)
-header.Size = UDim2.new(1,0,0,36)
+header.Size = UDim2.new(1,0,0,34)
 header.BackgroundColor3 = Color3.fromRGB(35,35,35)
 
 local title = Instance.new("TextLabel", header)
-title.Size = UDim2.new(1,-100,1,0)
+title.Size = UDim2.new(1,-80,1,0)
 title.Position = UDim2.new(0,8,0,0)
 title.BackgroundTransparency = 1
 title.Text = "AutoTrashKill"
@@ -47,82 +47,61 @@ title.TextColor3 = Color3.fromRGB(220,220,220)
 title.TextXAlignment = Enum.TextXAlignment.Left
 
 local minBtn = Instance.new("TextButton", header)
-minBtn.Size = UDim2.new(0,80,1,0)
-minBtn.Position = UDim2.new(1,-80,0,0)
+minBtn.Size = UDim2.new(0,64,1,0)
+minBtn.Position = UDim2.new(1,-64,0,0)
 minBtn.BackgroundColor3 = Color3.fromRGB(28,28,28)
 minBtn.Text = "—"
 minBtn.Font = Enum.Font.SourceSansBold
 minBtn.TextSize = 20
 minBtn.TextColor3 = Color3.fromRGB(255,255,255)
 
+-- Content
 local content = Instance.new("Frame", main)
-content.Position = UDim2.new(0,0,0,36)
-content.Size = UDim2.new(1,0,1,-36)
+content.Position = UDim2.new(0,0,0,34)
+content.Size = UDim2.new(1,0,1,-34)
 content.BackgroundTransparency = 1
 
--- Target textbox + set button
-local lbl = Instance.new("TextLabel", content)
-lbl.Size = UDim2.new(0,1,0,20)
-lbl.Position = UDim2.new(0,8,0,6)
-lbl.BackgroundTransparency = 1
-lbl.Text = "Target name:"
-lbl.Font = Enum.Font.SourceSans
-lbl.TextSize = 14
-lbl.TextColor3 = Color3.fromRGB(200,200,200)
-lbl.TextXAlignment = Enum.TextXAlignment.Left
+-- Dropdown label + button
+local label = Instance.new("TextLabel", content)
+label.Size = UDim2.new(0,1,0,20)
+label.Position = UDim2.new(0,8,0,6)
+label.BackgroundTransparency = 1
+label.Text = "Target:"
+label.Font = Enum.Font.SourceSansBold
+label.TextSize = 14
+label.TextColor3 = Color3.fromRGB(200,200,200)
+label.TextXAlignment = Enum.TextXAlignment.Left
 
-local txtBox = Instance.new("TextBox", content)
-txtBox.Size = UDim2.new(0,220,0,30)
-txtBox.Position = UDim2.new(0,8,0,30)
-txtBox.BackgroundColor3 = Color3.fromRGB(40,40,40)
-txtBox.TextColor3 = Color3.fromRGB(230,230,230)
-txtBox.Text = ""
-txtBox.PlaceholderText = "Nhập tên player (case-sensitive)"
-txtBox.ClearTextOnFocus = false
-txtBox.Font = Enum.Font.SourceSans
-txtBox.TextSize = 14
+local dropdownBtn = Instance.new("TextButton", content)
+dropdownBtn.Size = UDim2.new(0,220,0,30)
+dropdownBtn.Position = UDim2.new(0,8,0,30)
+dropdownBtn.BackgroundColor3 = Color3.fromRGB(40,40,40)
+dropdownBtn.BorderSizePixel = 0
+dropdownBtn.Text = "Chọn player..."
+dropdownBtn.Font = Enum.Font.SourceSans
+dropdownBtn.TextSize = 14
+dropdownBtn.TextColor3 = Color3.fromRGB(230,230,230)
 
-local setBtn = Instance.new("TextButton", content)
-setBtn.Size = UDim2.new(0,90,0,30)
-setBtn.Position = UDim2.new(0,240,0,30)
-setBtn.BackgroundColor3 = Color3.fromRGB(60,60,60)
-setBtn.Text = "Set"
-setBtn.Font = Enum.Font.SourceSans
-setBtn.TextSize = 14
-setBtn.TextColor3 = Color3.fromRGB(230,230,230)
-
-local infoLabel = Instance.new("TextLabel", content)
-infoLabel.Size = UDim2.new(0,1,0,20)
-infoLabel.Position = UDim2.new(0,8,0,68)
-infoLabel.BackgroundTransparency = 1
-infoLabel.Text = "Target: (none)"
-infoLabel.Font = Enum.Font.SourceSans
-infoLabel.TextSize = 13
-infoLabel.TextColor3 = Color3.fromRGB(200,200,200)
-infoLabel.TextXAlignment = Enum.TextXAlignment.Left
+local dropdownFrame = Instance.new("Frame", content)
+dropdownFrame.Size = UDim2.new(0,220,0,90)
+dropdownFrame.Position = UDim2.new(0,8,0,66)
+dropdownFrame.BackgroundColor3 = Color3.fromRGB(18,18,18)
+dropdownFrame.BorderSizePixel = 0
+dropdownFrame.Visible = false
+local listLayout = Instance.new("UIListLayout", dropdownFrame)
+listLayout.Padding = UDim.new(0,4)
 
 -- Toggle button
 local toggleBtn = Instance.new("TextButton", content)
-toggleBtn.Size = UDim2.new(0,160,0,36)
-toggleBtn.Position = UDim2.new(0,8,0,100)
+toggleBtn.Size = UDim2.new(0,140,0,36)
+toggleBtn.Position = UDim2.new(0,8,0,168-34)
 toggleBtn.BackgroundColor3 = Color3.fromRGB(50,50,50)
 toggleBtn.Text = "Bật AutoKill"
 toggleBtn.Font = Enum.Font.SourceSans
 toggleBtn.TextSize = 14
 toggleBtn.TextColor3 = Color3.fromRGB(230,230,230)
 
--- Status
-local status = Instance.new("TextLabel", content)
-status.Size = UDim2.new(0,260,0,24)
-status.Position = UDim2.new(0,8,0,148)
-status.BackgroundTransparency = 1
-status.Text = "Status: Idle"
-status.Font = Enum.Font.SourceSans
-status.TextSize = 13
-status.TextColor3 = Color3.fromRGB(200,200,200)
-status.TextXAlignment = Enum.TextXAlignment.Left
-
--- Minimize small button
+-- Minimize small button (when minimized)
 local smallBtn = Instance.new("TextButton")
 smallBtn.Name = "SmallToggle"
 smallBtn.Size = UDim2.fromOffset(48,48)
@@ -134,7 +113,18 @@ smallBtn.BorderSizePixel = 0
 smallBtn.Visible = false
 smallBtn.Parent = screenGui
 
--- draggable helper
+-- Status
+local status = Instance.new("TextLabel", content)
+status.Size = UDim2.new(0,180,0,24)
+status.Position = UDim2.new(0,158,0,30)
+status.BackgroundTransparency = 1
+status.Text = "Status: Idle"
+status.Font = Enum.Font.SourceSans
+status.TextSize = 13
+status.TextColor3 = Color3.fromRGB(200,200,200)
+status.TextXAlignment = Enum.TextXAlignment.Left
+
+-- Helper: draggable
 local UserInput = game:GetService("UserInputService")
 local function makeDraggable(guiElement)
     local dragging = false
@@ -224,31 +214,52 @@ local function faceAt(targetPos)
     end
 end
 
--- Set target from textbox
-local function setTargetFromText()
-    local name = tostring(txtBox.Text or "")
-    if name == "" then
-        selectedTarget = nil
-        infoLabel.Text = "Target: (none)"
-        return
-    end
-    local p = Players:FindFirstChild(name)
-    if p then
-        selectedTarget = p
-        infoLabel.Text = "Target: "..p.Name
-    else
-        selectedTarget = nil
-        infoLabel.Text = "Target: (not found)"
+-- Dropdown management
+local function clearDropdown()
+    for _,v in ipairs(dropdownFrame:GetChildren()) do
+        if v ~= listLayout then v:Destroy() end
     end
 end
 
-setBtn.MouseButton1Click:Connect(function()
-    setTargetFromText()
+local function updateDropdown()
+    clearDropdown()
+    for _,plr in ipairs(Players:GetPlayers()) do
+        if plr ~= player then
+            local btn = Instance.new("TextButton")
+            btn.Size = UDim2.new(1,-8,0,28)
+            btn.BackgroundColor3 = Color3.fromRGB(40,40,40)
+            btn.BorderSizePixel = 0
+            btn.TextColor3 = Color3.fromRGB(230,230,230)
+            btn.Font = Enum.Font.SourceSans
+            btn.TextSize = 14
+            btn.Text = plr.Name
+            btn.Parent = dropdownFrame
+            btn.MouseButton1Click:Connect(function()
+                selectedTarget = plr
+                dropdownBtn.Text = "Target: "..plr.Name
+                dropdownFrame.Visible = false
+            end)
+        end
+    end
+end
+
+dropdownBtn.MouseButton1Click:Connect(function()
+    dropdownFrame.Visible = not dropdownFrame.Visible
+    if dropdownFrame.Visible then
+        updateDropdown()
+    end
 end)
 
-txtBox.FocusLost:Connect(function(enterPressed)
-    if enterPressed then setTargetFromText() end
+Players.PlayerAdded:Connect(updateDropdown)
+Players.PlayerRemoving:Connect(function()
+    updateDropdown()
+    if selectedTarget and not Players:FindFirstChild(selectedTarget.Name) then
+        selectedTarget = nil
+        dropdownBtn.Text = "Chọn player..."
+    end
 end)
+
+updateDropdown()
 
 -- Auto loop starter/stopper
 local function startLoop()
@@ -256,17 +267,17 @@ local function startLoop()
     isLoopRunning = true
     task.spawn(function()
         while autoKill do
-            -- validate target
+            -- check target
             if not selectedTarget or not selectedTarget.Parent then
                 status.Text = "Status: Chưa chọn target hợp lệ"
-                task.wait(0.4)
-                goto continue_outer
+                task.wait(0.5)
+                continue
             end
             local tHrp = getHRP(selectedTarget)
             if not tHrp then
                 status.Text = "Status: Target chưa spawn"
-                task.wait(0.4)
-                goto continue_outer
+                task.wait(0.5)
+                continue
             end
 
             -- find trash cans
@@ -274,7 +285,7 @@ local function startLoop()
             if #cans == 0 then
                 status.Text = "Status: Không tìm thấy Trash Can"
                 task.wait(1)
-                goto continue_outer
+                continue
             end
 
             -- choose random trash can
@@ -309,14 +320,14 @@ local function startLoop()
                 while waited < TELEPORT_OUT_INTERVAL and autoKill do
                     local dt = RunService.Heartbeat:Wait()
                     waited = waited + dt
+                    -- keep facing
                     local curT = getHRP(selectedTarget)
                     if curT then faceAt(curT.Position) end
                 end
             end
             if not autoKill then break end
 
-            ::continue_outer::
-            -- small pause between cycles
+            -- small pause before next cycle
             task.wait(0.05)
         end
         isLoopRunning = false
@@ -334,7 +345,7 @@ toggleBtn.MouseButton1Click:Connect(function()
     else
         toggleBtn.Text = "Bật AutoKill"
         status.Text = "Status: Stopping..."
-        -- loop reads autoKill and stops cleanly
+        -- stopping happens naturally inside loop due to autoKill flag
     end
 end)
 
@@ -351,4 +362,4 @@ smallBtn.MouseButton1Click:Connect(function()
     smallBtn.Visible = false
 end)
 
-print("[AutoTrashKill] GUI loaded. TELEPORT_OUT_INTERVAL = "..tostring(TELEPORT_OUT_INTERVAL).."s")
+print("[AutoTrashKill] GUI loaded.")
