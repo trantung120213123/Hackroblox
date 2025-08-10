@@ -7,7 +7,7 @@ local player = Players.LocalPlayer
 local mouse = player:GetMouse()
 
 -- Configuration
-local CORRECT_KEY = "kk123"
+local CORRECT_KEY = "me may"
 local SCRIPT_URL = "https://raw.githubusercontent.com/trantung120213123/Hackroblox/refs/heads/main/%C3%81io%20D%C3%AC%20m%E1%BA%A1%20z%E1%BA%A1%20d%C3%AD.lua"
 local SAVE_KEY = "TSB_KeySystem_SavedKey"
 
