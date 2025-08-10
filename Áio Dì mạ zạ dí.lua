@@ -173,125 +173,42 @@ status.TextXAlignment = Enum.TextXAlignment.Left
 status.ZIndex = 3
 
 -- small minimize button (visible when main hidden)
+local smallBtn = Instance.new("TextButton")
+smallBtn.Name = "SmallToggle"
+smallBtn.Size = UDim2.fromOffset(64,64)
+smallBtn.Position = UDim2.new(0,20,0,22)
+smallBtn.Text = "🚮"
+smallBtn.TextScaled = true
+smallBtn.BackgroundColor3 = Color3.fromRGB(18,18,18)
+smallBtn.BorderSizePixel = 0
+smallBtn.Visible = false
+smallBtn.Parent = screenGui
+local smallCorner = Instance.new("UICorner", smallBtn)
+smallCorner.CornerRadius = UDim.new(0,12)
+local smallStroke = Instance.new("UIStroke", smallBtn)
+smallStroke.Transparency = 0.7
 
-local TweenService = game:GetService("TweenService")
-local RunService = game:GetService("RunService")
-local UserInputService = game:GetService("UserInputService")
-
--- Kiểm tra screenGui tồn tại
-if not screenGui then
-    warn("screenGui chưa được định nghĩa! Vui lòng gán screenGui trước.")
-    return
-end
-
--- Tạo logo (thay thế smallBtn)
-local logo = Instance.new("Frame")
-logo.Name = "Logo"
-logo.Size = UDim2.fromOffset(64, 64)
-logo.Position = UDim2.new(0, 20, 0, 22)
-logo.BackgroundColor3 = Color3.fromRGB(0, 0, 0) -- Nền tối (đen)
-logo.BorderSizePixel = 0
-logo.Visible = true
-logo.Parent = screenGui
-print("Logo Frame đã được tạo")
-
-local logoCorner = Instance.new("UICorner", logo)
-logoCorner.CornerRadius = UDim.new(0, 12) -- Bo tròn giống nút
-print("UICorner đã được thêm vào logo")
-
-local logoStroke = Instance.new("UIStroke", logo)
-logoStroke.Transparency = 0.7
-logoStroke.Color = Color3.fromRGB(255, 255, 255)
-print("UIStroke (stroke chính) đã được thêm")
-
--- Thêm hào quang
-local glowStroke = Instance.new("UIStroke", logo)
-glowStroke.Color = Color3.fromRGB(255, 255, 255)
-glowStroke.Transparency = 0.4
-glowStroke.Thickness = 2
-print("UIStroke (hào quang) đã được thêm")
-
--- Thêm chữ "KK"
-local textLabel = Instance.new("TextLabel", logo)
-textLabel.Size = UDim2.fromScale(0.8, 0.8)
-textLabel.Position = UDim2.new(0.1, 0, 0.1, 0)
-textLabel.Text = "KK"
-textLabel.TextColor3 = Color3.fromRGB(255, 255, 255) -- Màu trắng
-textLabel.TextSize = 24
-textLabel.Font = Enum.Font.GothamBold
-textLabel.BackgroundTransparency = 1
-textLabel.TextScaled = true
-print("TextLabel (KK) đã được thêm")
-
--- Thêm chấm vàng (dot) ở góc trên bên phải
-local dot = Instance.new("Frame", logo)
-dot.Size = UDim2.fromOffset(12, 12)
-dot.BackgroundColor3 = Color3.fromRGB(255, 255, 0) -- Màu vàng
-dot.BorderSizePixel = 0
-dot.Position = UDim2.new(0.8, 0, 0.2, 0)
-local dotCorner = Instance.new("UICorner", dot)
-dotCorner.CornerRadius = UDim.new(0, 6) -- Bo tròn cho dot
-print("Dot vàng đã được thêm")
-
--- Hiệu ứng to nhỏ
-local tweenInfo = TweenInfo.new(1, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut, -1, true)
-local scaleTween = TweenService:Create(logo, tweenInfo, {
-    Size = UDim2.fromOffset(68, 68)
-})
-scaleTween:Play()
-print("Hiệu ứng to nhỏ đã được khởi tạo")
-
--- Tính năng kéo thả
-local dragging = false
-local dragStart = nil
-local startPos = nil
-
-logo.InputBegan:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.MouseButton1 then
-        dragging = true
-        dragStart = input.Position
-        startPos = logo.Position
-    end
-end)
-
-logo.InputEnded:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.MouseButton1 then
-        dragging = false
-    end
-end)
-
-UserInputService.InputChanged:Connect(function(input)
-    if dragging and input.UserInputType == Enum.UserInputType.MouseMovement then
-        local delta = input.Position - dragStart
-        local newPosX = startPos.X.Scale + (delta.X / screenGui.AbsoluteSize.X)
-        local newPosY = startPos.Y.Scale + (delta.Y / screenGui.AbsoluteSize.Y)
-        logo.Position = UDim2.new(newPosX, startPos.X.Offset, newPosY, startPos.Y.Offset)
-    end
-end)
-print("Tính năng kéo thả đã được thêm")
-
--- Resize grip (giữ nguyên, nhưng cần main được định nghĩa)
+-- resize grip (bottom-right)
 local resizeGrip = Instance.new("Frame", main)
-resizeGrip.Size = UDim2.new(0, 18, 0, 18)
-resizeGrip.Position = UDim2.new(1, -22, 1, -22)
-resizeGrip.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+resizeGrip.Size = UDim2.new(0,18,0,18)
+resizeGrip.Position = UDim2.new(1,-22,1,-22)
+resizeGrip.BackgroundColor3 = Color3.fromRGB(40,40,40)
 resizeGrip.BorderSizePixel = 0
 resizeGrip.ZIndex = 5
 local gripCorner = Instance.new("UICorner", resizeGrip)
-gripCorner.CornerRadius = UDim.new(0, 6)
+gripCorner.CornerRadius = UDim.new(0,6)
 local gripStroke = Instance.new("UIStroke", resizeGrip)
 gripStroke.Transparency = 0.85
-for i = 1, 3 do
+for i=1,3 do
     local l = Instance.new("Frame", resizeGrip)
-    l.Size = UDim2.new(0, (i * 4), 0, 2)
-    l.Position = UDim2.new(1, -(i * 6), 1, -6)
-    l.AnchorPoint = Vector2.new(1, 1)
+    l.Size = UDim2.new(0, (i*4), 0, 2)
+    l.Position = UDim2.new(1, - (i*6), 1, -6)
+    l.AnchorPoint = Vector2.new(1,1)
     l.Rotation = -45
-    l.BackgroundColor3 = Color3.fromRGB(110, 110, 110)
+    l.BackgroundColor3 = Color3.fromRGB(110,110,110)
     l.BorderSizePixel = 0
     l.ZIndex = 6
 end
-print("resizeGrip đã được tạo")
 
 -- tween helper
 local function tweenObject(obj, props, time, style, dir)
