@@ -1,38 +1,41 @@
--- Script: Ghi lại hành động bằng CFrame + nút thu nhỏ / phóng to
--- Dán nguyên vào executor (ví dụ Synapse / Krnl / etc.)
--- Lưu ý: một số game chặn thao tác thay đổi CFrame, dùng trong môi trường executor.
+-- Auto Kill Thùng Rác (Trash Can) <-> Behind Target 5 studs
+-- Flat Lua, dán vào executor (Synapse/krnl/other)
+-- Chú ý: một số game chặn thay đổi CFrame -> có thể không chạy.
+-- Tác giả: tự động cho mày, chỉnh tiếp nếu cần.
 
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local UserInputService = game:GetService("UserInputService")
-local TweenService = game:GetService("TweenService")
 
-local player = Players.LocalPlayer
-local character = player.Character or player.CharacterAdded:Wait()
-local hrp = character:WaitForChild("HumanoidRootPart") -- dùng HumanoidRootPart
+local localPlayer = Players.LocalPlayer
 
--- Cấu hình
-local SAMPLE_INTERVAL = 1/120 -- giây giữa 2 sample
-local LERP_STEPS = 20 -- số bước nội suy giữa 2 frame khi phát lại (cao hơn mượt hơn)
-local GUI_NAME = "CFrameRecorderGUI"
+-- Cấu hình mặc định
+local BEHIND_STUDS = 5          -- khoảng cách sau lưng target (mày set: 5)
+local TRASH_OFFSET_BACK = 2     -- offset sau trash can (ứng với "sau trash can 1 xíu")
+local TELEPORT_OUT_INTERVAL = 0.3 -- teleport ra sau target mỗi 0.3s (theo yêu cầu)
+local OUT_PHASE_DURATION = 1.0  -- thời lượng phase "ra sau target" (1s)
+local TRASH_PHASE_DURATION = 1.0 -- thời lượng phase "ở sau trash can" (1s)
 
--- Xóa GUI cũ nếu có
-if player:FindFirstChildOfClass("PlayerGui") then
-    local existing = player.PlayerGui:FindFirstChild(GUI_NAME)
-    if existing then existing:Destroy() end
+-- GUI tên
+local GUI_NAME = "AutoTrashKillGUI"
+
+-- Remove GUI cũ nếu có
+if localPlayer:FindFirstChildOfClass("PlayerGui") then
+    local old = localPlayer.PlayerGui:FindFirstChild(GUI_NAME)
+    if old then old:Destroy() end
 end
 
--- Tạo ScreenGui
+-- ScreenGui
 local screenGui = Instance.new("ScreenGui")
 screenGui.Name = GUI_NAME
 screenGui.ResetOnSpawn = false
-screenGui.Parent = player:WaitForChild("PlayerGui")
+screenGui.Parent = localPlayer:WaitForChild("PlayerGui")
 
--- Small toggle button (nút thu nhỏ) - ban đầu ẩn
+-- Small toggle (thu nhỏ)
 local smallBtn = Instance.new("TextButton")
 smallBtn.Name = "SmallToggle"
 smallBtn.Size = UDim2.fromOffset(48,48)
-smallBtn.Position = UDim2.new(0,10,0,10) -- góc trái trên, có thể kéo
+smallBtn.Position = UDim2.new(0,8,0,8)
 smallBtn.Text = "💀"
 smallBtn.TextScaled = true
 smallBtn.BackgroundColor3 = Color3.fromRGB(25,25,25)
@@ -40,119 +43,176 @@ smallBtn.BorderSizePixel = 0
 smallBtn.Visible = false
 smallBtn.Parent = screenGui
 
--- Main GUI frame
-local mainFrame = Instance.new("Frame")
-mainFrame.Name = "MainFrame"
-mainFrame.Size = UDim2.new(0,360,0,220)
-mainFrame.Position = UDim2.new(0,80,0,80)
-mainFrame.BackgroundColor3 = Color3.fromRGB(20,20,20)
-mainFrame.BorderSizePixel = 0
-mainFrame.Parent = screenGui
+-- Main Frame
+local main = Instance.new("Frame")
+main.Name = "Main"
+main.Size = UDim2.new(0,380,0,260)
+main.Position = UDim2.new(0,80,0,80)
+main.BackgroundColor3 = Color3.fromRGB(20,20,20)
+main.BorderSizePixel = 0
+main.Parent = screenGui
 
--- Header (title + minimize button)
+-- Header
 local header = Instance.new("Frame")
-header.Name = "Header"
 header.Size = UDim2.new(1,0,0,36)
+header.Position = UDim2.new(0,0,0,0)
 header.BackgroundColor3 = Color3.fromRGB(35,35,35)
 header.BorderSizePixel = 0
-header.Parent = mainFrame
+header.Parent = main
 
 local title = Instance.new("TextLabel")
 title.Size = UDim2.new(1,-80,1,0)
 title.Position = UDim2.new(0,8,0,0)
 title.BackgroundTransparency = 1
-title.Text = "CFrame Recorder"
+title.Text = "AutoTrashKill"
 title.Font = Enum.Font.SourceSansBold
 title.TextSize = 18
 title.TextColor3 = Color3.fromRGB(220,220,220)
 title.TextXAlignment = Enum.TextXAlignment.Left
 title.Parent = header
 
-local minimizeBtn = Instance.new("TextButton")
-minimizeBtn.Name = "Minimize"
-minimizeBtn.Size = UDim2.new(0,64,1,0)
-minimizeBtn.Position = UDim2.new(1,-64,0,0)
-minimizeBtn.BackgroundColor3 = Color3.fromRGB(28,28,28)
-minimizeBtn.BorderSizePixel = 0
-minimizeBtn.Text = "—"
-minimizeBtn.Font = Enum.Font.SourceSansBold
-minimizeBtn.TextSize = 20
-minimizeBtn.TextColor3 = Color3.fromRGB(255,255,255)
-minimizeBtn.Parent = header
+local minBtn = Instance.new("TextButton")
+minBtn.Size = UDim2.new(0,64,1,0)
+minBtn.Position = UDim2.new(1,-64,0,0)
+minBtn.BackgroundColor3 = Color3.fromRGB(28,28,28)
+minBtn.BorderSizePixel = 0
+minBtn.Text = "—"
+minBtn.Font = Enum.Font.SourceSansBold
+minBtn.TextSize = 20
+minBtn.TextColor3 = Color3.fromRGB(255,255,255)
+minBtn.Parent = header
 
--- Content area
-local content = Instance.new("Frame")
-content.Name = "Content"
-content.Position = UDim2.new(0,0,0,36)
-content.Size = UDim2.new(1,0,1,-36)
-content.BackgroundTransparency = 1
-content.Parent = mainFrame
+-- Left: Player list + Refresh
+local left = Instance.new("Frame")
+left.Size = UDim2.new(0,170,0,220)
+left.Position = UDim2.new(0,8,0,40)
+left.BackgroundColor3 = Color3.fromRGB(15,15,15)
+left.BorderSizePixel = 0
+left.Parent = main
 
--- Buttons
-local function makeButton(name, text, posY)
-    local b = Instance.new("TextButton")
-    b.Name = name
-    b.Size = UDim2.new(0,100,0,36)
-    b.Position = UDim2.new(0,12,0,posY)
-    b.BackgroundColor3 = Color3.fromRGB(45,45,45)
-    b.BorderSizePixel = 0
-    b.Text = text
-    b.Font = Enum.Font.SourceSans
-    b.TextSize = 16
-    b.TextColor3 = Color3.fromRGB(230,230,230)
-    b.Parent = content
-    return b
-end
+local playersLabel = Instance.new("TextLabel")
+playersLabel.Size = UDim2.new(1, -12, 0, 20)
+playersLabel.Position = UDim2.new(0,6,0,6)
+playersLabel.BackgroundTransparency = 1
+playersLabel.Text = "Players"
+playersLabel.Font = Enum.Font.SourceSansBold
+playersLabel.TextSize = 14
+playersLabel.TextColor3 = Color3.fromRGB(200,200,200)
+playersLabel.TextXAlignment = Enum.TextXAlignment.Left
+playersLabel.Parent = left
 
-local recordBtn = makeButton("Record", "Record", 6)
-local stopBtn = makeButton("Stop", "Stop", 46)
-local playBtn = makeButton("Play", "Play", 86)
-local clearBtn = makeButton("Clear", "Clear", 126)
-local saveBtn = makeButton("SavePoint", "Save Point", 166)
+local refreshBtn = Instance.new("TextButton")
+refreshBtn.Size = UDim2.new(0,64,0,22)
+refreshBtn.Position = UDim2.new(1,-70,0,3)
+refreshBtn.Text = "Refresh"
+refreshBtn.Font = Enum.Font.SourceSans
+refreshBtn.TextSize = 12
+refreshBtn.Parent = left
 
--- Status label
-local statusLabel = Instance.new("TextLabel")
-statusLabel.Size = UDim2.new(0,220,0,36)
-statusLabel.Position = UDim2.new(0,128,0,6)
-statusLabel.BackgroundTransparency = 1
-statusLabel.Text = "Status: Idle"
-statusLabel.Font = Enum.Font.SourceSans
-statusLabel.TextSize = 16
-statusLabel.TextColor3 = Color3.fromRGB(200,200,200)
-statusLabel.TextXAlignment = Enum.TextXAlignment.Left
-statusLabel.Parent = content
+local playerListFrame = Instance.new("Frame")
+playerListFrame.Size = UDim2.new(1,-12,0,170)
+playerListFrame.Position = UDim2.new(0,6,0,32)
+playerListFrame.BackgroundColor3 = Color3.fromRGB(18,18,18)
+playerListFrame.BorderSizePixel = 0
+playerListFrame.Parent = left
 
--- Saved points list
-local savedPoints = Instance.new("Frame")
-savedPoints.Name = "SavedPoints"
-savedPoints.Position = UDim2.new(0,128,0,48)
-savedPoints.Size = UDim2.new(0,220,0,150)
-savedPoints.BackgroundColor3 = Color3.fromRGB(18,18,18)
-savedPoints.BorderSizePixel = 0
-savedPoints.Parent = content
+local listLayout = Instance.new("UIListLayout")
+listLayout.Padding = UDim.new(0,4)
+listLayout.Parent = playerListFrame
 
-local uiList = Instance.new("UIListLayout")
-uiList.Parent = savedPoints
-uiList.SortOrder = Enum.SortOrder.LayoutOrder
-uiList.Padding = UDim.new(0,6)
+-- Right: Controls
+local right = Instance.new("Frame")
+right.Size = UDim2.new(0,190,0,220)
+right.Position = UDim2.new(0,190,0,40)
+right.BackgroundColor3 = Color3.fromRGB(15,15,15)
+right.BorderSizePixel = 0
+right.Parent = main
 
--- Draggable behaviour for mainFrame and smallBtn
-local function makeDraggable(guiElement)
+-- Selected target label
+local selLabel = Instance.new("TextLabel")
+selLabel.Size = UDim2.new(1,-12,0,24)
+selLabel.Position = UDim2.new(0,6,0,6)
+selLabel.BackgroundTransparency = 1
+selLabel.Text = "Target: (none)"
+selLabel.Font = Enum.Font.SourceSansBold
+selLabel.TextSize = 14
+selLabel.TextColor3 = Color3.fromRGB(220,220,220)
+selLabel.TextXAlignment = Enum.TextXAlignment.Left
+selLabel.Parent = right
+
+-- Toggle AutoKill
+local toggleBtn = Instance.new("TextButton")
+toggleBtn.Size = UDim2.new(0,120,0,36)
+toggleBtn.Position = UDim2.new(0,6,0,40)
+toggleBtn.Text = "AutoKill: OFF"
+toggleBtn.Font = Enum.Font.SourceSans
+toggleBtn.TextSize = 14
+toggleBtn.Parent = right
+
+-- Settings: studs
+local studsLabel = Instance.new("TextLabel")
+studsLabel.Size = UDim2.new(1,-12,0,18)
+studsLabel.Position = UDim2.new(0,6,0,86)
+studsLabel.BackgroundTransparency = 1
+studsLabel.Text = "Behind studs: "..tostring(BEHIND_STUDS)
+studsLabel.Font = Enum.Font.SourceSans
+studsLabel.TextSize = 14
+studsLabel.TextColor3 = Color3.fromRGB(200,200,200)
+studsLabel.TextXAlignment = Enum.TextXAlignment.Left
+studsLabel.Parent = right
+
+local incBtn = Instance.new("TextButton")
+incBtn.Size = UDim2.new(0,28,0,20)
+incBtn.Position = UDim2.new(1,-70,0,82)
+incBtn.Text = "+"
+incBtn.Font = Enum.Font.SourceSansBold
+incBtn.TextSize = 14
+incBtn.Parent = right
+
+local decBtn = Instance.new("TextButton")
+decBtn.Size = UDim2.new(0,28,0,20)
+decBtn.Position = UDim2.new(1,-36,0,82)
+decBtn.Text = "-"
+decBtn.Font = Enum.Font.SourceSansBold
+decBtn.TextSize = 14
+decBtn.Parent = right
+
+-- Status
+local status = Instance.new("TextLabel")
+status.Size = UDim2.new(1,-12,0,36)
+status.Position = UDim2.new(0,6,0,112)
+status.BackgroundTransparency = 1
+status.Text = "Status: Idle"
+status.Font = Enum.Font.SourceSans
+status.TextSize = 14
+status.TextColor3 = Color3.fromRGB(200,200,200)
+status.TextXAlignment = Enum.TextXAlignment.Left
+status.Parent = right
+
+-- Footer small note
+local note = Instance.new("TextLabel")
+note.Size = UDim2.new(1,-12,0,36)
+note.Position = UDim2.new(0,6,0,156)
+note.BackgroundTransparency = 1
+note.Text = "Auto teleport every "..tostring(TELEPORT_OUT_INTERVAL).."s during OUT phase."
+note.Font = Enum.Font.SourceSans
+note.TextSize = 12
+note.TextColor3 = Color3.fromRGB(160,160,160)
+note.TextXAlignment = Enum.TextXAlignment.Left
+note.Parent = right
+
+-- Make main and small draggable
+local UserInput = UserInputService
+local function makeDraggable(gui)
     local dragging = false
-    local dragInput, dragStart, startPos
+    local dragStart
+    local startPos
 
-    local function update(input)
-        local delta = input.Position - dragStart
-        guiElement.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X,
-                                        startPos.Y.Scale, startPos.Y.Offset + delta.Y)
-    end
-
-    guiElement.InputBegan:Connect(function(input)
+    gui.InputBegan:Connect(function(input)
         if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
             dragging = true
             dragStart = input.Position
-            startPos = guiElement.Position
-
+            startPos = gui.Position
             input.Changed:Connect(function()
                 if input.UserInputState == Enum.UserInputState.End then
                     dragging = false
@@ -161,203 +221,251 @@ local function makeDraggable(guiElement)
         end
     end)
 
-    guiElement.InputChanged:Connect(function(input)
+    gui.InputChanged:Connect(function(input)
         if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
             dragInput = input
         end
     end)
 
-    UserInputService.InputChanged:Connect(function(input)
-        if input == dragInput and dragging then
-            update(input)
+    UserInput.InputChanged:Connect(function(input)
+        if dragging and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
+            local delta = input.Position - dragStart
+            gui.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
         end
     end)
 end
 
-makeDraggable(mainFrame)
+makeDraggable(main)
 makeDraggable(smallBtn)
 
--- Playback / Recording data
-local recordings = {} -- list of CFrames
-local isRecording = false
-local recordConn
+-- State variables
+local selectedTarget = nil
+local isRunning = false
 
--- Record function
-local function startRecording()
-    if isRecording then return end
-    isRecording = true
-    recordings = {}
-    statusLabel.Text = "Status: Recording..."
-    recordBtn.BackgroundColor3 = Color3.fromRGB(80,30,30)
-    recordConn = RunService.Heartbeat:Connect(function(dt)
-        -- sample theo interval
-        -- we'll use tick() to control interval
-    end)
-
-    -- use a timer loop separate for better control
-    spawn(function()
-        local last = tick()
-        while isRecording do
-            local now = tick()
-            if now - last >= SAMPLE_INTERVAL then
-                last = now
-                local char = player.Character
-                if char and char:FindFirstChild("HumanoidRootPart") then
-                    table.insert(recordings, char.HumanoidRootPart.CFrame)
+-- Utility: find trash can in workspace (search by name keywords)
+local function findTrashCan()
+    local keywords = {"Trash", "TrashCan", "Trash Can", "Garbage", "Bin"}
+    for _, obj in ipairs(workspace:GetDescendants()) do
+        if obj:IsA("BasePart") or obj:IsA("Model") or obj:IsA("UnionOperation") then
+            local name = obj.Name or ""
+            for _, k in ipairs(keywords) do
+                if string.find(string.lower(name), string.lower(k)) then
+                    -- If model, try to get primary part / primary bounding part
+                    if obj:IsA("Model") then
+                        local primary = obj.PrimaryPart or obj:FindFirstChildWhichIsA("BasePart")
+                        if primary then
+                            return primary
+                        end
+                    else
+                        return obj
+                    end
                 end
             end
-            RunService.Stepped:Wait()
-        end
-    end)
-end
-
-local function stopRecording()
-    if not isRecording then return end
-    isRecording = false
-    if recordConn then recordConn:Disconnect() recordConn = nil end
-    statusLabel.Text = "Status: Idle (Recorded ".. tostring(#recordings) .." frames)"
-    recordBtn.BackgroundColor3 = Color3.fromRGB(45,45,45)
-end
-
--- Playback function (nội suy)
-local function playRecording()
-    if isRecording then
-        statusLabel.Text = "Status: Stop recording trước khi phát lại"
-        return
-    end
-    if #recordings == 0 then
-        statusLabel.Text = "Status: Không có bản ghi"
-        return
-    end
-
-    statusLabel.Text = "Status: Playing..."
-    playBtn.BackgroundColor3 = Color3.fromRGB(30,80,30)
-
-    -- đảm bảo character hiện tại
-    local char = player.Character or player.CharacterAdded:Wait()
-    local hrpPlay = char:FindFirstChild("HumanoidRootPart")
-    if not hrpPlay then
-        statusLabel.Text = "Status: Không tìm thấy HumanoidRootPart"
-        playBtn.BackgroundColor3 = Color3.fromRGB(45,45,45)
-        return
-    end
-
-    -- disable humanoid physics? chúng ta vẫn sẽ đặt CFrame trực tiếp
-    -- Phát từng đoạn
-    for i = 1, #recordings-1 do
-        local a = recordings[i]
-        local b = recordings[i+1]
-        for step = 1, LERP_STEPS do
-            local alpha = step / LERP_STEPS
-            local newCFrame = a:Lerp(b, alpha)
-            -- đặt CFrame trực tiếp
-            if hrpPlay and hrpPlay.Parent then
-                pcall(function() hrpPlay.CFrame = newCFrame end)
-            end
-            RunService.Heartbeat:Wait()
         end
     end
-
-    -- đặt về cuối cùng
-    pcall(function() if hrpPlay then hrpPlay.CFrame = recordings[#recordings] end end)
-
-    statusLabel.Text = "Status: Done playing"
-    playBtn.BackgroundColor3 = Color3.fromRGB(45,45,45)
+    return nil
 end
 
--- Save point (luu vị trí hiện tại)
-local function createSavedPoint(cframe)
-    local idx = #savedPoints:GetChildren() + 1
+-- UI: populate player list
+local function clearPlayerList()
+    for _, v in ipairs(playerListFrame:GetChildren()) do
+        if v ~= listLayout then v:Destroy() end
+    end
+end
+
+local function makePlayerButton(p)
     local btn = Instance.new("TextButton")
-    btn.Size = UDim2.new(1,-12,0,28)
+    btn.Size = UDim2.new(1, -8, 0, 28)
     btn.BackgroundColor3 = Color3.fromRGB(40,40,40)
     btn.BorderSizePixel = 0
     btn.TextColor3 = Color3.fromRGB(230,230,230)
     btn.Font = Enum.Font.SourceSans
     btn.TextSize = 14
-    btn.Text = "Point ".. tostring(idx)
-    btn.Parent = savedPoints
+    btn.Text = p.Name
+    btn.Parent = playerListFrame
 
     btn.MouseButton1Click:Connect(function()
-        -- teleport đến điểm đã lưu
-        local char = player.Character
-        local hrpPlay = char and char:FindFirstChild("HumanoidRootPart")
-        if hrpPlay then
-            pcall(function() hrpPlay.CFrame = cframe end)
-        end
+        selectedTarget = p
+        selLabel.Text = "Target: "..p.Name
     end)
 end
 
--- Button events
-recordBtn.MouseButton1Click:Connect(function()
-    startRecording()
-end)
-
-stopBtn.MouseButton1Click:Connect(function()
-    stopRecording()
-end)
-
-playBtn.MouseButton1Click:Connect(function()
-    spawn(function() playRecording() end)
-end)
-
-clearBtn.MouseButton1Click:Connect(function()
-    recordings = {}
-    -- xóa saved recordings nếu muốn
-    statusLabel.Text = "Status: Cleared"
-end)
-
-saveBtn.MouseButton1Click:Connect(function()
-    local char = player.Character
-    if char and char:FindFirstChild("HumanoidRootPart") then
-        local cf = char.HumanoidRootPart.CFrame
-        createSavedPoint(cf)
-        statusLabel.Text = "Saved point ".. tostring(#savedPoints:GetChildren())
-    else
-        statusLabel.Text = "Không tìm thấy HumanoidRootPart"
+local function populatePlayers()
+    clearPlayerList()
+    for _, p in ipairs(Players:GetPlayers()) do
+        if p ~= localPlayer then
+            makePlayerButton(p)
+        end
     end
-end)
-
--- Minimize / Small button behavior
-local minimized = false
-
-local function minimize()
-    minimized = true
-    mainFrame.Visible = false
-    smallBtn.Visible = true
 end
 
+refreshBtn.MouseButton1Click:Connect(function()
+    populatePlayers()
+end)
+
+-- inc/dec studs
+incBtn.MouseButton1Click:Connect(function()
+    BEHIND_STUDS = BEHIND_STUDS + 1
+    studsLabel.Text = "Behind studs: "..tostring(BEHIND_STUDS)
+end)
+decBtn.MouseButton1Click:Connect(function()
+    if BEHIND_STUDS > 1 then BEHIND_STUDS = BEHIND_STUDS - 1 end
+    studsLabel.Text = "Behind studs: "..tostring(BEHIND_STUDS)
+end)
+
+-- Toggle minimize / maximize
+local minimized = false
+local function minimize()
+    minimized = true
+    main.Visible = false
+    smallBtn.Visible = true
+end
 local function maximize()
     minimized = false
-    mainFrame.Visible = true
+    main.Visible = true
     smallBtn.Visible = false
 end
 
-minimizeBtn.MouseButton1Click:Connect(function()
-    minimize()
+minBtn.MouseButton1Click:Connect(minimize)
+smallBtn.MouseButton1Click:Connect(maximize)
+
+-- Toggle AutoKill
+toggleBtn.MouseButton1Click:Connect(function()
+    isRunning = not isRunning
+    if isRunning then
+        toggleBtn.Text = "AutoKill: ON"
+        status.Text = "Status: Running..."
+    else
+        toggleBtn.Text = "AutoKill: OFF"
+        status.Text = "Status: Idle"
+    end
 end)
 
-smallBtn.MouseButton1Click:Connect(function()
-    maximize()
+-- Helper: safe get HRP
+local function getHRP(p)
+    if not p then return nil end
+    local ch = p.Character
+    if not ch then return nil end
+    local hrp = ch:FindFirstChild("HumanoidRootPart") or ch:FindFirstChild("Torso") or ch:FindFirstChild("UpperTorso")
+    return hrp
+end
+
+-- Helper: teleport local player to a CFrame (safe pcall)
+local function tpTo(cframe)
+    local char = localPlayer.Character
+    if not char then return end
+    local hrp = getHRP(localPlayer)
+    if not hrp then return end
+    pcall(function()
+        hrp.CFrame = cframe
+    end)
+end
+
+-- Helper: face target from a position (returns CFrame that looks at targetPos)
+local function cframeLookAt(fromPos, targetPos)
+    return CFrame.new(fromPos, targetPos)
+end
+
+-- Main loop coroutine
+spawn(function()
+    while true do
+        if isRunning then
+            -- find trash can
+            local trashPart = findTrashCan()
+            if not trashPart then
+                status.Text = "Status: Không tìm thấy Trash Can"
+                wait(1)
+                -- try again
+            else
+                local target = selectedTarget
+                if not target or not target.Parent then
+                    status.Text = "Status: Chưa chọn target hoặc target không hợp lệ"
+                    wait(0.5)
+                else
+                    local targetHRP = getHRP(target)
+                    if not targetHRP then
+                        status.Text = "Status: Target không có HRP"
+                        wait(0.5)
+                    else
+                        -- Phase 1: teleport đến sau Trash Can và hướng mặt vào trash (ở yên TRASH_PHASE_DURATION)
+                        local trashPos = trashPart.Position
+                        -- attempt to get "behind" relative to trash's lookVector (use trashPart.CFrame lookVector)
+                        local trashBackPos = trashPart.CFrame.Position - (trashPart.CFrame.LookVector * TRASH_OFFSET_BACK)
+                        local lookAtTrashCf = cframeLookAt(trashBackPos, trashPos)
+                        tpTo(lookAtTrashCf)
+                        status.Text = "Phase: At Trash ("..tostring(TRASH_PHASE_DURATION).."s)"
+                        -- keep facing trash for duration
+                        local t0 = tick()
+                        while tick() - t0 < TRASH_PHASE_DURATION and isRunning do
+                            -- continuously ensure facing trash (some games may push)
+                            pcall(function()
+                                local hrp = getHRP(localPlayer)
+                                if hrp then hrp.CFrame = cframeLookAt(trashBackPos, trashPos) end
+                            end)
+                            RunService.Heartbeat:Wait()
+                        end
+
+                        if not isRunning then break end
+
+                        -- Phase 2: OUT phase -> trong OUT_PHASE_DURATION, every TELEPORT_OUT_INTERVAL teleport behind target và hướng mặt vào họ
+                        status.Text = "Phase: Attacking target "..target.Name
+                        local outStart = tick()
+                        while tick() - outStart < OUT_PHASE_DURATION and isRunning do
+                            -- recompute target HRP (target may move)
+                            targetHRP = getHRP(target)
+                            if not targetHRP then break end
+                            local targetPos = targetHRP.Position
+                            -- compute behind position relative to target look vector
+                            local behindPos = targetPos - (targetHRP.CFrame.LookVector * BEHIND_STUDS)
+                            -- set a small Y offset to match HRP height
+                            behindPos = Vector3.new(behindPos.X, targetPos.Y, behindPos.Z)
+                            local cf = cframeLookAt(behindPos, targetPos)
+                            tpTo(cf)
+                            -- wait TELEPORT_OUT_INTERVAL while maintaining facing (split into small waits)
+                            local waited = 0
+                            while waited < TELEPORT_OUT_INTERVAL and isRunning do
+                                -- keep facing target while waiting
+                                pcall(function()
+                                    local hrp = getHRP(localPlayer)
+                                    if hrp and targetHRP and targetHRP.Parent then
+                                        hrp.CFrame = cframeLookAt(hrp.Position, targetHRP.Position)
+                                    end
+                                end)
+                                local dt = RunService.Heartbeat:Wait()
+                                waited = waited + dt
+                            end
+                        end
+
+                        if not isRunning then break end
+
+                        -- Phase 3: teleport lại sau Trash Can immediately (loop continues)
+                        -- teleport back quickly and continue loop (next iteration will wait in phase)
+                        tpTo(cframeLookAt(trashBackPos, trashPos))
+                        -- small wait to avoid super tight loop before next iteration
+                        wait(0.05)
+                    end
+                end
+            end
+        else
+            RunService.Heartbeat:Wait()
+        end
+        RunService.Heartbeat:Wait()
+    end
 end)
 
--- Make header draggable only (so user có thể kéo GUI)
-header.Active = true
-header.Draggable = false -- we'll use custom draggable for mainFrame already
+-- Initial populate
+populatePlayers()
 
--- Save/Load GUI position when moved? (simple: keep as-is during session)
-
--- Optional: hotkey M để thu nhỏ / phóng to
-UserInputService.InputBegan:Connect(function(input, gameProcessed)
-    if gameProcessed then return end
+-- Keyboard M to minimize / maximize
+UserInputService.InputBegan:Connect(function(input, g)
+    if g then return end
     if input.KeyCode == Enum.KeyCode.M then
         if minimized then maximize() else minimize() end
     end
 end)
 
--- Final touch: initial visible
-mainFrame.Visible = true
+-- Final visibility
+main.Visible = true
 smallBtn.Visible = false
 
--- Thông báo nhỏ ở console
-print("[CFrame Recorder] Loaded. Use the GUI to record and play back.")
+print("[AutoTrashKill] Loaded.")
