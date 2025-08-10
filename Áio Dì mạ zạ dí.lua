@@ -26,7 +26,7 @@ if EXIST then EXIST:Destroy() end
 
 -- ===== GUI =====
 local screenGui = Instance.new("ScreenGui")
-screenGui.Name = "KK trash can"
+screenGui.Name = "AutoTrashKillGUI"
 screenGui.ResetOnSpawn = false
 screenGui.Parent = player:WaitForChild("PlayerGui")
 
@@ -173,12 +173,11 @@ status.TextXAlignment = Enum.TextXAlignment.Left
 status.ZIndex = 3
 
 -- small minimize button (visible when main hidden)
-
 local smallBtn = Instance.new("TextButton")
 smallBtn.Name = "SmallToggle"
 smallBtn.Size = UDim2.fromOffset(64,64)
 smallBtn.Position = UDim2.new(0,20,0,22)
-smallBtn.Text = "🚮"
+smallBtn.Text = "💀"
 smallBtn.TextScaled = true
 smallBtn.BackgroundColor3 = Color3.fromRGB(18,18,18)
 smallBtn.BorderSizePixel = 0
@@ -229,7 +228,23 @@ end
 -- apply hover
 dropdownBtn.BackgroundTransparency = 0.45
 toggleBtn.BackgroundTransparency = 0.12
-minBtn. = UDim2.new(startGuiPos.X.Scale, startGuiPos.X.Offset + delta.X, startGuiPos.Y.Scale, startGuiPos.Y.Offset + delta.Y)
+minBtn.BackgroundTransparency = 0.12
+addHover(dropdownBtn)
+addHover(toggleBtn)
+addHover(minBtn)
+
+-- make header draggable
+local function makeDraggable(frame, handle)
+    handle.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+            local startPos = input.Position
+            local startGuiPos = frame.Position
+            local moveConn
+            local endConn
+            moveConn = UserInput.InputChanged:Connect(function(i)
+                if i.UserInputType == Enum.UserInputType.MouseMovement or i.UserInputType == Enum.UserInputType.Touch then
+                    local delta = i.Position - startPos
+                    local newPos = UDim2.new(startGuiPos.X.Scale, startGuiPos.X.Offset + delta.X, startGuiPos.Y.Scale, startGuiPos.Y.Offset + delta.Y)
                     frame.Position = newPos
                 end
             end)
@@ -243,12 +258,35 @@ minBtn. = UDim2.new(startGuiPos.X.Scale, startGuiPos.X.Offset + delta.X, startGu
     end)
 end
 
-mak = false
+makeDraggable(main, header)
+makeDraggable(smallBtn, smallBtn)
+
+-- resize logic
+do
+    local resizing = false
+    local startInputPos, startSize
+    resizeGrip.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+            resizing = true
+            startInputPos = input.Position
+            startSize = { X = main.AbsoluteSize.X, Y = main.AbsoluteSize.Y }
+            input.Changed:Connect(function()
+                if input.UserInputState == Enum.UserInputState.End then
+                    resizing = false
                 end
             end)
         end
     end)
-    UserInput.InputChanged: = UDim2.new(1,-22,1,-22)
+    UserInput.InputChanged:Connect(function(input)
+        if resizing and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
+            local delta = input.Position - startInputPos
+            local newW = math.clamp(startSize.X + delta.X, MIN_W, MAX_W)
+            local newH = math.clamp(startSize.Y + delta.Y, MIN_H, MAX_H)
+            main.Size = UDim2.new(0, newW, 0, newH)
+            -- adjust dropdown & toggle positions/sizes smoothly
+            dropdownFrame.Size = UDim2.new(0, math.max(260, newW - 140), 0, math.min(400, newH - 120))
+            -- toggle anchored so no need to set Position here
+            resizeGrip.Position = UDim2.new(1,-22,1,-22)
         end
     end)
 end
