@@ -178,71 +178,83 @@ local TweenService = game:GetService("TweenService")
 local RunService = game:GetService("RunService")
 local UserInputService = game:GetService("UserInputService")
 
-local smallBtn = Instance.new("TextButton")
-smallBtn.Name = "SmallToggle"
-smallBtn.Size = UDim2.fromOffset(64,64)
-smallBtn.Position = UDim2.new(0,20,0,22)
-smallBtn.Text = "kk"
-smallBtn.TextColor3 = Color3.fromRGB(255,255,255)
-smallBtn.TextSize = 24
-smallBtn.Font = Enum.Font.GothamBold
-smallBtn.TextScaled = true
-smallBtn.BackgroundColor3 = Color3.fromRGB(0,100,0)
-smallBtn.BorderSizePixel = 0
-smallBtn.Visible = false
-smallBtn.Parent = screenGui
+-- Kiểm tra screenGui tồn tại
+if not screenGui then
+    warn("screenGui chưa được định nghĩa! Vui lòng gán screenGui trước.")
+    return
+end
 
-local smallCorner = Instance.new("UICorner", smallBtn)
-smallCorner.CornerRadius = UDim.new(0,12)
+-- Tạo logo (thay thế smallBtn)
+local logo = Instance.new("Frame")
+logo.Name = "Logo"
+logo.Size = UDim2.fromOffset(64, 64)
+logo.Position = UDim2.new(0, 20, 0, 22)
+logo.BackgroundColor3 = Color3.fromRGB(0, 0, 0) -- Nền tối (đen)
+logo.BorderSizePixel = 0
+logo.Visible = true
+logo.Parent = screenGui
+print("Logo Frame đã được tạo")
 
-local smallStroke = Instance.new("UIStroke", smallBtn)
-smallStroke.Transparency = 0.7
+local logoCorner = Instance.new("UICorner", logo)
+logoCorner.CornerRadius = UDim.new(0, 12) -- Bo tròn giống nút
+print("UICorner đã được thêm vào logo")
 
-local glowStroke = Instance.new("UIStroke", smallBtn)
-glowStroke.Color = Color3.fromRGB(255,255,255)
+local logoStroke = Instance.new("UIStroke", logo)
+logoStroke.Transparency = 0.7
+logoStroke.Color = Color3.fromRGB(255, 255, 255)
+print("UIStroke (stroke chính) đã được thêm")
+
+-- Thêm hào quang
+local glowStroke = Instance.new("UIStroke", logo)
+glowStroke.Color = Color3.fromRGB(255, 255, 255)
 glowStroke.Transparency = 0.4
 glowStroke.Thickness = 2
+print("UIStroke (hào quang) đã được thêm")
 
-local moon = Instance.new("ImageLabel", smallBtn)
-moon.Size = UDim2.fromOffset(16,16)
-moon.BackgroundTransparency = 1
-moon.Image = "rbxassetid://259438880"
-moon.Position = UDim2.new(0.8, 0, 0.2, 0)
-moon.AnchorPoint = Vector2.new(0.5, 0.5)
-moon.ZIndex = 2
+-- Thêm chữ "KK"
+local textLabel = Instance.new("TextLabel", logo)
+textLabel.Size = UDim2.fromScale(0.8, 0.8)
+textLabel.Position = UDim2.new(0.1, 0, 0.1, 0)
+textLabel.Text = "KK"
+textLabel.TextColor3 = Color3.fromRGB(255, 255, 255) -- Màu trắng
+textLabel.TextSize = 24
+textLabel.Font = Enum.Font.GothamBold
+textLabel.BackgroundTransparency = 1
+textLabel.TextScaled = true
+print("TextLabel (KK) đã được thêm")
 
--- Animate trăng xoay
-local center = Vector2.new(32, 32)
-local radius = 20
-local angle = 0
-RunService.Heartbeat:Connect(function(delta)
-    angle = angle + delta * 2
-    local offsetX = math.cos(angle) * radius
-    local offsetY = math.sin(angle) * radius
-    moon.Position = UDim2.new(0.5 + offsetX / 64, 0, 0.5 + offsetY / 64, 0)
-end)
+-- Thêm chấm vàng (dot) ở góc trên bên phải
+local dot = Instance.new("Frame", logo)
+dot.Size = UDim2.fromOffset(12, 12)
+dot.BackgroundColor3 = Color3.fromRGB(255, 255, 0) -- Màu vàng
+dot.BorderSizePixel = 0
+dot.Position = UDim2.new(0.8, 0, 0.2, 0)
+local dotCorner = Instance.new("UICorner", dot)
+dotCorner.CornerRadius = UDim.new(0, 6) -- Bo tròn cho dot
+print("Dot vàng đã được thêm")
 
 -- Hiệu ứng to nhỏ
 local tweenInfo = TweenInfo.new(1, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut, -1, true)
-local scaleTween = TweenService:Create(smallBtn, tweenInfo, {
-    Size = UDim2.fromOffset(68,68)
+local scaleTween = TweenService:Create(logo, tweenInfo, {
+    Size = UDim2.fromOffset(68, 68)
 })
 scaleTween:Play()
+print("Hiệu ứng to nhỏ đã được khởi tạo")
 
 -- Tính năng kéo thả
 local dragging = false
 local dragStart = nil
 local startPos = nil
 
-smallBtn.InputBegan:Connect(function(input)
+logo.InputBegan:Connect(function(input)
     if input.UserInputType == Enum.UserInputType.MouseButton1 then
         dragging = true
         dragStart = input.Position
-        startPos = smallBtn.Position
+        startPos = logo.Position
     end
 end)
 
-smallBtn.InputEnded:Connect(function(input)
+logo.InputEnded:Connect(function(input)
     if input.UserInputType == Enum.UserInputType.MouseButton1 then
         dragging = false
     end
@@ -253,31 +265,33 @@ UserInputService.InputChanged:Connect(function(input)
         local delta = input.Position - dragStart
         local newPosX = startPos.X.Scale + (delta.X / screenGui.AbsoluteSize.X)
         local newPosY = startPos.Y.Scale + (delta.Y / screenGui.AbsoluteSize.Y)
-        smallBtn.Position = UDim2.new(newPosX, startPos.X.Offset, newPosY, startPos.Y.Offset)
+        logo.Position = UDim2.new(newPosX, startPos.X.Offset, newPosY, startPos.Y.Offset)
     end
 end)
+print("Tính năng kéo thả đã được thêm")
 
--- Resize grip (giữ nguyên)
+-- Resize grip (giữ nguyên, nhưng cần main được định nghĩa)
 local resizeGrip = Instance.new("Frame", main)
-resizeGrip.Size = UDim2.new(0,18,0,18)
-resizeGrip.Position = UDim2.new(1,-22,1,-22)
-resizeGrip.BackgroundColor3 = Color3.fromRGB(40,40,40)
+resizeGrip.Size = UDim2.new(0, 18, 0, 18)
+resizeGrip.Position = UDim2.new(1, -22, 1, -22)
+resizeGrip.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
 resizeGrip.BorderSizePixel = 0
 resizeGrip.ZIndex = 5
 local gripCorner = Instance.new("UICorner", resizeGrip)
-gripCorner.CornerRadius = UDim.new(0,6)
+gripCorner.CornerRadius = UDim.new(0, 6)
 local gripStroke = Instance.new("UIStroke", resizeGrip)
 gripStroke.Transparency = 0.85
-for i=1,3 do
+for i = 1, 3 do
     local l = Instance.new("Frame", resizeGrip)
-    l.Size = UDim2.new(0, (i*4), 0, 2)
-    l.Position = UDim2.new(1, - (i*6), 1, -6)
-    l.AnchorPoint = Vector2.new(1,1)
+    l.Size = UDim2.new(0, (i * 4), 0, 2)
+    l.Position = UDim2.new(1, -(i * 6), 1, -6)
+    l.AnchorPoint = Vector2.new(1, 1)
     l.Rotation = -45
-    l.BackgroundColor3 = Color3.fromRGB(110,110,110)
+    l.BackgroundColor3 = Color3.fromRGB(110, 110, 110)
     l.BorderSizePixel = 0
     l.ZIndex = 6
 end
+print("resizeGrip đã được tạo")
 
 -- tween helper
 local function tweenObject(obj, props, time, style, dir)
@@ -297,23 +311,7 @@ end
 -- apply hover
 dropdownBtn.BackgroundTransparency = 0.45
 toggleBtn.BackgroundTransparency = 0.12
-minBtn.BackgroundTransparency = 0.12
-addHover(dropdownBtn)
-addHover(toggleBtn)
-addHover(minBtn)
-
--- make header draggable
-local function makeDraggable(frame, handle)
-    handle.InputBegan:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-            local startPos = input.Position
-            local startGuiPos = frame.Position
-            local moveConn
-            local endConn
-            moveConn = UserInput.InputChanged:Connect(function(i)
-                if i.UserInputType == Enum.UserInputType.MouseMovement or i.UserInputType == Enum.UserInputType.Touch then
-                    local delta = i.Position - startPos
-                    local newPos = UDim2.new(startGuiPos.X.Scale, startGuiPos.X.Offset + delta.X, startGuiPos.Y.Scale, startGuiPos.Y.Offset + delta.Y)
+minBtn. = UDim2.new(startGuiPos.X.Scale, startGuiPos.X.Offset + delta.X, startGuiPos.Y.Scale, startGuiPos.Y.Offset + delta.Y)
                     frame.Position = newPos
                 end
             end)
@@ -327,35 +325,12 @@ local function makeDraggable(frame, handle)
     end)
 end
 
-makeDraggable(main, header)
-makeDraggable(smallBtn, smallBtn)
-
--- resize logic
-do
-    local resizing = false
-    local startInputPos, startSize
-    resizeGrip.InputBegan:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-            resizing = true
-            startInputPos = input.Position
-            startSize = { X = main.AbsoluteSize.X, Y = main.AbsoluteSize.Y }
-            input.Changed:Connect(function()
-                if input.UserInputState == Enum.UserInputState.End then
-                    resizing = false
+mak = false
                 end
             end)
         end
     end)
-    UserInput.InputChanged:Connect(function(input)
-        if resizing and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
-            local delta = input.Position - startInputPos
-            local newW = math.clamp(startSize.X + delta.X, MIN_W, MAX_W)
-            local newH = math.clamp(startSize.Y + delta.Y, MIN_H, MAX_H)
-            main.Size = UDim2.new(0, newW, 0, newH)
-            -- adjust dropdown & toggle positions/sizes smoothly
-            dropdownFrame.Size = UDim2.new(0, math.max(260, newW - 140), 0, math.min(400, newH - 120))
-            -- toggle anchored so no need to set Position here
-            resizeGrip.Position = UDim2.new(1,-22,1,-22)
+    UserInput.InputChanged: = UDim2.new(1,-22,1,-22)
         end
     end)
 end
