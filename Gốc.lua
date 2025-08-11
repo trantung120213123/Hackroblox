@@ -677,6 +677,19 @@ tsbTab:CreateButton({
     end,
 })
 
+tsbTab:CreateButton({
+    Name = "Hater",
+    Description = "Hater script",
+    Callback = function()
+        local success, err = pcall(function()
+            loadstring(game:HttpGet("https://raw.githubusercontent.com/HaterHubV2/Hater-Hub-V2/refs/heads/main/V2", true))()
+        end)
+        if not success then
+            warn("Lỗi chạy Hater: " .. tostring(err))
+        end
+    end,
+})
+
 ------------------ Knife Tab ----------------
 
 -- Knife Tab
