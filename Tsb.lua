@@ -7,8 +7,8 @@ local UserInputService = game:GetService("UserInputService")
 local player = Players.LocalPlayer
 
 -- Config
-local VALID_KEY = "kk123" -- đổi key nếu cần
-local GET_KEY_LINK = "https://pastefy.app/zJzNKM8Z"
+local VALID_KEY = "kkhubabcxyzferkoff" -- đổi key nếu cần
+local GET_KEY_LINK = "https://lootdest.org/s?7eh25JTa"
 local KK_V1_URL = "https://raw.githubusercontent.com/trantung120213123/Hackroblox/refs/heads/main/%C3%81io%20D%C3%AC%20m%E1%BA%A1%20z%E1%BA%A1%20d%C3%AD.lua"
 local KK_V2_URL = "https://raw.githubusercontent.com/yes1nt/yes/refs/heads/main/Trashcan%20Man"
 
