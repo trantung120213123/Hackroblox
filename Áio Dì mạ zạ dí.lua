@@ -241,123 +241,147 @@ status.TextXAlignment = Enum.TextXAlignment.Left
 status.ZIndex = 3
 
 -- small minimize button (visible when main hidden)
--- === smallBtn block: logo như Tsb.lua + click sound + chức năng thu nhỏ ===
-local TweenService = TweenService or game:GetService("TweenService")
-local parentForSmallBtn = screenGui  -- hoặc đặt thành "header" nếu muốn logo ở giữa thanh trên
-local SoundService = game:GetService("SoundService")
+-- === REPLACE existing smallBtn block with this ===
+local SMALL_ASSET_CLICK = "rbxassetid://2668781453"  -- click sound ID
 
--- Button dạng TextButton để giữ khả năng nhận click
+-- retain TweenService and screenGui from earlier
 local smallBtn = Instance.new("TextButton")
 smallBtn.Name = "SmallToggle"
-smallBtn.Size = UDim2.new(0,52,0,52)
+smallBtn.Size = UDim2.fromOffset(64,64)
 smallBtn.Position = UDim2.new(0,20,0,22)
-smallBtn.AnchorPoint = Vector2.new(0,0)
-smallBtn.BackgroundColor3 = Color3.fromRGB(30,30,30)
+smallBtn.Text = ""               -- hide default icon
+smallBtn.BackgroundColor3 = Color3.fromRGB(18,18,18)
 smallBtn.BorderSizePixel = 0
-smallBtn.Text = ""
 smallBtn.AutoButtonColor = false
-smallBtn.Visible = false
+smallBtn.Visible = false         -- same as original
 smallBtn.ZIndex = 10
-smallBtn.Parent = parentForSmallBtn
+smallBtn.Parent = screenGui      -- same as original
 
--- Style giống Tsb logo
-Instance.new("UICorner", smallBtn).CornerRadius = UDim.new(0,12)
-local grad = Instance.new("UIGradient", smallBtn)
-grad.Color = ColorSequence.new{
+local smallCorner = Instance.new("UICorner", smallBtn)
+smallCorner.CornerRadius = UDim.new(0,12)
+local smallStroke = Instance.new("UIStroke", smallBtn)
+smallStroke.Transparency = 0.7
+smallStroke.Thickness = 1
+
+-- Logo design (match Tsb.lua)
+local logoBg = Instance.new("Frame", smallBtn)
+logoBg.Size = UDim2.new(1,0,1,0)
+logoBg.Position = UDim2.new(0,0,0,0)
+logoBg.BackgroundColor3 = Color3.fromRGB(30,30,30)
+logoBg.BorderSizePixel = 0
+logoBg.ZIndex = 11
+Instance.new("UICorner", logoBg).CornerRadius = UDim.new(0,12)
+local logoGrad = Instance.new("UIGradient", logoBg)
+logoGrad.Color = ColorSequence.new{
     ColorSequenceKeypoint.new(0, Color3.fromRGB(120,60,200)),
     ColorSequenceKeypoint.new(1, Color3.fromRGB(60,200,200))
 }
-grad.Rotation = 45
+logoGrad.Rotation = 45
 
-local kk = Instance.new("TextLabel", smallBtn)
-kk.Size = UDim2.new(1,-8,1,-8); kk.Position = UDim2.new(0,4,0,4)
-kk.BackgroundTransparency = 1; kk.Text = "KK"
-kk.Font = Enum.Font.GothamSemibold; kk.TextSize = 20
-kk.TextColor3 = Color3.fromRGB(245,245,245)
-kk.TextXAlignment = Enum.TextXAlignment.Center; kk.TextYAlignment = Enum.TextYAlignment.Center
-kk.ZIndex = 12
+local kkLabel = Instance.new("TextLabel", logoBg)
+kkLabel.Size = UDim2.new(1,-8,1,-8)
+kkLabel.Position = UDim2.new(0,4,0,4)
+kkLabel.BackgroundTransparency = 1
+kkLabel.Text = "KK"
+kkLabel.Font = Enum.Font.GothamSemibold
+kkLabel.TextSize = 20
+kkLabel.TextColor3 = Color3.fromRGB(245,245,245)
+kkLabel.TextXAlignment = Enum.TextXAlignment.Center
+kkLabel.TextYAlignment = Enum.TextYAlignment.Center
+kkLabel.ZIndex = 12
 
-local dot = Instance.new("Frame", smallBtn)
-dot.Size = UDim2.new(0,8,0,8); dot.Position = UDim2.new(1,-14,0,6)
-dot.BackgroundColor3 = Color3.fromRGB(255,240,120); dot.BorderSizePixel = 0
-Instance.new("UICorner", dot).CornerRadius = UDim.new(1,0)
-dot.ZIndex = 13
+local yellowDot = Instance.new("Frame", logoBg)
+yellowDot.Size = UDim2.new(0,8,0,8)
+yellowDot.Position = UDim2.new(1,-14,0,6)
+yellowDot.BackgroundColor3 = Color3.fromRGB(255,240,120)
+yellowDot.BorderSizePixel = 0
+Instance.new("UICorner", yellowDot).CornerRadius = UDim.new(1,0)
+yellowDot.ZIndex = 13
 
--- Halo glow behind
-local glow = Instance.new("ImageLabel", smallBtn)
-glow.Name = "LogoGlow"
-glow.Size = UDim2.new(1.8,0,1.8,0); glow.Position = UDim2.new(-0.4,0,-0.4,0)
-glow.BackgroundTransparency = 1; glow.Image = "rbxassetid://4996891970"
-glow.ImageTransparency = 0.88; glow.ZIndex = 9
-glow.ScaleType = Enum.ScaleType.Slice
-glow.SliceCenter = Rect.new(10,10,118,118)
+local halo = Instance.new("ImageLabel", smallBtn)
+halo.Name = "HaloGlow"
+halo.Size = UDim2.new(1.8,0,1.8,0)
+halo.Position = UDim2.new(-0.4,0,-0.4,0)
+halo.BackgroundTransparency = 1
+halo.Image = "rbxassetid://4996891970"
+halo.ImageTransparency = 0.88
+halo.ZIndex = 9
+halo.ScaleType = Enum.ScaleType.Slice
+halo.SliceCenter = Rect.new(10,10,118,118)
 
--- Sparkle ring orbit
-local sparkle = Instance.new("ImageLabel", parentForSmallBtn)
+local sparkle = Instance.new("ImageLabel", screenGui)
 sparkle.Name = "SparkleOrbit"
 sparkle.Size = UDim2.new(0,18,0,18)
 sparkle.BackgroundTransparency = 1
-sparkle.Image = "rbxassetid://6035067836" -- sparkle asset
+sparkle.Image = "rbxassetid://6035067836"
 sparkle.ZIndex = 9
 sparkle.Visible = true
 
--- Pulse animation (to/nhỏ)
+-- Pulse animation match Tsb.lua
 spawn(function()
-  while smallBtn and smallBtn.Parent do
-    pcall(function()
-      TweenService:Create(smallBtn, TweenInfo.new(0.45, Enum.EasingStyle.Sine, Enum.EasingDirection.Out), {Size = UDim2.new(0,60,0,60)}):Play()
-      TweenService:Create(kk, TweenInfo.new(0.45, Enum.EasingStyle.Sine, Enum.EasingDirection.Out), {TextSize = 22}):Play()
-    end)
-    task.wait(0.45)
-    pcall(function()
-      TweenService:Create(smallBtn, TweenInfo.new(0.45, Enum.EasingStyle.Sine, Enum.EasingDirection.Out), {Size = UDim2.new(0,52,0,52)}):Play()
-      TweenService:Create(kk, TweenInfo.new(0.45, Enum.EasingStyle.Sine, Enum.EasingDirection.Out), {TextSize = 20}):Play()
-    end)
-    task.wait(0.45)
-  end
-end)
-
--- Sparkle orbit rotation
-spawn(function()
-  local angle = 0
-  while smallBtn.Parent and sparkle.Parent do
-    local ok, ax, ay, aw, ah = pcall(function()
-      return smallBtn.AbsolutePosition.X, smallBtn.AbsolutePosition.Y, smallBtn.AbsoluteSize.X, smallBtn.AbsoluteSize.Y
-    end)
-    if ok then
-      local cx = ax + aw/2
-      local cy = ay + ah/2
-      angle = (angle + 8) % 360
-      local r = math.clamp(aw * 1.7, 40, 90)
-      local rad = math.rad(angle)
-      local sx = cx + math.cos(rad)*r - (sparkle.AbsoluteSize.X/2)
-      local sy = cy + math.sin(rad)*r - (sparkle.AbsoluteSize.Y/2)
-      pcall(function()
-        sparkle.Position = UDim2.new(0, sx, 0, sy)
-        sparkle.Rotation = (sparkle.Rotation + 9) % 360
-      end)
+    while smallBtn and smallBtn.Parent do
+        TweenService:Create(smallBtn, TweenInfo.new(0.45, Enum.EasingStyle.Sine, Enum.EasingDirection.Out), {Size = UDim2.fromOffset(74,74)}):Play()
+        TweenService:Create(kkLabel, TweenInfo.new(0.45, Enum.EasingStyle.Sine, Enum.EasingDirection.Out), {TextSize = 22}):Play()
+        task.wait(0.45)
+        TweenService:Create(smallBtn, TweenInfo.new(0.45, Enum.EasingStyle.Sine, Enum.EasingDirection.Out), {Size = UDim2.fromOffset(64,64)}):Play()
+        TweenService:Create(kkLabel, TweenInfo.new(0.45, Enum.EasingStyle.Sine, Enum.EasingDirection.Out), {TextSize = 20}):Play()
+        task.wait(0.45)
     end
-    task.wait(0.03)
-  end
-  pcall(function() sparkle:Destroy() end)
 end)
 
--- Click sound setup
+-- Orbit rotation
+spawn(function()
+    local angle = 0
+    while smallBtn and smallBtn.Parent and sparkle and sparkle.Parent do
+        local ok, ax, ay, aw, ah = pcall(function()
+            return smallBtn.AbsolutePosition.X, smallBtn.AbsolutePosition.Y, smallBtn.AbsoluteSize.X, smallBtn.AbsoluteSize.Y
+        end)
+        if ok then
+            local cx, cy = ax + aw/2, ay + ah/2
+            angle = (angle + 8) % 360
+            local r = math.clamp(aw * 1.7, 40, 90)
+            local rad = math.rad(angle)
+            local sx = cx + math.cos(rad)*r - sparkle.AbsoluteSize.X/2
+            local sy = cy + math.sin(rad)*r - sparkle.AbsoluteSize.Y/2
+            sparkle.Position = UDim2.new(0, sx, 0, sy)
+            sparkle.Rotation = (sparkle.Rotation + 9) % 360
+        end
+        task.wait(0.03)
+    end
+    sparkle:Destroy()
+end)
+
+-- Click sound
 local clickSound = Instance.new("Sound", smallBtn)
-clickSound.SoundId = "rbxassetid://2668781453"
+clickSound.SoundId = SMALL_ASSET_CLICK
 clickSound.Volume = 0.5
 
--- Click behavior: vừa play sound, vừa gọi maximizeUI (hoặc phục hồi GUI)
+-- Click behavior → same functionality
 smallBtn.MouseButton1Click:Connect(function()
-  clickSound:Play()
-  if type(maximizeUI) == "function" then
+    clickSound:Play()
+    minimizeUI = minimizeUI or function()
+        if not main.Visible then return end
+        tweenObject(main, {Size = UDim2.new(0,200,0,64), BackgroundTransparency = 0.6}, 0.22, "Back"):Play()
+        tweenObject(title, {TextTransparency = 1}, 0.22):Play()
+        task.delay(0.22, function()
+            main.Visible = false
+            smallBtn.Visible = true
+            smallBtn.Size = UDim2.fromOffset(6,6)
+            tweenObject(smallBtn, {Size = UDim2.fromOffset(64,64)}, 0.2, "Back"):Play()
+        end)
+    end
+    maximizeUI = maximizeUI or function()
+        if main.Visible then return end
+        smallBtn.Visible = false
+        main.Visible = true
+        main.Size = UDim2.new(0,420,0,260)
+        title.TextTransparency = 1
+        tweenObject(main, {Size = UDim2.new(0,420,0,260), BackgroundTransparency = 0.12}, 0.22, "Back"):Play()
+        tweenObject(title, {TextTransparency = 0}, 0.28):Play()
+    end
     maximizeUI()
-  else
-    local mainFrame = main or (screenGui and screenGui:FindFirstChild("Main"))
-    if mainFrame then mainFrame.Visible = not mainFrame.Visible end
-  end
 end)
--- === END block ===
+-- === END REPLACE ===
 
 -- resize grip (bottom-right)
 local resizeGrip = Instance.new("Frame", main)
