@@ -631,6 +631,52 @@ PlaneWarTab:CreateButton({
 	end,
 })
 
+------------------- TSB --------------------
+
+local tsbTab = Window:CreateTab("tsb", 4483362458) -- Icon ID có thể đổi
+
+-- Nút 1: kk hub
+tsbTab:CreateButton({
+    Name = "kk hub",
+    Description = "Chạy script kk hub",
+    Callback = function()
+        local success, err = pcall(function()
+            loadstring(game:HttpGet("https://raw.githubusercontent.com/trantung120213123/Hackroblox/refs/heads/main/Tsb.lua", true))()
+        end)
+        if not success then
+            warn("Lỗi chạy kk hub: " .. tostring(err))
+        end
+    end,
+})
+
+-- Nút 2: phantasm
+tsbTab:CreateButton({
+    Name = "phantasm",
+    Description = "Chạy script phantasm",
+    Callback = function()
+        local success, err = pcall(function()
+            loadstring(game:HttpGet("https://raw.githubusercontent.com/ATrainz/main/main/Phantasm-Loader.lua", true))()
+        end)
+        if not success then
+            warn("Lỗi chạy phantasm: " .. tostring(err))
+        end
+    end,
+})
+
+-- Nút 3: nopatki
+tsbTab:CreateButton({
+    Name = "nopatki",
+    Description = "Chạy script nopatki",
+    Callback = function()
+        local success, err = pcall(function()
+            loadstring(game:HttpGet("https://raw.githubusercontent.com/Cyborg883/WhisGui/refs/heads/main/Protected_4861761080861549.lua", true))()
+        end)
+        if not success then
+            warn("Lỗi chạy nopatki: " .. tostring(err))
+        end
+    end,
+})
+
 ------------------ Knife Tab ----------------
 
 -- Knife Tab
