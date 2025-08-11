@@ -241,107 +241,123 @@ status.TextXAlignment = Enum.TextXAlignment.Left
 status.ZIndex = 3
 
 -- small minimize button (visible when main hidden)
--- Thay thế toàn bộ smallBtn block bằng đoạn này:
-local TweenService = game:GetService("TweenService")
-local parentForBtn = header or screenGui  -- nếu đặt logo ở header thì dùng header, nếu ở ngoài thì giữ screenGui
+-- === smallBtn block: logo như Tsb.lua + click sound + chức năng thu nhỏ ===
+local TweenService = TweenService or game:GetService("TweenService")
+local parentForSmallBtn = screenGui  -- hoặc đặt thành "header" nếu muốn logo ở giữa thanh trên
+local SoundService = game:GetService("SoundService")
 
-local smallBtn = Instance.new("Frame")
-smallBtn.Name = "SmallLogo"
+-- Button dạng TextButton để giữ khả năng nhận click
+local smallBtn = Instance.new("TextButton")
+smallBtn.Name = "SmallToggle"
 smallBtn.Size = UDim2.new(0,52,0,52)
-smallBtn.Position = UDim2.new(0,20,0,22) -- hoặc căn giữa nếu muốn
+smallBtn.Position = UDim2.new(0,20,0,22)
+smallBtn.AnchorPoint = Vector2.new(0,0)
 smallBtn.BackgroundColor3 = Color3.fromRGB(30,30,30)
 smallBtn.BorderSizePixel = 0
-smallBtn.ZIndex = 4
-smallBtn.Parent = parentForBtn
+smallBtn.Text = ""
+smallBtn.AutoButtonColor = false
+smallBtn.Visible = false
+smallBtn.ZIndex = 10
+smallBtn.Parent = parentForSmallBtn
 
-local btnCorner = Instance.new("UICorner", smallBtn)
-btnCorner.CornerRadius = UDim.new(0,12)
-
-local logoGrad = Instance.new("UIGradient", smallBtn)
-logoGrad.Color = ColorSequence.new{
-  ColorSequenceKeypoint.new(0, Color3.fromRGB(120,60,200)),
-  ColorSequenceKeypoint.new(1, Color3.fromRGB(60,200,200))
+-- Style giống Tsb logo
+Instance.new("UICorner", smallBtn).CornerRadius = UDim.new(0,12)
+local grad = Instance.new("UIGradient", smallBtn)
+grad.Color = ColorSequence.new{
+    ColorSequenceKeypoint.new(0, Color3.fromRGB(120,60,200)),
+    ColorSequenceKeypoint.new(1, Color3.fromRGB(60,200,200))
 }
-logoGrad.Rotation = 45
+grad.Rotation = 45
 
-local logoInner = Instance.new("TextLabel", smallBtn)
-logoInner.Size = UDim2.new(1, -8, 1, -8)
-logoInner.Position = UDim2.new(0,4,0,4)
-logoInner.BackgroundTransparency = 1
-logoInner.Text = "KK"
-logoInner.Font = Enum.Font.GothamSemibold
-logoInner.TextSize = 20
-logoInner.TextColor3 = Color3.fromRGB(245,245,245)
-logoInner.ZIndex = 6
-logoInner.TextXAlignment = Enum.TextXAlignment.Center
-logoInner.TextYAlignment = Enum.TextYAlignment.Center
+local kk = Instance.new("TextLabel", smallBtn)
+kk.Size = UDim2.new(1,-8,1,-8); kk.Position = UDim2.new(0,4,0,4)
+kk.BackgroundTransparency = 1; kk.Text = "KK"
+kk.Font = Enum.Font.GothamSemibold; kk.TextSize = 20
+kk.TextColor3 = Color3.fromRGB(245,245,245)
+kk.TextXAlignment = Enum.TextXAlignment.Center; kk.TextYAlignment = Enum.TextYAlignment.Center
+kk.ZIndex = 12
 
-local logoDot = Instance.new("Frame", smallBtn)
-logoDot.Size = UDim2.new(0,8,0,8)
-logoDot.Position = UDim2.new(1,-14,0,6)
-logoDot.BackgroundColor3 = Color3.fromRGB(255,240,120)
-logoDot.BorderSizePixel = 0
-local dotCorner = Instance.new("UICorner", logoDot)
-dotCorner.CornerRadius = UDim.new(1,0)
-logoDot.ZIndex = 7
+local dot = Instance.new("Frame", smallBtn)
+dot.Size = UDim2.new(0,8,0,8); dot.Position = UDim2.new(1,-14,0,6)
+dot.BackgroundColor3 = Color3.fromRGB(255,240,120); dot.BorderSizePixel = 0
+Instance.new("UICorner", dot).CornerRadius = UDim.new(1,0)
+dot.ZIndex = 13
 
 -- Halo glow behind
-local logoGlow = Instance.new("ImageLabel", smallBtn)
-logoGlow.Name = "LogoGlow"
-logoGlow.Size = UDim2.new(1.8,0,1.8,0)
-logoGlow.Position = UDim2.new(-0.4,0,-0.4,0)
-logoGlow.BackgroundTransparency = 1
-logoGlow.Image = "rbxassetid://4996891970"
-logoGlow.ImageTransparency = 0.88
-logoGlow.ZIndex = 3
-logoGlow.ScaleType = Enum.ScaleType.Slice
-logoGlow.SliceCenter = Rect.new(10,10,118,118)
+local glow = Instance.new("ImageLabel", smallBtn)
+glow.Name = "LogoGlow"
+glow.Size = UDim2.new(1.8,0,1.8,0); glow.Position = UDim2.new(-0.4,0,-0.4,0)
+glow.BackgroundTransparency = 1; glow.Image = "rbxassetid://4996891970"
+glow.ImageTransparency = 0.88; glow.ZIndex = 9
+glow.ScaleType = Enum.ScaleType.Slice
+glow.SliceCenter = Rect.new(10,10,118,118)
 
--- Sparkle ring orbit (same as in Tsb)
-local sparkle = Instance.new("ImageLabel", smallBtn)
+-- Sparkle ring orbit
+local sparkle = Instance.new("ImageLabel", parentForSmallBtn)
 sparkle.Name = "SparkleOrbit"
-sparkle.Size = UDim2.new(0, 18, 0, 18)
+sparkle.Size = UDim2.new(0,18,0,18)
 sparkle.BackgroundTransparency = 1
-sparkle.Image = ASSETS.SPARKLE_RING or "rbxassetid://6035067836"
-sparkle.ZIndex = 6
--- forever rotate the sparkle (placed accordingly below)
+sparkle.Image = "rbxassetid://6035067836" -- sparkle asset
+sparkle.ZIndex = 9
+sparkle.Visible = true
 
--- Pulse animation (logoFrame pulse from Tsb)
+-- Pulse animation (to/nhỏ)
 spawn(function()
-  while smallBtn.Parent do
+  while smallBtn and smallBtn.Parent do
     pcall(function()
       TweenService:Create(smallBtn, TweenInfo.new(0.45, Enum.EasingStyle.Sine, Enum.EasingDirection.Out), {Size = UDim2.new(0,60,0,60)}):Play()
-      TweenService:Create(logoInner, TweenInfo.new(0.45, Enum.EasingStyle.Sine, Enum.EasingDirection.Out), {TextSize = 22}):Play()
+      TweenService:Create(kk, TweenInfo.new(0.45, Enum.EasingStyle.Sine, Enum.EasingDirection.Out), {TextSize = 22}):Play()
     end)
     task.wait(0.45)
     pcall(function()
       TweenService:Create(smallBtn, TweenInfo.new(0.45, Enum.EasingStyle.Sine, Enum.EasingDirection.Out), {Size = UDim2.new(0,52,0,52)}):Play()
-      TweenService:Create(logoInner, TweenInfo.new(0.45, Enum.EasingStyle.Sine, Enum.EasingDirection.Out), {TextSize = 20}):Play()
+      TweenService:Create(kk, TweenInfo.new(0.45, Enum.EasingStyle.Sine, Enum.EasingDirection.Out), {TextSize = 20}):Play()
     end)
     task.wait(0.45)
   end
 end)
 
--- Sparkle orbit rotation (copy from Tsb)
+-- Sparkle orbit rotation
 spawn(function()
   local angle = 0
-  while smallBtn.Parent do
-    local absPos = smallBtn.AbsolutePosition
-    local absSize = smallBtn.AbsoluteSize
-    local radius = math.clamp(absSize.X * 1.7, 40, 90)
-    angle = (angle + 8) % 360
-    local radians = math.rad(angle)
-    local cx = absPos.X + absSize.X/2
-    local cy = absPos.Y + absSize.Y/2
-    local x = cx + math.cos(radians) * radius - (sparkle.AbsoluteSize.X/2)
-    local y = cy + math.sin(radians) * radius - (sparkle.AbsoluteSize.Y/2)
-    pcall(function()
-      sparkle.Position = UDim2.new(0, x, 0, y)
-      sparkle.Rotation = (sparkle.Rotation + 9) % 360
+  while smallBtn.Parent and sparkle.Parent do
+    local ok, ax, ay, aw, ah = pcall(function()
+      return smallBtn.AbsolutePosition.X, smallBtn.AbsolutePosition.Y, smallBtn.AbsoluteSize.X, smallBtn.AbsoluteSize.Y
     end)
+    if ok then
+      local cx = ax + aw/2
+      local cy = ay + ah/2
+      angle = (angle + 8) % 360
+      local r = math.clamp(aw * 1.7, 40, 90)
+      local rad = math.rad(angle)
+      local sx = cx + math.cos(rad)*r - (sparkle.AbsoluteSize.X/2)
+      local sy = cy + math.sin(rad)*r - (sparkle.AbsoluteSize.Y/2)
+      pcall(function()
+        sparkle.Position = UDim2.new(0, sx, 0, sy)
+        sparkle.Rotation = (sparkle.Rotation + 9) % 360
+      end)
+    end
     task.wait(0.03)
   end
+  pcall(function() sparkle:Destroy() end)
 end)
+
+-- Click sound setup
+local clickSound = Instance.new("Sound", smallBtn)
+clickSound.SoundId = "rbxassetid://2668781453"
+clickSound.Volume = 0.5
+
+-- Click behavior: vừa play sound, vừa gọi maximizeUI (hoặc phục hồi GUI)
+smallBtn.MouseButton1Click:Connect(function()
+  clickSound:Play()
+  if type(maximizeUI) == "function" then
+    maximizeUI()
+  else
+    local mainFrame = main or (screenGui and screenGui:FindFirstChild("Main"))
+    if mainFrame then mainFrame.Visible = not mainFrame.Visible end
+  end
+end)
+-- === END block ===
 
 -- resize grip (bottom-right)
 local resizeGrip = Instance.new("Frame", main)
