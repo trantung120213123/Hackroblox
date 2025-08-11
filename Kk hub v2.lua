@@ -527,4 +527,194 @@ end
 
 -- SMALL LOGO BUTTON (appears when main minimized)
 local smallBtn = Instance.new("TextButton", screenGui)
-smallBtn.Name = "Sm
+smallBtn.Name = "SmallToggle"
+smallBtn.Size = UDim2.new(0,64,0,64)
+smallBtn.Position = UDim2.new(0,20,0,22)
+smallBtn.BackgroundColor3 = Color3.fromRGB(18,18,18)
+smallBtn.BorderSizePixel = 0
+smallBtn.Text = ""
+smallBtn.AutoButtonColor = false
+smallBtn.Visible = false
+smallBtn.ZIndex = 50
+local smallCorner = Instance.new("UICorner", smallBtn); smallCorner.CornerRadius = UDim.new(0,12)
+local smallStroke = Instance.new("UIStroke", smallBtn); smallStroke.Transparency = 0.7; smallStroke.Thickness = 1
+
+-- inner logo visuals (exact)
+local innerFrame = Instance.new("Frame", smallBtn)
+innerFrame.Size = UDim2.new(1,0,1,0); innerFrame.BackgroundTransparency = 1
+local innerBg = Instance.new("Frame", innerFrame)
+innerBg.Size = UDim2.new(1,0,1,0); innerBg.Position = UDim2.new(0,0,0,0)
+innerBg.BackgroundColor3 = Color3.fromRGB(30,30,30); innerBg.BorderSizePixel = 0
+Instance.new("UICorner", innerBg).CornerRadius = UDim.new(0,12)
+local innerGrad = Instance.new("UIGradient", innerBg)
+innerGrad.Color = ColorSequence.new{
+    ColorSequenceKeypoint.new(0, Color3.fromRGB(120,60,200)),
+    ColorSequenceKeypoint.new(1, Color3.fromRGB(60,200,200))
+}
+innerGrad.Rotation = 45
+local kkLabel2 = Instance.new("TextLabel", innerBg)
+kkLabel2.Size = UDim2.new(1, -8, 1, -8)
+kkLabel2.Position = UDim2.new(0,4,0,4)
+kkLabel2.BackgroundTransparency = 1
+kkLabel2.Text = "KK"
+kkLabel2.Font = Enum.Font.GothamSemibold
+kkLabel2.TextSize = 20
+kkLabel2.TextColor3 = Color3.fromRGB(245,245,245)
+kkLabel2.TextXAlignment = Enum.TextXAlignment.Center
+kkLabel2.TextYAlignment = Enum.TextYAlignment.Center
+local yellowDot2 =
+Instance.new("Frame", innerBg)
+yellowDot2.Size = UDim2.new(0,8,0,8); yellowDot2.Position = UDim2.new(1,-14,0,6)
+yellowDot2.BackgroundColor3 = Color3.fromRGB(255,240,120); yellowDot2.BorderSizePixel = 0
+Instance.new("UICorner", yellowDot2).CornerRadius = UDim.new(1,0)
+
+local halo2 = Instance.new("ImageLabel", smallBtn)
+halo2.Name = "HaloGlow"
+halo2.Size = UDim2.new(1.8,0,1.8,0)
+halo2.Position = UDim2.new(-0.4,0,-0.4,0)
+halo2.BackgroundTransparency = 1
+halo2.Image = "rbxassetid://4996891970"
+halo2.ImageTransparency = 0.88
+halo2.ZIndex = 49
+halo2.ScaleType = Enum.ScaleType.Slice
+halo2.SliceCenter = Rect.new(10,10,118,118)
+
+local sparkle2 = Instance.new("ImageLabel", screenGui)
+sparkle2.Name = "SparkleOrbitSmall"
+sparkle2.Size = UDim2.new(0,18,0,18)
+sparkle2.BackgroundTransparency = 1
+sparkle2.Image = "rbxassetid://6035067836"
+sparkle2.ZIndex = 49
+sparkle2.Visible = true
+
+-- pulse small
+spawn(function()
+    while smallBtn and smallBtn.Parent do
+        pcall(function()
+            TweenService:Create(smallBtn, TweenInfo.new(0.45, Enum.EasingStyle.Sine, Enum.EasingDirection.Out), {Size = UDim2.new(0,72,0,72)}):Play()
+            TweenService:Create(kkLabel2, TweenInfo.new(0.45, Enum.EasingStyle.Sine, Enum.EasingDirection.Out), {TextSize = 22}):Play()
+        end)
+        task.wait(0.45)
+        pcall(function()
+            TweenService:Create(smallBtn, TweenInfo.new(0.45, Enum.EasingStyle.Sine, Enum.EasingDirection.Out), {Size = UDim2.new(0,64,0,64)}):Play()
+            TweenService:Create(kkLabel2, TweenInfo.new(0.45, Enum.EasingStyle.Sine, Enum.EasingDirection.Out), {TextSize = 20}):Play()
+        end)
+        task.wait(0.45)
+        end
+        end)
+
+-- orbit for small sparkle
+spawn(function()
+    local angle = 0
+    while smallBtn and smallBtn.Parent and sparkle2 and sparkle2.Parent do
+        local ok, ax, ay, aw, ah = pcall(function()
+            return smallBtn.AbsolutePosition.X, smallBtn.AbsolutePosition.Y, smallBtn.AbsoluteSize.X, smallBtn.AbsoluteSize.Y
+        end)
+        if ok then
+            local cx = ax + aw/2
+            local cy = ay + ah/2
+            angle = (angle + 8) % 360
+            local r = math.clamp(aw * 1.7, 40, 90)
+            local rad = math.rad(angle)
+            local sx = cx + math.cos(rad) * r - (sparkle2.AbsoluteSize.X/2)
+            local sy = cy + math.sin(rad) * r - (sparkle2.AbsoluteSize.Y/2)
+            pcall(function()
+                sparkle2.Position = UDim2.new(0, sx, 0, sy)
+                sparkle2.Rotation = (sparkle2.Rotation + 9) % 360
+            end)
+        end
+        task.wait(0.03)
+            end
+    pcall(function() sparkle2:Destroy() end)
+end)
+
+-- click sound on small logo
+local clickSound = Instance.new("Sound", smallBtn)
+clickSound.SoundId = CLICK_SOUND_ID
+clickSound.Volume = 0.6
+
+-- minimize / maximize functions
+local function minimizeUI()
+    if not main.Visible then return end
+    -- animate shrink
+    tweenObject(main, {Size = UDim2.new(0,200,0,64), BackgroundTransparency = 0.6}, 0.22, "Back"):Play()
+    tweenObject(title, {TextTransparency = 1}, 0.22):Play()
+    task.delay(0.22, function()
+        main.Visible = false
+        -- show small button and animate
+        smallBtn.Position = UDim2.new(0, main.AbsolutePosition.X + 8, 0, main.AbsolutePosition.Y + 8)
+        smallBtn.Size = UDim2.new(0,8,0,8)
+        smallBtn.Visible = true
+        tweenObject(smallBtn, {Size = UDim2.new(0,64,0,64)}, 0.2, "Back"):Play()
+    end)
+    end
+
+local function maximizeUI()
+    if main.Visible then return end
+    -- hide small
+    pcall(function() clickSound:Play() end)
+    smallBtn.Visible = false
+    main.Visible = true
+    main.Size = UDim2.new(0,420,0,260)
+    tweenObject(main, {Size = UDim2.new(0,420,0,260), BackgroundTransparency = 0.12}, 0.22, "Back"):Play()
+    tweenObject(title, {TextTransparency = 0}, 0.28):Play()
+end
+
+-- connect minBtn
+minBtn.MouseButton1Click:Connect(function()
+    minimizeUI()
+end)
+
+-- clicking smallBtn restores
+smallBtn.MouseButton1Click:Connect(function()
+    pcall(function() clickSound:Play() end)
+    maximizeUI()
+end)
+
+-- allow dragging smallBtn (when visible)
+do
+    local dragging, dragInput, dragStart, startPos
+    local function update(input)
+        local delta = input.Position - dragStart
+        local newX = startPos.X.Offset + delta.X
+        local newY = startPos.Y.Offset + delta.Y
+        smallBtn.Position = UDim2.new(0, newX, 0, newY)
+    end
+    smallBtn.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+            dragging = true
+            dragStart = input.Position
+            startPos = smallBtn.Position
+            dragInput = input
+            input.Changed:Connect(function()
+                if input.UserInputState == Enum.UserInputState.End then
+                    dragging = false
+                end
+            end)
+        end
+    end)
+    UserInputService.InputChanged:Connect(function(input)
+                 if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+            dragging = true
+            dragStart = input.Position
+            startPos = smallBtn.Position
+            dragInput = input
+            input.Changed:Connect(function()
+                if input.UserInputState == Enum.UserInputState.End then
+                    dragging = false
+                end
+            end)
+        end
+    end)
+    UserInputService.InputChanged:Connect(function(input)
+        if dragging and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
+            update(input)
+        end
+    end)
+end
+
+initial populate
+refreshDropdown()
+
+-- final status
+status.Text = "Status: Ready"
