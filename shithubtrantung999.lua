@@ -27,6 +27,6 @@ local MainTab = Window:CreateTab("Kích Hoạt", 4483362458)
 MainTab:CreateButton({
 	Name = "Kích hoạt Script",
 	Callback = function()
-		loadstring(game:HttpGet("https://raw.githubusercontent.com/trantung120213123/Hackroblox/refs/heads/main/Realshithub.lua"))()
+		loadstring(game:HttpGet("https://raw.githubusercontent.com/trantung120213123/Hackroblox/refs/heads/main/G%E1%BB%91c.lua"))()
 	end,
 })
