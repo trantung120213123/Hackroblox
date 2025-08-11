@@ -160,6 +160,50 @@ toggleBtn.ZIndex = 3
 local togCorner = Instance.new("UICorner", toggleBtn)
 togCorner.CornerRadius = UDim.new(0,8)
 
+-- Biến speed
+local speedEnabled = false
+local speedValue = 50 -- tốc độ
+local player = game.Players.LocalPlayer
+local char = player.Character or player.CharacterAdded:Wait()
+local hum = char:WaitForChild("Humanoid")
+local hrp = char:WaitForChild("HumanoidRootPart")
+
+-- Tạo nút Speed
+local speedBtn = Instance.new("TextButton")
+speedBtn.Name = "SpeedBtn"
+speedBtn.Size = UDim2.new(0, 100, 0, 30)
+speedBtn.Position = UDim2.new(0, 10, 0, 40) -- dưới nút thu nhỏ
+speedBtn.BackgroundColor3 = Color3.fromRGB(0, 120, 0)
+speedBtn.TextColor3 = Color3.new(1, 1, 1)
+speedBtn.Text = "Speed: OFF"
+speedBtn.Font = Enum.Font.GothamBold
+speedBtn.TextSize = 14
+speedBtn.Parent = mainFrame -- gắn vào GUI chính
+
+local spdCorner = Instance.new("UICorner", speedBtn)
+spdCorner.CornerRadius = UDim.new(0, 6)
+
+-- Toggle speed
+speedBtn.MouseButton1Click:Connect(function()
+    speedEnabled = not speedEnabled
+    speedBtn.Text = "Speed: " .. (speedEnabled and "ON" or "OFF")
+    speedBtn.BackgroundColor3 = speedEnabled and Color3.fromRGB(0, 180, 0) or Color3.fromRGB(120, 0, 0)
+end)
+
+-- Speed mượt bằng CFrame
+game:GetService("RunService").Heartbeat:Connect(function(dt)
+    if speedEnabled and hum.MoveDirection.Magnitude > 0 then
+        hrp.CFrame = hrp.CFrame + (hum.MoveDirection * speedValue * dt)
+    end
+end)
+
+-- Khi chết spawn lại thì cập nhật biến
+player.CharacterAdded:Connect(function(newChar)
+    char = newChar
+    hum = newChar:WaitForChild("Humanoid")
+    hrp = newChar:WaitForChild("HumanoidRootPart")
+end)
+
 -- Status label
 local status = Instance.new("TextLabel", content)
 status.Size = UDim2.new(0,260,0,24)
