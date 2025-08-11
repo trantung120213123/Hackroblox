@@ -10,7 +10,7 @@ local player = Players.LocalPlayer
 local VALID_KEY = "kk123" -- đổi key nếu cần
 local GET_KEY_LINK = "https://pastefy.app/zJzNKM8Z"
 local KK_V1_URL = "https://raw.githubusercontent.com/trantung120213123/Hackroblox/refs/heads/main/%C3%81io%20D%C3%AC%20m%E1%BA%A1%20z%E1%BA%A1%20d%C3%AD.lua"
-local KK_V2_URL = "loadstring(game:HttpGet("https://raw.githubusercontent.com/yes1nt/yes/refs/heads/main/Trashcan%20Man", true))()"
+local KK_V2_URL = "https://raw.githubusercontent.com/yes1nt/yes/refs/heads/main/Trashcan%20Man"
 
 -- Assets
 local CLICK_SOUND_ID = "rbxassetid://2668781453"
