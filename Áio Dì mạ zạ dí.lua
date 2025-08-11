@@ -241,49 +241,81 @@ status.TextXAlignment = Enum.TextXAlignment.Left
 status.ZIndex = 3
 
 -- small minimize button (visible when main hidden)
+-- Nút thu nhỏ (logo)
 local smallBtn = Instance.new("TextButton")
 smallBtn.Name = "SmallToggle"
 smallBtn.Size = UDim2.fromOffset(64,64)
 smallBtn.Position = UDim2.new(0,20,0,22)
-smallBtn.BackgroundColor3 = Color3.fromRGB(18,18,18)
+smallBtn.AnchorPoint = Vector2.new(0,0)
+smallBtn.BackgroundColor3 = Color3.fromRGB(30,30,30)
 smallBtn.BorderSizePixel = 0
-smallBtn.Visible = false
-smallBtn.Parent = screenGui
+smallBtn.Text = ""
+smallBtn.Visible = false -- ẩn khi GUI chính mở
+smallBtn.ZIndex = 10
+smallBtn.Parent = screenGui -- hoặc parent vào container đúng trong script của mày
 
--- UICorner và UIStroke cho nút
+-- Bo tròn
 local smallCorner = Instance.new("UICorner", smallBtn)
 smallCorner.CornerRadius = UDim.new(0,12)
-local smallStroke = Instance.new("UIStroke", smallBtn)
-smallStroke.Transparency = 0.7
 
--- Tạo chữ "KK"
-local kkLabel = Instance.new("TextLabel")
-kkLabel.Parent = smallBtn
-kkLabel.Size = UDim2.new(1,0,1,0)
+-- Chữ "KK"
+local kkLabel = Instance.new("TextLabel", smallBtn)
+kkLabel.Size = UDim2.new(1, -8, 1, -8)
+kkLabel.Position = UDim2.new(0,4,0,4)
 kkLabel.BackgroundTransparency = 1
 kkLabel.Text = "KK"
-kkLabel.TextColor3 = Color3.new(1,1,1)
-kkLabel.Font = Enum.Font.GothamBold
-kkLabel.TextScaled = true
-kkLabel.TextStrokeTransparency = 0.7
-kkLabel.ZIndex = 2
+kkLabel.Font = Enum.Font.GothamSemibold
+kkLabel.TextSize = 20
+kkLabel.TextColor3 = Color3.fromRGB(245,245,245)
+kkLabel.TextXAlignment = Enum.TextXAlignment.Center
+kkLabel.TextYAlignment = Enum.TextYAlignment.Center
+kkLabel.ZIndex = 11
 
--- Tạo chấm vàng góc trên phải
-local yellowDot = Instance.new("Frame")
-yellowDot.Parent = smallBtn
-yellowDot.Size = UDim2.new(0,16,0,16)
-yellowDot.Position = UDim2.new(1,-18,0,2)
-yellowDot.BackgroundColor3 = Color3.fromRGB(255, 241, 133) -- màu vàng sáng
+-- Chấm vàng góc phải
+local yellowDot = Instance.new("Frame", smallBtn)
+yellowDot.Size = UDim2.new(0,8,0,8)
+yellowDot.Position = UDim2.new(1,-14,0,6)
+yellowDot.BackgroundColor3 = Color3.fromRGB(255,240,120)
 yellowDot.BorderSizePixel = 0
-yellowDot.ZIndex = 3
 local dotCorner = Instance.new("UICorner", yellowDot)
-dotCorner.CornerRadius = UDim.new(1,0) -- tròn hoàn toàn
+dotCorner.CornerRadius = UDim.new(1,0)
+yellowDot.ZIndex = 11
 
--- Hiệu ứng to nhỏ (scale pulse) cho nút
-local TweenService = game:GetService("TweenService")
-local tweenInfo = TweenInfo.new(1, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut, -1, true) -- lặp vô tận, pingpong
-local tween = TweenService:Create(smallBtn, tweenInfo, {Size = UDim2.fromOffset(74,74)})
-tween:Play()
+-- Halo glow lấp lánh
+local logoGlow = Instance.new("ImageLabel", smallBtn)
+logoGlow.Name = "LogoGlow"
+logoGlow.Size = UDim2.new(1.8,0,1.8,0)
+logoGlow.Position = UDim2.new(-0.4,0,-0.4,0)
+logoGlow.BackgroundTransparency = 1
+logoGlow.Image = "rbxassetid://4996891970"
+logoGlow.ImageTransparency = 0.88
+logoGlow.ZIndex = 9
+logoGlow.ScaleType = Enum.ScaleType.Slice
+logoGlow.SliceCenter = Rect.new(10,10,118,118)
+
+-- Hiệu ứng phóng to / thu nhỏ liên tục
+spawn(function()
+    while smallBtn.Parent do
+        pcall(function()
+            TweenService:Create(smallBtn, TweenInfo.new(0.45, Enum.EasingStyle.Sine, Enum.EasingDirection.Out), {
+                Size = UDim2.fromOffset(74,74)
+            }):Play()
+            TweenService:Create(kkLabel, TweenInfo.new(0.45, Enum.EasingStyle.Sine, Enum.EasingDirection.Out), {
+                TextSize = 22
+            }):Play()
+        end)
+        task.wait(0.45)
+        pcall(function()
+            TweenService:Create(smallBtn, TweenInfo.new(0.45, Enum.EasingStyle.Sine, Enum.EasingDirection.Out), {
+                Size = UDim2.fromOffset(64,64)
+            }):Play()
+            TweenService:Create(kkLabel, TweenInfo.new(0.45, Enum.EasingStyle.Sine, Enum.EasingDirection.Out), {
+                TextSize = 20
+            }):Play()
+        end)
+        task.wait(0.45)
+    end
+end)
 
 -- resize grip (bottom-right)
 local resizeGrip = Instance.new("Frame", main)
