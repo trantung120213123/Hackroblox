@@ -690,6 +690,19 @@ tsbTab:CreateButton({
     end,
 })
 
+tsbTab:CreateButton({
+    Name = "emote free(beta)",
+    Description = "Emote free(Beta)",
+    Callback = function()
+        local success, err = pcall(function()
+            loadstring(game:HttpGet("https://raw.githubusercontent.com/NetlessScripter/GOKU/refs/heads/main/FREE%20EMOTES%20GUI", true))()
+        end)
+        if not success then
+            warn("Lỗi chạy Hater: " .. tostring(err))
+        end
+    end,
+})
+
 ------------------ Knife Tab ----------------
 
 -- Knife Tab
