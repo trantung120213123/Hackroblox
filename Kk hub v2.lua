@@ -562,8 +562,7 @@ kkLabel2.TextSize = 20
 kkLabel2.TextColor3 = Color3.fromRGB(245,245,245)
 kkLabel2.TextXAlignment = Enum.TextXAlignment.Center
 kkLabel2.TextYAlignment = Enum.TextYAlignment.Center
-local yellowDot2 =
-Instance.new("Frame", innerBg)
+local yellowDot2 = Instance.new("Frame", innerBg)
 yellowDot2.Size = UDim2.new(0,8,0,8); yellowDot2.Position = UDim2.new(1,-14,0,6)
 yellowDot2.BackgroundColor3 = Color3.fromRGB(255,240,120); yellowDot2.BorderSizePixel = 0
 Instance.new("UICorner", yellowDot2).CornerRadius = UDim.new(1,0)
@@ -600,8 +599,8 @@ spawn(function()
             TweenService:Create(kkLabel2, TweenInfo.new(0.45, Enum.EasingStyle.Sine, Enum.EasingDirection.Out), {TextSize = 20}):Play()
         end)
         task.wait(0.45)
-        end
-        end)
+    end
+end)
 
 -- orbit for small sparkle
 spawn(function()
@@ -624,7 +623,7 @@ spawn(function()
             end)
         end
         task.wait(0.03)
-            end
+    end
     pcall(function() sparkle2:Destroy() end)
 end)
 
@@ -647,7 +646,7 @@ local function minimizeUI()
         smallBtn.Visible = true
         tweenObject(smallBtn, {Size = UDim2.new(0,64,0,64)}, 0.2, "Back"):Play()
     end)
-    end
+end
 
 local function maximizeUI()
     if main.Visible then return end
@@ -694,26 +693,13 @@ do
         end
     end)
     UserInputService.InputChanged:Connect(function(input)
-                 if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-            dragging = true
-            dragStart = input.Position
-            startPos = smallBtn.Position
-            dragInput = input
-            input.Changed:Connect(function()
-                if input.UserInputState == Enum.UserInputState.End then
-                    dragging = false
-                end
-            end)
-        end
-    end)
-    UserInputService.InputChanged:Connect(function(input)
         if dragging and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
             update(input)
         end
     end)
 end
 
-initial populate
+-- initial populate
 refreshDropdown()
 
 -- final status
