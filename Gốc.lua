@@ -60,6 +60,21 @@ Rayfield:Notify("NoClip", Value and "Bật" or "Tắt", 2)
 end
 })
 
+
+
+local memeButton = MainTab:CreateButton({
+    Name = "jerk off item",
+    Description = "Chạy script meme",
+    Callback = function()
+        local success, err = pcall(function()
+            loadstring(game:HttpGet("https://pastefy.app/wa3v2Vgm/raw", true))()
+        end)
+        if not success then
+            warn("Lỗi khi chạy script meme: " .. tostring(err))
+        end
+    end,
+})
+
 MainTab:CreateToggle({
 Name = "ESP người chơi",
 CurrentValue = false,
