@@ -2,11 +2,13 @@ local Players = game:GetService("Players")
 local TweenService = game:GetService("TweenService")
 local player = Players.LocalPlayer
 
+-- Tạo ScreenGui chính
 local screenGui = Instance.new("ScreenGui")
 screenGui.Name = "QuestionGui"
 screenGui.ResetOnSpawn = false
 screenGui.Parent = player:WaitForChild("PlayerGui")
 
+-- Frame chính (dark trong suốt, có thể kéo)
 local frame = Instance.new("Frame", screenGui)
 frame.Size = UDim2.new(0, 380, 0, 160)
 frame.Position = UDim2.new(0.5, 0, 0.5, 0)
@@ -19,6 +21,7 @@ frame.Draggable = true
 local uicorner = Instance.new("UICorner", frame)
 uicorner.CornerRadius = UDim.new(0, 10)
 
+-- Tiêu đề câu hỏi
 local questionLabel = Instance.new("TextLabel", frame)
 questionLabel.Size = UDim2.new(1, -20, 0, 40)
 questionLabel.Position = UDim2.new(0, 10, 0, 10)
@@ -29,6 +32,7 @@ questionLabel.TextColor3 = Color3.fromRGB(220, 220, 220)
 questionLabel.Text = "Câu hỏi: 123 + 1e82828 = ?"
 questionLabel.TextXAlignment = Enum.TextXAlignment.Center
 
+-- Hộp nhập câu trả lời
 local answerBox = Instance.new("TextBox", frame)
 answerBox.Size = UDim2.new(1, -20, 0, 40)
 answerBox.Position = UDim2.new(0, 10, 0, 60)
@@ -43,6 +47,7 @@ answerBox.BorderSizePixel = 0
 local boxCorner = Instance.new("UICorner", answerBox)
 boxCorner.CornerRadius = UDim.new(0, 8)
 
+-- Nút submit
 local submitBtn = Instance.new("TextButton", frame)
 submitBtn.Size = UDim2.new(0, 100, 0, 36)
 submitBtn.Position = UDim2.new(0.5, -50, 0, 110)
@@ -55,18 +60,40 @@ submitBtn.BorderSizePixel = 0
 local btnCorner = Instance.new("UICorner", submitBtn)
 btnCorner.CornerRadius = UDim.new(0, 10)
 
+-- Text hiện thông báo lỗi đúng sai ở giữa màn hình
 local feedbackLabel = Instance.new("TextLabel", screenGui)
-feedbackLabel.Size = UDim2.new(0, 300, 0, 40)
+feedbackLabel.Size = UDim2.new(0, 600, 0, 80)  -- to hơn
 feedbackLabel.Position = UDim2.new(0.5, 0, 0.3, 0)
 feedbackLabel.AnchorPoint = Vector2.new(0.5, 0.5)
 feedbackLabel.BackgroundTransparency = 1
-feedbackLabel.Font = Enum.Font.GothamBold
-feedbackLabel.TextSize = 28
-feedbackLabel.TextColor3 = Color3.fromRGB(255, 70, 70)
+feedbackLabel.Font = Enum.Font.GothamBlack  -- font đậm hơn
+feedbackLabel.TextSize = 56  -- to hẳn luôn
+feedbackLabel.TextColor3 = Color3.fromRGB(255, 70, 70)  -- mặc định đỏ (sai)
 feedbackLabel.Text = ""
 feedbackLabel.Visible = false
 feedbackLabel.ZIndex = 20
 
+-- Thêm shadow cho chữ nổi bật hơn
+local textShadow = Instance.new("TextLabel", feedbackLabel)
+textShadow.Size = UDim2.new(1,0,1,0)
+textShadow.Position = UDim2.new(0, 2, 0, 2)
+textShadow.BackgroundTransparency = 1
+textShadow.Text = feedbackLabel.Text
+textShadow.Font = feedbackLabel.Font
+textShadow.TextSize = feedbackLabel.TextSize
+textShadow.TextColor3 = Color3.new(0,0,0)
+textShadow.TextTransparency = 0.5
+textShadow.ZIndex = feedbackLabel.ZIndex - 1
+textShadow.TextStrokeTransparency = 1
+textShadow.TextXAlignment = Enum.TextXAlignment.Center
+textShadow.TextYAlignment = Enum.TextYAlignment.Center
+
+-- Update text shadow mỗi lần text thay đổi
+feedbackLabel:GetPropertyChangedSignal("Text"):Connect(function()
+    textShadow.Text = feedbackLabel.Text
+end)
+
+-- Hiệu ứng blur xung quanh khi đúng
 local blurEffect
 local function createBlur()
     local blur = Instance.new("BlurEffect")
@@ -77,7 +104,7 @@ local function createBlur()
 end
 
 local function showCorrectEffect()
-    feedbackLabel.TextColor3 = Color3.fromRGB(160, 255, 160)
+    feedbackLabel.TextColor3 = Color3.fromRGB(170, 0, 255) -- màu tím đẹp
     feedbackLabel.Text = "shit hub hello"
     feedbackLabel.Visible = true
     feedbackLabel.Position = UDim2.new(0.5, 0, 0.3, 0)
