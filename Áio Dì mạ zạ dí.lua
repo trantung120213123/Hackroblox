@@ -63,6 +63,74 @@ header.Size = UDim2.new(1,0,0,48)
 header.BackgroundTransparency = 1
 header.ZIndex = 3
 
+-- Logo giữa header
+local logoFrame = Instance.new("Frame", header)
+logoFrame.Name = "LogoFrame"
+logoFrame.AnchorPoint = Vector2.new(0.5, 0.5)
+logoFrame.Position = UDim2.new(0.5, 0, 0.5, 0) -- căn giữa header
+logoFrame.Size = UDim2.new(0,52,0,52)
+logoFrame.BackgroundColor3 = Color3.fromRGB(30,30,30)
+logoFrame.BorderSizePixel = 0
+logoFrame.ZIndex = 4
+
+local logoCorner = Instance.new("UICorner", logoFrame)
+logoCorner.CornerRadius = UDim.new(0,12)
+
+local logoGrad = Instance.new("UIGradient", logoFrame)
+logoGrad.Color = ColorSequence.new{
+    ColorSequenceKeypoint.new(0, Color3.fromRGB(120,60,200)),
+    ColorSequenceKeypoint.new(1, Color3.fromRGB(60,200,200))
+}
+logoGrad.Rotation = 45
+
+local logoInner = Instance.new("TextLabel", logoFrame)
+logoInner.Size = UDim2.new(1, -8, 1, -8)
+logoInner.Position = UDim2.new(0,4,0,4)
+logoInner.BackgroundTransparency = 1
+logoInner.Text = "KK"
+logoInner.Font = Enum.Font.GothamSemibold
+logoInner.TextSize = 20
+logoInner.TextColor3 = Color3.fromRGB(245,245,245)
+logoInner.ZIndex = 6
+logoInner.TextXAlignment = Enum.TextXAlignment.Center
+logoInner.TextYAlignment = Enum.TextYAlignment.Center
+
+local logoDot = Instance.new("Frame", logoFrame)
+logoDot.Size = UDim2.new(0,8,0,8)
+logoDot.Position = UDim2.new(1,-14,0,6)
+logoDot.BackgroundColor3 = Color3.fromRGB(255,240,120)
+logoDot.BorderSizePixel = 0
+local dotCorner = Instance.new("UICorner", logoDot)
+dotCorner.CornerRadius = UDim.new(1,0)
+logoDot.ZIndex = 7
+
+local logoGlow = Instance.new("ImageLabel", logoFrame)
+logoGlow.Name = "LogoGlow"
+logoGlow.Size = UDim2.new(1.8,0,1.8,0)
+logoGlow.Position = UDim2.new(-0.4,0,-0.4,0)
+logoGlow.BackgroundTransparency = 1
+logoGlow.Image = "rbxassetid://4996891970"
+logoGlow.ImageTransparency = 0.88
+logoGlow.ZIndex = 3
+logoGlow.ScaleType = Enum.ScaleType.Slice
+logoGlow.SliceCenter = Rect.new(10,10,118,118)
+
+-- Hiệu ứng phóng to / thu nhỏ
+spawn(function()
+    while screenGui.Parent do
+        pcall(function()
+            tweenObject(logoFrame, {Size = UDim2.new(0,60,0,60)}, 0.45, "Sine"):Play()
+            tweenObject(logoInner, {TextSize = 22}, 0.45, "Sine"):Play()
+        end)
+        task.wait(0.45)
+        pcall(function()
+            tweenObject(logoFrame, {Size = UDim2.new(0,52,0,52)}, 0.45, "Sine"):Play()
+            tweenObject(logoInner, {TextSize = 20}, 0.45, "Sine"):Play()
+        end)
+        task.wait(0.45)
+    end
+end)
+
 local title = Instance.new("TextLabel", header)
 title.Size = UDim2.new(1,-140,1,0)
 title.Position = UDim2.new(0,16,0,0)
