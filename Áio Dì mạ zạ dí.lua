@@ -1,4 +1,4 @@
-AutoTrashCanKill (GUI nâng cấp: resize + nút AutoKill fix không bị che)
+-- AutoTrashCanKill (GUI nâng cấp: resize + nút AutoKill fix không bị che)
 -- Dán vào executor, chạy ở client. Một số game có anti-cheat -> tự chịu.
 
 local Players = game:GetService("Players")
