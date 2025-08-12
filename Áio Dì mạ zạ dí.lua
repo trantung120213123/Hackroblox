@@ -490,24 +490,21 @@ end
 local autoKill = false
 local isLoopRunning = false
 local selectedTarget = nil
+local lastTP = {}
 
--- Find all trash cans (keywords)
+-- Tìm tất cả các object có tên đúng "Trashcan" (case-sensitive)
 local function findAllTrashCans()
-    local keywords = {"trash","trashcan","trash can","garbage","bin"}
     local results = {}
-    for _,obj in ipairs(workspace:GetDescendants()) do
+    for _, obj in ipairs(workspace:GetDescendants()) do
         if obj:IsA("Model") or obj:IsA("BasePart") then
-            local name = tostring(obj.Name or "")
-            local lname = string.lower(name)
-            for _,k in ipairs(keywords) do
-                if string.find(lname, k, 1, true) then
-                    if obj:IsA("Model") then
-                        local primary = obj.PrimaryPart or obj:FindFirstChildWhichIsA("BasePart")
-                        if primary then table.insert(results, primary) end
-                    elseif obj:IsA("BasePart") then
-                        table.insert(results, obj)
+            if obj.Name == "Trashcan" then
+                if obj:IsA("Model") then
+                    local primary = obj.PrimaryPart or obj:FindFirstChildWhichIsA("BasePart")
+                    if primary then
+                        table.insert(results, primary)
                     end
-                    break
+                elseif obj:IsA("BasePart") then
+                    table.insert(results, obj)
                 end
             end
         end
@@ -655,24 +652,57 @@ local function startLoop()
                     status.Text = "Status: Target chưa spawn"
                     task.wait(0.5)
                 else
-                    local cans = findAllTrashCans()
-                    if #cans == 0 then
-                        status.Text = "Status: Không tìm thấy Trash Can"
-                        task.wait(1)
-                    else
-                        local trash = cans[math.random(1,#cans)]
-                        local trashPos = trash.Position
-                        local trashBack = trash.CFrame.Position - (trash.CFrame.LookVector * TRASH_BEHIND_STUDS)
-                        local trashCf = CFrame.new(trashBack, trashPos)
+local cans = findAllTrashCans()
 
-                        tpTo(trashCf)
-                        status.Text = "Phase: At trash ("..tostring(TRASH_PHASE_DURATION).."s)"
-                        local t0 = tick()
-                        while tick() - t0 < TRASH_PHASE_DURATION and autoKill do
-                            faceAt(trashPos)
-                            RunService.Heartbeat:Wait()
+-- Lọc thùng có thể TP (cooldown 30s)
+local eligible = {}
+local now = tick()
+for _, c in ipairs(cans) do
+    if not lastTP[c] or (now - lastTP[c] >= 30) then
+        table.insert(eligible, c)
+    end
+end
+
+if #eligible == 0 then
+    status.Text = "Status: Không tìm thấy Trashcan khả dụng"
+    task.wait(1)
+else
+    local trash = eligible[math.random(1, #eligible)]
+    lastTP[trash] = now
+
+    local trashPos = trash.Position
+    local trashBack = trash.CFrame.Position - (trash.CFrame.LookVector * TRASH_BEHIND_STUDS)
+    local trashCf = CFrame.new(trashBack, trashPos)
+    tpTo(trashCf)
+
+    status.Text = "Phase: At Trashcan ("..tostring(TRASH_PHASE_DURATION).."s)"
+    local t0 = tick()
+    while tick() - t0 < TRASH_PHASE_DURATION and autoKill do
+        faceAt(trashPos)
+        RunService.Heartbeat:Wait()
+    end
+    if not autoKill then break end
+
+    status.Text = "Phase: Attacking "..(selectedTarget.Name or "??")
+    local outStart = tick()
+    while tick() - outStart < OUT_PHASE_DURATION and autoKill do
+        local curTargetHrp = getHRP(selectedTarget)
+        if not curTargetHrp then break end
+        local tpos = curTargetHrp.Position
+        local behindPos = tpos - (curTargetHrp.CFrame.LookVector * BEHIND_STUDS)
+        behindPos = Vector3.new(behindPos.X, tpos.Y, behindPos.Z)
+        local cf = CFrame.new(behindPos, tpos)
+        tpTo(cf)
+        local waited = 0
+        while waited < TELEPORT_OUT_INTERVAL and autoKill do
+            local dt = RunService.Heartbeat:Wait()
+            waited = waited + dt
+            local curT = getHRP(selectedTarget)
+            if curT then faceAt(curT.Position) end
+        end
+    end
+    if not autoKill then break end
                         end
-                        if not autoKill then break end
 
                         status.Text = "Phase: Attacking "..(selectedTarget.Name or "??")
                         local outStart = tick()
