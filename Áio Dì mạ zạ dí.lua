@@ -1,4 +1,4 @@
--- AutoTrashCanKill (GUI nâng cấp: resize + nút AutoKill fix không bị che)
+AutoTrashCanKill (GUI nâng cấp: resize + nút AutoKill fix không bị che)
 -- Dán vào executor, chạy ở client. Một số game có anti-cheat -> tự chịu.
 
 local Players = game:GetService("Players")
@@ -52,8 +52,8 @@ mainStroke.Thickness = 1
 
 local gradient = Instance.new("UIGradient", main)
 gradient.Color = ColorSequence.new{
-    ColorSequenceKeypoint.new(0, Color3.fromRGB(18,18,18)),
-    ColorSequenceKeypoint.new(1, Color3.fromRGB(28,28,28))
+    ColorSequenceKeypoint.new(0, Color3.fromRGB(18,18,18)),
+    ColorSequenceKeypoint.new(1, Color3.fromRGB(28,28,28))
 }
 gradient.Rotation = 270
 
@@ -78,8 +78,8 @@ logoCorner.CornerRadius = UDim.new(0,12)
 
 local logoGrad = Instance.new("UIGradient", logoFrame)
 logoGrad.Color = ColorSequence.new{
-    ColorSequenceKeypoint.new(0, Color3.fromRGB(120,60,200)),
-    ColorSequenceKeypoint.new(1, Color3.fromRGB(60,200,200))
+    ColorSequenceKeypoint.new(0, Color3.fromRGB(120,60,200)),
+    ColorSequenceKeypoint.new(1, Color3.fromRGB(60,200,200))
 }
 logoGrad.Rotation = 45
 
@@ -117,18 +117,18 @@ logoGlow.SliceCenter = Rect.new(10,10,118,118)
 
 -- Hiệu ứng phóng to / thu nhỏ
 spawn(function()
-    while screenGui.Parent do
-        pcall(function()
-            tweenObject(logoFrame, {Size = UDim2.new(0,60,0,60)}, 0.45, "Sine"):Play()
-            tweenObject(logoInner, {TextSize = 22}, 0.45, "Sine"):Play()
-        end)
-        task.wait(0.45)
-        pcall(function()
-            tweenObject(logoFrame, {Size = UDim2.new(0,52,0,52)}, 0.45, "Sine"):Play()
-            tweenObject(logoInner, {TextSize = 20}, 0.45, "Sine"):Play()
-        end)
-        task.wait(0.45)
-    end
+    while screenGui.Parent do
+        pcall(function()
+            tweenObject(logoFrame, {Size = UDim2.new(0,60,0,60)}, 0.45, "Sine"):Play()
+            tweenObject(logoInner, {TextSize = 22}, 0.45, "Sine"):Play()
+        end)
+        task.wait(0.45)
+        pcall(function()
+            tweenObject(logoFrame, {Size = UDim2.new(0,52,0,52)}, 0.45, "Sine"):Play()
+            tweenObject(logoInner, {TextSize = 20}, 0.45, "Sine"):Play()
+        end)
+        task.wait(0.45)
+    end
 end)
 
 local title = Instance.new("TextLabel", header)
@@ -216,8 +216,8 @@ padding.BackgroundTransparency = 1
 -- Toggle button (ANCHOR FIXED: anchored to bottom-left so never gets cut)
 local toggleBtn = Instance.new("TextButton", content)
 toggleBtn.Size = UDim2.new(0,220,0,44)
-toggleBtn.AnchorPoint = Vector2.new(0,1)               -- anchor to bottom
-toggleBtn.Position = UDim2.new(0,16,1,-16)             -- 16px from left, 16px from bottom
+toggleBtn.AnchorPoint = Vector2.new(0,1)               -- anchor to bottom
+toggleBtn.Position = UDim2.new(0,16,1,-16)             -- 16px from left, 16px from bottom
 toggleBtn.BackgroundColor3 = Color3.fromRGB(16,120,16)
 toggleBtn.BorderSizePixel = 0
 toggleBtn.Text = "Bật AutoKill"
@@ -242,20 +242,20 @@ status.ZIndex = 3
 
 -- small minimize button (visible when main hidden)
 -- === REPLACE existing smallBtn block with this ===
-local SMALL_ASSET_CLICK = "rbxassetid://2668781453"  -- click sound ID
+local SMALL_ASSET_CLICK = "rbxassetid://2668781453"  -- click sound ID
 
 -- retain TweenService and screenGui from earlier
 local smallBtn = Instance.new("TextButton")
 smallBtn.Name = "SmallToggle"
 smallBtn.Size = UDim2.fromOffset(64,64)
 smallBtn.Position = UDim2.new(0,20,0,22)
-smallBtn.Text = ""               -- hide default icon
+smallBtn.Text = ""               -- hide default icon
 smallBtn.BackgroundColor3 = Color3.fromRGB(18,18,18)
 smallBtn.BorderSizePixel = 0
 smallBtn.AutoButtonColor = false
-smallBtn.Visible = false         -- same as original
+smallBtn.Visible = false         -- same as original
 smallBtn.ZIndex = 10
-smallBtn.Parent = screenGui      -- same as original
+smallBtn.Parent = screenGui      -- same as original
 
 local smallCorner = Instance.new("UICorner", smallBtn)
 smallCorner.CornerRadius = UDim.new(0,12)
@@ -273,8 +273,8 @@ logoBg.ZIndex = 11
 Instance.new("UICorner", logoBg).CornerRadius = UDim.new(0,12)
 local logoGrad = Instance.new("UIGradient", logoBg)
 logoGrad.Color = ColorSequence.new{
-    ColorSequenceKeypoint.new(0, Color3.fromRGB(120,60,200)),
-    ColorSequenceKeypoint.new(1, Color3.fromRGB(60,200,200))
+    ColorSequenceKeypoint.new(0, Color3.fromRGB(120,60,200)),
+    ColorSequenceKeypoint.new(1, Color3.fromRGB(60,200,200))
 }
 logoGrad.Rotation = 45
 
@@ -319,36 +319,36 @@ sparkle.Visible = true
 
 -- Pulse animation match Tsb.lua
 spawn(function()
-    while smallBtn and smallBtn.Parent do
-        TweenService:Create(smallBtn, TweenInfo.new(0.45, Enum.EasingStyle.Sine, Enum.EasingDirection.Out), {Size = UDim2.fromOffset(74,74)}):Play()
-        TweenService:Create(kkLabel, TweenInfo.new(0.45, Enum.EasingStyle.Sine, Enum.EasingDirection.Out), {TextSize = 22}):Play()
-        task.wait(0.45)
-        TweenService:Create(smallBtn, TweenInfo.new(0.45, Enum.EasingStyle.Sine, Enum.EasingDirection.Out), {Size = UDim2.fromOffset(64,64)}):Play()
-        TweenService:Create(kkLabel, TweenInfo.new(0.45, Enum.EasingStyle.Sine, Enum.EasingDirection.Out), {TextSize = 20}):Play()
-        task.wait(0.45)
-    end
+    while smallBtn and smallBtn.Parent do
+        TweenService:Create(smallBtn, TweenInfo.new(0.45, Enum.EasingStyle.Sine, Enum.EasingDirection.Out), {Size = UDim2.fromOffset(74,74)}):Play()
+        TweenService:Create(kkLabel, TweenInfo.new(0.45, Enum.EasingStyle.Sine, Enum.EasingDirection.Out), {TextSize = 22}):Play()
+        task.wait(0.45)
+        TweenService:Create(smallBtn, TweenInfo.new(0.45, Enum.EasingStyle.Sine, Enum.EasingDirection.Out), {Size = UDim2.fromOffset(64,64)}):Play()
+        TweenService:Create(kkLabel, TweenInfo.new(0.45, Enum.EasingStyle.Sine, Enum.EasingDirection.Out), {TextSize = 20}):Play()
+        task.wait(0.45)
+    end
 end)
 
 -- Orbit rotation
 spawn(function()
-    local angle = 0
-    while smallBtn and smallBtn.Parent and sparkle and sparkle.Parent do
-        local ok, ax, ay, aw, ah = pcall(function()
-            return smallBtn.AbsolutePosition.X, smallBtn.AbsolutePosition.Y, smallBtn.AbsoluteSize.X, smallBtn.AbsoluteSize.Y
-        end)
-        if ok then
-            local cx, cy = ax + aw/2, ay + ah/2
-            angle = (angle + 8) % 360
-            local r = math.clamp(aw * 1.7, 40, 90)
-            local rad = math.rad(angle)
-            local sx = cx + math.cos(rad)*r - sparkle.AbsoluteSize.X/2
-            local sy = cy + math.sin(rad)*r - sparkle.AbsoluteSize.Y/2
-            sparkle.Position = UDim2.new(0, sx, 0, sy)
-            sparkle.Rotation = (sparkle.Rotation + 9) % 360
-        end
-        task.wait(0.03)
-    end
-    sparkle:Destroy()
+    local angle = 0
+    while smallBtn and smallBtn.Parent and sparkle and sparkle.Parent do
+        local ok, ax, ay, aw, ah = pcall(function()
+            return smallBtn.AbsolutePosition.X, smallBtn.AbsolutePosition.Y, smallBtn.AbsoluteSize.X, smallBtn.AbsoluteSize.Y
+        end)
+        if ok then
+            local cx, cy = ax + aw/2, ay + ah/2
+            angle = (angle + 8) % 360
+            local r = math.clamp(aw * 1.7, 40, 90)
+            local rad = math.rad(angle)
+            local sx = cx + math.cos(rad)*r - sparkle.AbsoluteSize.X/2
+            local sy = cy + math.sin(rad)*r - sparkle.AbsoluteSize.Y/2
+            sparkle.Position = UDim2.new(0, sx, 0, sy)
+            sparkle.Rotation = (sparkle.Rotation + 9) % 360
+        end
+        task.wait(0.03)
+    end
+    sparkle:Destroy()
 end)
 
 -- Click sound
@@ -358,28 +358,28 @@ clickSound.Volume = 0.5
 
 -- Click behavior → same functionality
 smallBtn.MouseButton1Click:Connect(function()
-    clickSound:Play()
-    minimizeUI = minimizeUI or function()
-        if not main.Visible then return end
-        tweenObject(main, {Size = UDim2.new(0,200,0,64), BackgroundTransparency = 0.6}, 0.22, "Back"):Play()
-        tweenObject(title, {TextTransparency = 1}, 0.22):Play()
-        task.delay(0.22, function()
-            main.Visible = false
-            smallBtn.Visible = true
-            smallBtn.Size = UDim2.fromOffset(6,6)
-            tweenObject(smallBtn, {Size = UDim2.fromOffset(64,64)}, 0.2, "Back"):Play()
-        end)
-    end
-    maximizeUI = maximizeUI or function()
-        if main.Visible then return end
-        smallBtn.Visible = false
-        main.Visible = true
-        main.Size = UDim2.new(0,420,0,260)
-        title.TextTransparency = 1
-        tweenObject(main, {Size = UDim2.new(0,420,0,260), BackgroundTransparency = 0.12}, 0.22, "Back"):Play()
-        tweenObject(title, {TextTransparency = 0}, 0.28):Play()
-    end
-    maximizeUI()
+    clickSound:Play()
+    minimizeUI = minimizeUI or function()
+        if not main.Visible then return end
+        tweenObject(main, {Size = UDim2.new(0,200,0,64), BackgroundTransparency = 0.6}, 0.22, "Back"):Play()
+        tweenObject(title, {TextTransparency = 1}, 0.22):Play()
+        task.delay(0.22, function()
+            main.Visible = false
+            smallBtn.Visible = true
+            smallBtn.Size = UDim2.fromOffset(6,6)
+            tweenObject(smallBtn, {Size = UDim2.fromOffset(64,64)}, 0.2, "Back"):Play()
+        end)
+    end
+    maximizeUI = maximizeUI or function()
+        if main.Visible then return end
+        smallBtn.Visible = false
+        main.Visible = true
+        main.Size = UDim2.new(0,420,0,260)
+        title.TextTransparency = 1
+        tweenObject(main, {Size = UDim2.new(0,420,0,260), BackgroundTransparency = 0.12}, 0.22, "Back"):Play()
+        tweenObject(title, {TextTransparency = 0}, 0.28):Play()
+    end
+    maximizeUI()
 end)
 -- === END REPLACE ===
 
@@ -395,29 +395,29 @@ gripCorner.CornerRadius = UDim.new(0,6)
 local gripStroke = Instance.new("UIStroke", resizeGrip)
 gripStroke.Transparency = 0.85
 for i=1,3 do
-    local l = Instance.new("Frame", resizeGrip)
-    l.Size = UDim2.new(0, (i*4), 0, 2)
-    l.Position = UDim2.new(1, - (i*6), 1, -6)
-    l.AnchorPoint = Vector2.new(1,1)
-    l.Rotation = -45
-    l.BackgroundColor3 = Color3.fromRGB(110,110,110)
-    l.BorderSizePixel = 0
-    l.ZIndex = 6
+    local l = Instance.new("Frame", resizeGrip)
+    l.Size = UDim2.new(0, (i*4), 0, 2)
+    l.Position = UDim2.new(1, - (i*6), 1, -6)
+    l.AnchorPoint = Vector2.new(1,1)
+    l.Rotation = -45
+    l.BackgroundColor3 = Color3.fromRGB(110,110,110)
+    l.BorderSizePixel = 0
+    l.ZIndex = 6
 end
 
 -- tween helper
 local function tweenObject(obj, props, time, style, dir)
-    local info = TweenInfo.new(time or 0.18, Enum.EasingStyle[style or "Quad"], Enum.EasingDirection[dir or "Out"])
-    return TweenService:Create(obj, info, props)
+    local info = TweenInfo.new(time or 0.18, Enum.EasingStyle[style or "Quad"], Enum.EasingDirection[dir or "Out"])
+    return TweenService:Create(obj, info, props)
 end
 
 local function addHover(btn)
-    btn.MouseEnter:Connect(function()
-        pcall(function() tweenObject(btn, {BackgroundTransparency = 0.06}, 0.12, "Quad"):Play() end)
-    end)
-    btn.MouseLeave:Connect(function()
-        pcall(function() tweenObject(btn, {BackgroundTransparency = 0.45}, 0.12, "Quad"):Play() end)
-    end)
+    btn.MouseEnter:Connect(function()
+        pcall(function() tweenObject(btn, {BackgroundTransparency = 0.06}, 0.12, "Quad"):Play() end)
+    end)
+    btn.MouseLeave:Connect(function()
+        pcall(function() tweenObject(btn, {BackgroundTransparency = 0.45}, 0.12, "Quad"):Play() end)
+    end)
 end
 
 -- apply hover
@@ -430,27 +430,27 @@ addHover(minBtn)
 
 -- make header draggable
 local function makeDraggable(frame, handle)
-    handle.InputBegan:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-            local startPos = input.Position
-            local startGuiPos = frame.Position
-            local moveConn
-            local endConn
-            moveConn = UserInput.InputChanged:Connect(function(i)
-                if i.UserInputType == Enum.UserInputType.MouseMovement or i.UserInputType == Enum.UserInputType.Touch then
-                    local delta = i.Position - startPos
-                    local newPos = UDim2.new(startGuiPos.X.Scale, startGuiPos.X.Offset + delta.X, startGuiPos.Y.Scale, startGuiPos.Y.Offset + delta.Y)
-                    frame.Position = newPos
-                end
-            end)
-            endConn = input.Changed:Connect(function()
-                if input.UserInputState == Enum.UserInputState.End then
-                    moveConn:Disconnect()
-                    endConn:Disconnect()
-                end
-            end)
-        end
-    end)
+    handle.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+            local startPos = input.Position
+            local startGuiPos = frame.Position
+            local moveConn
+            local endConn
+            moveConn = UserInput.InputChanged:Connect(function(i)
+                if i.UserInputType == Enum.UserInputType.MouseMovement or i.UserInputType == Enum.UserInputType.Touch then
+                    local delta = i.Position - startPos
+                    local newPos = UDim2.new(startGuiPos.X.Scale, startGuiPos.X.Offset + delta.X, startGuiPos.Y.Scale, startGuiPos.Y.Offset + delta.Y)
+                    frame.Position = newPos
+                end
+            end)
+            endConn = input.Changed:Connect(function()
+                if input.UserInputState == Enum.UserInputState.End then
+                    moveConn:Disconnect()
+                    endConn:Disconnect()
+                end
+            end)
+        end
+    end)
 end
 
 makeDraggable(main, header)
@@ -458,180 +458,183 @@ makeDraggable(smallBtn, smallBtn)
 
 -- resize logic
 do
-    local resizing = false
-    local startInputPos, startSize
-    resizeGrip.InputBegan:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-            resizing = true
-            startInputPos = input.Position
-            startSize = { X = main.AbsoluteSize.X, Y = main.AbsoluteSize.Y }
-            input.Changed:Connect(function()
-                if input.UserInputState == Enum.UserInputState.End then
-                    resizing = false
-                end
-            end)
-        end
-    end)
-    UserInput.InputChanged:Connect(function(input)
-        if resizing and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
-            local delta = input.Position - startInputPos
-            local newW = math.clamp(startSize.X + delta.X, MIN_W, MAX_W)
-            local newH = math.clamp(startSize.Y + delta.Y, MIN_H, MAX_H)
-            main.Size = UDim2.new(0, newW, 0, newH)
-            -- adjust dropdown & toggle positions/sizes smoothly
-            dropdownFrame.Size = UDim2.new(0, math.max(260, newW - 140), 0, math.min(400, newH - 120))
-            -- toggle anchored so no need to set Position here
-            resizeGrip.Position = UDim2.new(1,-22,1,-22)
-        end
-    end)
+    local resizing = false
+    local startInputPos, startSize
+    resizeGrip.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+            resizing = true
+            startInputPos = input.Position
+            startSize = { X = main.AbsoluteSize.X, Y = main.AbsoluteSize.Y }
+            input.Changed:Connect(function()
+                if input.UserInputState == Enum.UserInputState.End then
+                    resizing = false
+                end
+            end)
+        end
+    end)
+    UserInput.InputChanged:Connect(function(input)
+        if resizing and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
+            local delta = input.Position - startInputPos
+            local newW = math.clamp(startSize.X + delta.X, MIN_W, MAX_W)
+            local newH = math.clamp(startSize.Y + delta.Y, MIN_H, MAX_H)
+            main.Size = UDim2.new(0, newW, 0, newH)
+            -- adjust dropdown & toggle positions/sizes smoothly
+            dropdownFrame.Size = UDim2.new(0, math.max(260, newW - 140), 0, math.min(400, newH - 120))
+            -- toggle anchored so no need to set Position here
+            resizeGrip.Position = UDim2.new(1,-22,1,-22)
+        end
+    end)
 end
 
--- ===== logic (giữ nguyên) =====
+==== logic (giữ nguyên) =====
 local autoKill = false
 local isLoopRunning = false
 local selectedTarget = nil
-local lastTP = {}
 
--- Tìm tất cả các object có tên đúng "Trashcan" (case-sensitive)
+-- Find all trash cans (keywords)
 local function findAllTrashCans()
-    local results = {}
-    for _, obj in ipairs(workspace:GetDescendants()) do
-        if obj:IsA("Model") or obj:IsA("BasePart") then
-            if obj.Name == "Trashcan" then
-                if obj:IsA("Model") then
-                    local primary = obj.PrimaryPart or obj:FindFirstChildWhichIsA("BasePart")
-                    if primary then
-                        table.insert(results, primary)
-                    end
-                elseif obj:IsA("BasePart") then
-                    table.insert(results, obj)
-                end
-            end
-        end
-    end
-    return results
+    local keywords = {"trash","trashcan","trash can","garbage","bin"}
+    local results = {}
+    for _,obj in ipairs(workspace:GetDescendants()) do
+        if obj:IsA("Model") or obj:IsA("BasePart") then
+            local name = tostring(obj.Name or "")
+            local lname = string.lower(name)
+            for _,k in ipairs(keywords) do
+                if string.find(lname, k, 1, true) then
+                    if obj:IsA("Model") then
+                        local primary = obj.PrimaryPart or obj:FindFirstChildWhichIsA("BasePart")
+                        if primary then table.insert(results, primary) end
+                    elseif obj:IsA("BasePart") then
+                        table.insert(results, obj)
+                    end
+                    break
+                end
+            end
+        end
+    end
+    return results
 end
 
 -- safe HRP getter
 local function getHRP(plr)
-    if not plr or not plr.Character then return nil end
-    local ch = plr.Character
-    return ch:FindFirstChild("HumanoidRootPart") or ch:FindFirstChild("Torso") or ch:FindFirstChild("UpperTorso")
+    if not plr or not plr.Character then return nil end
+    local ch = plr.Character
+    return ch:FindFirstChild("HumanoidRootPart") or ch:FindFirstChild("Torso") or ch:FindFirstChild("UpperTorso")
 end
 
 -- teleport safe
 local function tpTo(cf)
-    local hrp = getHRP(player)
-    if hrp then
-        pcall(function() hrp.CFrame = cf end)
-    end
+    local hrp = getHRP(player)
+    if hrp then
+        pcall(function() hrp.CFrame = cf end)
+    end
 end
 
 -- face helper (set HRP to look at targetPos)
 local function faceAt(targetPos)
-    local hrp = getHRP(player)
-    if hrp then
-        pcall(function()
-            hrp.CFrame = CFrame.new(hrp.Position, targetPos)
-        end)
-    end
+    local hrp = getHRP(player)
+    if hrp then
+        pcall(function()
+            hrp.CFrame = CFrame.new(hrp.Position, targetPos)
+        end)
+    end
 end
 
 -- Dropdown management (scrollable)
 local function clearDropdown()
-    for _,v in ipairs(dropdownFrame:GetChildren()) do
-        if v ~= listLayout and v ~= padding then v:Destroy() end
-    end
+    for _,v in ipairs(dropdownFrame:GetChildren()) do
+        if v ~= listLayout and v ~= padding then v:Destroy() end
+    end
 end
 
 local function updateDropdown()
-    clearDropdown()
-    for _,plr in ipairs(Players:GetPlayers()) do
-        if plr ~= player then
-            local btn = Instance.new("TextButton")
-            btn.Size = UDim2.new(1,-12,0,36)
-            btn.Position = UDim2.new(0,6,0,0)
-            btn.BackgroundColor3 = Color3.fromRGB(28,28,28)
-            btn.BorderSizePixel = 0
-            btn.TextColor3 = Color3.fromRGB(220,220,220)
-            btn.Font = Enum.Font.Gotham
-            btn.TextSize = 14
-            btn.Text = plr.Name
-            btn.AutoButtonColor = true
-            btn.Parent = dropdownFrame
-            local btnCorner = Instance.new("UICorner", btn)
-            btnCorner.CornerRadius = UDim.new(0,8)
-            btn.ZIndex = 5
-            btn.MouseButton1Click:Connect(function()
-                selectedTarget = plr
-                dropdownBtn.Text = "Target: "..plr.Name
-                tweenObject(dropdownFrame, {BackgroundTransparency = 1}, 0.12):Play()
-                tweenObject(dropdownFrame, {Size = UDim2.new(dropdownFrame.Size.X.Scale, dropdownFrame.Size.X.Offset, 0, 0)}, 0.18, "Quad"):Play()
-                task.delay(0.18, function()
-                    dropdownFrame.Visible = false
-                    dropdownFrame.BackgroundTransparency = 0
-                    dropdownFrame.Size = UDim2.new(0,300,0,180)
-                end)
-            end)
-        end
-    end
-    listLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
-        dropdownFrame.CanvasSize = UDim2.new(0,0,0, listLayout.AbsoluteContentSize.Y + 10)
-    end)
-    dropdownFrame.CanvasSize = UDim2.new(0,0,0, listLayout.AbsoluteContentSize.Y + 10)
+    clearDropdown()
+    for _,plr in ipairs(Players:GetPlayers()) do
+        if plr ~= player then
+            local btn = Instance.new("TextButton")
+            btn.Size = UDim2.new(1,-12,0,36)
+            btn.Position = UDim2.new(0,6,0,0)
+            btn.BackgroundColor3 = Color3.fromRGB(28,28,28)
+            btn.BorderSizePixel = 0
+            btn.TextColor3 = Color3.fromRGB(220,220,220)
+            btn.Font = Enum.Font.Gotham
+            btn.TextSize = 14
+            btn.Text = plr.Name
+            btn.AutoButtonColor = true
+            btn.Parent = dropdownFrame
+            local btnCorner = Instance.new("UICorner", btn)
+            btnCorner.CornerRadius = UDim.new(0,8)
+            btn.ZIndex = 5
+            btn.MouseButton1Click:Connect(function()
+                selectedTarget = plr
+                dropdownBtn.Text = "Target: "..plr.Name
+                tweenObject(dropdownFrame, {BackgroundTransparency = 1}, 0.12):Play()
+                tweenObject(dropdownFrame, {Size = UDim2.new(dropdownFrame.Size.X.Scale, dropdownFrame.Size.X.Offset, 0, 0)}, 0.18, "Quad"):Play()
+                task.delay(0.18, function()
+                    dropdownFrame.Visible = false
+                    dropdownFrame.BackgroundTransparency = 0
+                    dropdownFrame.Size = UDim2.new(0,300,0,180)
+                end)
+            end)
+        end
+    end
+    listLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
+        dropdownFrame.CanvasSize = UDim2.new(0,0,0, listLayout.AbsoluteContentSize.Y + 10)
+    end)
+    dropdownFrame.CanvasSize = UDim2.new(0,0,0, listLayout.AbsoluteContentSize.Y + 10)
 end
 
 dropdownBtn.MouseButton1Click:Connect(function()
-    if dropdownFrame.Visible then
-        tweenObject(dropdownFrame, {BackgroundTransparency = 1}, 0.12):Play()
-        tweenObject(dropdownFrame, {Size = UDim2.new(dropdownFrame.Size.X.Scale, dropdownFrame.Size.X.Offset, 0, 0)}, 0.18, "Quad"):Play()
-        task.delay(0.18, function()
-            dropdownFrame.Visible = false
-            dropdownFrame.BackgroundTransparency = 0
-            dropdownFrame.Size = UDim2.new(0,300,0,180)
-        end)
-    else
-        dropdownFrame.Visible = true
-        dropdownFrame.BackgroundTransparency = 1
-        dropdownFrame.Size = UDim2.new(0,300,0,0)
-        tweenObject(dropdownFrame, {BackgroundTransparency = 0}, 0.12):Play()
-        tweenObject(dropdownFrame, {Size = UDim2.new(0,300,0,180)}, 0.18, "Quad"):Play()
-        updateDropdown()
-    end
+    if dropdownFrame.Visible then
+        tweenObject(dropdownFrame, {BackgroundTransparency = 1}, 0.12):Play()
+        tweenObject(dropdownFrame, {Size = UDim2.new(dropdownFrame.Size.X.Scale, dropdownFrame.Size.X.Offset, 0, 0)}, 0.18, "Quad"):Play()
+        task.delay(0.18, function()
+            dropdownFrame.Visible = false
+            dropdownFrame.BackgroundTransparency = 0
+            dropdownFrame.Size = UDim2.new(0,300,0,180)
+        end)
+    else
+        dropdownFrame.Visible = true
+        dropdownFrame.BackgroundTransparency = 1
+        dropdownFrame.Size = UDim2.new(0,300,0,0)
+        tweenObject(dropdownFrame, {BackgroundTransparency = 0}, 0.12):Play()
+        tweenObject(dropdownFrame, {Size = UDim2.new(0,300,0,180)}, 0.18, "Quad"):Play()
+        updateDropdown()
+    end
 end)
 
 Players.PlayerAdded:Connect(updateDropdown)
 Players.PlayerRemoving:Connect(function()
-    updateDropdown()
-    if selectedTarget and not Players:FindFirstChild(selectedTarget.Name) then
-        selectedTarget = nil
-        dropdownBtn.Text = "Chọn player..."
-    end
+    updateDropdown()
+    if selectedTarget and not Players:FindFirstChild(selectedTarget.Name) then
+        selectedTarget = nil
+        dropdownBtn.Text = "Chọn player..."
+    end
 end)
 
 updateDropdown()
 
 -- Animated minimize / maximize (no white patch)
 local function minimizeUI()
-    if not main.Visible then return end
-    tweenObject(main, {Size = UDim2.new(0, 200, 0, 64), BackgroundTransparency = 0.6}, 0.22, "Back"):Play()
-    tweenObject(title, {TextTransparency = 1}, 0.22):Play()
-    task.delay(0.22, function()
-        main.Visible = false
-        smallBtn.Visible = true
-        smallBtn.Size = UDim2.fromOffset(6,6)
-        tweenObject(smallBtn, {Size = UDim2.fromOffset(64,64)}, 0.2, "Back"):Play()
-    end)
+    if not main.Visible then return end
+    tweenObject(main, {Size = UDim2.new(0, 200, 0, 64), BackgroundTransparency = 0.6}, 0.22, "Back"):Play()
+    tweenObject(title, {TextTransparency = 1}, 0.22):Play()
+    task.delay(0.22, function()
+        main.Visible = false
+        smallBtn.Visible = true
+        smallBtn.Size = UDim2.fromOffset(6,6)
+        tweenObject(smallBtn, {Size = UDim2.fromOffset(64,64)}, 0.2, "Back"):Play()
+    end)
 end
 
 local function maximizeUI()
-    if main.Visible then return end
-    smallBtn.Visible = false
-    main.Visible = true
-    main.Size = UDim2.new(0, 420, 0, 260)
-    title.TextTransparency = 1
-    tweenObject(main, {Size = UDim2.new(0,420,0,260), BackgroundTransparency = 0.12}, 0.22, "Back"):Play()
-    tweenObject(title, {TextTransparency = 0}, 0.28):Play()
+    if main.Visible then return end
+    smallBtn.Visible = false
+    main.Visible = true
+    main.Size = UDim2.new(0, 420, 0, 260)
+    title.TextTransparency = 1
+    tweenObject(main, {Size = UDim2.new(0,420,0,260), BackgroundTransparency = 0.12}, 0.22, "Back"):Play()
+    tweenObject(title, {TextTransparency = 0}, 0.28):Play()
 end
 
 minBtn.MouseButton1Click:Connect(minimizeUI)
@@ -639,111 +642,78 @@ smallBtn.MouseButton1Click:Connect(maximizeUI)
 
 -- Auto loop starter/stopper (giữ nguyên logic)
 local function startLoop()
-    if isLoopRunning then return end
-    isLoopRunning = true
-    task.spawn(function()
-        while autoKill do
-            if not selectedTarget or not selectedTarget.Parent then
-                status.Text = "Status: Chưa chọn target hợp lệ"
-                task.wait(0.5)
-            else
-                local tHrp = getHRP(selectedTarget)
-                if not tHrp then
-                    status.Text = "Status: Target chưa spawn"
-                    task.wait(0.5)
-                else
-local cans = findAllTrashCans()
+    if isLoopRunning then return end
+    isLoopRunning = true
+    task.spawn(function()
+        while autoKill do
+            if not selectedTarget or not selectedTarget.Parent then
+                status.Text = "Status: Chưa chọn target hợp lệ"
+                task.wait(0.5)
+            else
+                local tHrp = getHRP(selectedTarget)
+                if not tHrp then
+                    status.Text = "Status: Target chưa spawn"
+                    task.wait(0.5)
+                else
+                    local cans = findAllTrashCans()
+                    if #cans == 0 then
+                        status.Text = "Status: Không tìm thấy Trash Can"
+                        task.wait(1)
+                    else
+                        local trash = cans[math.random(1,#cans)]
+                        local trashPos = trash.Position
+                        local trashBack = trash.CFrame.Position - (trash.CFrame.LookVector * TRASH_BEHIND_STUDS)
+                        local trashCf = CFrame.new(trashBack, trashPos)
 
--- Lọc thùng có thể TP (cooldown 30s)
-local eligible = {}
-local now = tick()
-for _, c in ipairs(cans) do
-    if not lastTP[c] or (now - lastTP[c] >= 30) then
-        table.insert(eligible, c)
-    end
-end
+                        tpTo(trashCf)
+                        status.Text = "Phase: At trash ("..tostring(TRASH_PHASE_DURATION).."s)"
+                        local t0 = tick()
+                        while tick() - t0 < TRASH_PHASE_DURATION and autoKill do
+                            faceAt(trashPos)
+                            RunService.Heartbeat:Wait()
+                        end
+                        if not autoKill then break end
 
-if #eligible == 0 then
-    status.Text = "Status: Không tìm thấy Trashcan khả dụng"
-    task.wait(1)
-else
-    local trash = eligible[math.random(1, #eligible)]
-    lastTP[trash] = now
-
-    local trashPos = trash.Position
-    local trashBack = trash.CFrame.Position - (trash.CFrame.LookVector * TRASH_BEHIND_STUDS)
-    local trashCf = CFrame.new(trashBack, trashPos)
-    tpTo(trashCf)
-
-    status.Text = "Phase: At Trashcan ("..tostring(TRASH_PHASE_DURATION).."s)"
-    local t0 = tick()
-    while tick() - t0 < TRASH_PHASE_DURATION and autoKill do
-        faceAt(trashPos)
-        RunService.Heartbeat:Wait()
-    end
-    if not autoKill then break end
-
-    status.Text = "Phase: Attacking "..(selectedTarget.Name or "??")
-    local outStart = tick()
-    while tick() - outStart < OUT_PHASE_DURATION and autoKill do
-        local curTargetHrp = getHRP(selectedTarget)
-        if not curTargetHrp then break end
-        local tpos = curTargetHrp.Position
-        local behindPos = tpos - (curTargetHrp.CFrame.LookVector * BEHIND_STUDS)
-        behindPos = Vector3.new(behindPos.X, tpos.Y, behindPos.Z)
-        local cf = CFrame.new(behindPos, tpos)
-        tpTo(cf)
-        local waited = 0
-        while waited < TELEPORT_OUT_INTERVAL and autoKill do
-            local dt = RunService.Heartbeat:Wait()
-            waited = waited + dt
-            local curT = getHRP(selectedTarget)
-            if curT then faceAt(curT.Position) end
-        end
-    end
-    if not autoKill then break end
-                        end
-
-                        status.Text = "Phase: Attacking "..(selectedTarget.Name or "??")
-                        local outStart = tick()
-                        while tick() - outStart < OUT_PHASE_DURATION and autoKill do
-                            local curTargetHrp = getHRP(selectedTarget)
-                            if not curTargetHrp then break end
-                            local tpos = curTargetHrp.Position
-                            local behindPos = tpos - (curTargetHrp.CFrame.LookVector * BEHIND_STUDS)
-                            behindPos = Vector3.new(behindPos.X, tpos.Y, behindPos.Z)
-                            local cf = CFrame.new(behindPos, tpos)
-                            tpTo(cf)
-                            local waited = 0
-                            while waited < TELEPORT_OUT_INTERVAL and autoKill do
-                                local dt = RunService.Heartbeat:Wait()
-                                waited = waited + dt
-                                local curT = getHRP(selectedTarget)
-                                if curT then faceAt(curT.Position) end
-                            end
-                        end
-                        if not autoKill then break end
-                    end
-                end
-            end
-            task.wait(0.05)
-        end
-        isLoopRunning = false
-        status.Text = "Status: Idle"
-    end)
+                        status.Text = "Phase: Attacking "..(selectedTarget.Name or "??")
+                        local outStart = tick()
+                        while tick() - outStart < OUT_PHASE_DURATION and autoKill do
+                            local curTargetHrp = getHRP(selectedTarget)
+                            if not curTargetHrp then break end
+                            local tpos = curTargetHrp.Position
+                            local behindPos = tpos - (curTargetHrp.CFrame.LookVector * BEHIND_STUDS)
+                            behindPos = Vector3.new(behindPos.X, tpos.Y, behindPos.Z)
+                            local cf = CFrame.new(behindPos, tpos)
+                            tpTo(cf)
+                            local waited = 0
+                            while waited < TELEPORT_OUT_INTERVAL and autoKill do
+                                local dt = RunService.Heartbeat:Wait()
+                                waited = waited + dt
+                                local curT = getHRP(selectedTarget)
+                                if curT then faceAt(curT.Position) end
+                            end
+                        end
+                        if not autoKill then break end
+                    end
+                end
+            end
+            task.wait(0.05)
+        end
+        isLoopRunning = false
+        status.Text = "Status: Idle"
+    end)
 end
 
 -- Toggle button
 toggleBtn.MouseButton1Click:Connect(function()
-    autoKill = not autoKill
-    if autoKill then
-        toggleBtn.Text = "Tắt AutoKill"
-        status.Text = "Status: Starting..."
-        startLoop()
-    else
-        toggleBtn.Text = "Bật AutoKill"
-        status.Text = "Status: Stopping..."
-    end
+    autoKill = not autoKill
+    if autoKill then
+        toggleBtn.Text = "Tắt AutoKill"
+        status.Text = "Status: Starting..."
+        startLoop()
+    else
+        toggleBtn.Text = "Bật AutoKill"
+        status.Text = "Status: Stopping..."
+    end
 end)
 
 print("[AutoTrashKill] GUI loaded. TELEPORT_OUT_INTERVAL = "..tostring(TELEPORT_OUT_INTERVAL).."s")
