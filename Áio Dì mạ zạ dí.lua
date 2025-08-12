@@ -486,7 +486,8 @@ do
     end)
 end
 
-==== logic (giữ nguyên) =====
+--==== logic (giữ nguyên) =====
+
 local autoKill = false
 local isLoopRunning = false
 local selectedTarget = nil
