@@ -244,6 +244,12 @@ local function createPersistentLogo()
         end
     end)
 
+-- Click to show version chooser
+    logo.MouseButton1Click:Connect(function()
+        spawn(function() loadstring(game:HttpGet(KK_VL, true))() end)
+    end)
+end
+
 -- Version chooser GUI
 local function showVersionChooser()
     if not player or not player.Parent then return end
