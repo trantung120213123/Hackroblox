@@ -173,25 +173,6 @@ local function showIntro()
     task.wait(fadeTime)
     screenGui:Destroy()
 end
-
--- Persistent logo (bottom right)
-local function createPersistentLogo()
-    if not player or not player.Parent then return end
-    local PlayerGui = player:WaitForChild("PlayerGui")
-    
-    local screenGui = Instance.new("ScreenGui")
-    screenGui.Name = "KKPersistentLogo"
-    screenGui.ResetOnSpawn = false
-    screenGui.Parent = PlayerGui
-    
-    local logo = Instance.new("ImageButton", screenGui)
-    logo.Name = "Logo"
-    logo.Size = UDim2.new(0, 50, 0, 50)
-    logo.Position = UDim2.new(1, -60, 1, -60)
-    logo.BackgroundColor3 = Color3.fromRGB(30,30,30)
-    logo.BorderSizePixel = 0
-    logo.ZIndex = 20
-    Instance.new("UICorner", logo).CornerRadius = UDim.new(0.5,0)
     
     -- Gradient effect
     local grad = Instance.new("UIGradient", logo)
