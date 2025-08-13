@@ -387,7 +387,6 @@ local function createDropdown()
     searchPadding.PaddingLeft = UDim.new(0, 8)
 
 -- hàm tạo --
-populateList(searchBox.Text)
 
 -- new
 Players.PlayerAdded:Connect(function()
