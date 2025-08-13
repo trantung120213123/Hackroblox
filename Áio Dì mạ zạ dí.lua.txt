@@ -634,6 +634,38 @@ local function performCycleFor(targetName)
     if not trashA then return end
     local keyA = tostring(trashA)
 
+    -- TP behind trashcan and face normally (instant)
+    local cfA = behindAndFaceCFrame(trashA, BACK_OFFSET)
+    if cfA then
+        instantTeleportToCFrame(myHRP, cfA)
+
+        -- Face-phase: trong TP_WAIT_AFTER_TRASH giây, cứ mỗi FACE_PHASE_INTERVAL
+        -- sẽ set CFrame lại phía sau thùng (với +FACE_PHASE_OFFSET_DELTA) để đảm bảo hướng mặt
+        local t0 = tick()
+        while tick() - t0 < TP_WAIT_AFTER_TRASH do
+            local faceCf = behindAndFaceCFrame(trashA, BACK_OFFSET + FACE_PHASE_OFFSET_DELTA)
+            if faceCf then
+                pcall(function() myHRP.CFrame = faceCf end)
+            end
+            task.wait(FACE_PHASE_INTERVAL)
+        end
+    end
+
+    -- Rapid spam teleport to target (như trước)
+    rapidSpamTeleportRecompute(myHRP, targetHRP, RAPID_TP_DURATION, RAPID_TP_INTERVAL)
+
+    -- Mark trashcan as used
+    usedTrash[keyA] = tick()
+
+    -- Pick a different trashcan and optionally TP behind it
+    local trashB = pickTrashcanExclude(keyA)
+    if trashB then
+        local cfB = behindAndFaceCFrame(trashB, BACK_OFFSET)
+        if cfB then instantTeleportToCFrame(myHRP, cfB) end
+        usedTrash[tostring(trashB)] = tick()
+    end
+end
+
     -- TP behind trashcan and face normally
     local cfA = behindAndFaceCFrame(trashA, BACK_OFFSET)
     if cfA then instantTeleportToCFrame(myHRP, cfA) end
