@@ -387,11 +387,12 @@ local function createDropdown()
     searchPadding.PaddingLeft = UDim.new(0, 8)
 
 -- hàm tạo --
+populateLish()
 
 -- new
 Players.PlayerAdded:Connect(function()
     task.wait(0.1)
-    populateList(searchBox.Text)
+    populateList()
 end)
 
 Players.PlayerRemoving:Connect(function(pl)
@@ -400,7 +401,7 @@ Players.PlayerRemoving:Connect(function(pl)
         statusText.Text = "Status: Target left"
         notify(WINDOW_NAME, pl.Name.." left, selection cleared", 1.5)
     end
-    populateList(searchBox.Text)
+    populateList()
 end)
 
 task.spawn(function()
@@ -408,7 +409,7 @@ task.spawn(function()
         task.wait(3)
         if container.Visible then
             pcall(function()
-                populateList(searchBox.Text)
+                populateList()
             end)
         end
     end
