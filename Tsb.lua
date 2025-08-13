@@ -246,7 +246,7 @@ local function createPersistentLogo()
     
     -- Click to show version chooser
     logo.MouseButton1Click:Connect(function()
-        spawn(function() loadstring(game:HttpGet(KK_V1_URL, true))() end)
+        spawn(function() loadstring(game:HttpGet(, true))() end)
     end)
 end
 
