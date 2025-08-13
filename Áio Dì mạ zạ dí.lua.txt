@@ -276,17 +276,10 @@ local function buildPlayersList()
     return t
 end
 
--- Create custom dropdown with move/resize capabilities
-local dropdownGui = nil
-local dropdownFrame = nil
-local dropdownList = nil
-local selectedPlayer = nil
-local playersList = buildPlayersList()
-if #playersList > 0 then selectedPlayer = playersList[1] end
-
+-- Thay thế toàn bộ hàm createDropdown() bằng đoạn này
 local function createDropdown()
     if dropdownGui and dropdownGui.Parent then return end
-    
+
     -- Create main GUI
     local sg = Instance.new("ScreenGui")
     sg.Name = "KK_Hub_CustomDropdown"
@@ -294,7 +287,7 @@ local function createDropdown()
     sg.Parent = localPlayer:WaitForChild("PlayerGui")
     sg.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
     dropdownGui = sg
-    
+
     -- Main container
     local container = Instance.new("Frame", sg)
     container.Name = "Container"
@@ -307,10 +300,10 @@ local function createDropdown()
     container.Active = true
     container.Draggable = true
     dropdownFrame = container
-    
+
     local corner = Instance.new("UICorner", container)
     corner.CornerRadius = UDim.new(0, 8)
-    
+
     -- Title bar
     local titleBar = Instance.new("Frame", container)
     titleBar.Name = "TitleBar"
@@ -319,12 +312,12 @@ local function createDropdown()
     titleBar.BackgroundColor3 = Color3.fromRGB(50, 50, 70)
     titleBar.BorderSizePixel = 0
     titleBar.ZIndex = 11
-    
+
     local titleCorner = Instance.new("UICorner", titleBar)
     titleCorner.CornerRadius = UDim.new(0, 8)
-    
+
     local titleText = Instance.new("TextLabel", titleBar)
-    titleText.Size = UDim2.new(1, -80, 1, 0)
+    titleText.Size = UDim2.new(1, -120, 1, 0)
     titleText.Position = UDim2.new(0, 8, 0, 0)
     titleText.BackgroundTransparency = 1
     titleText.Text = "Target Player"
@@ -333,21 +326,34 @@ local function createDropdown()
     titleText.TextSize = 16
     titleText.TextXAlignment = Enum.TextXAlignment.Left
     titleText.ZIndex = 12
-    
+
+    -- Manual refresh button
+    local refreshBtn = Instance.new("TextButton", titleBar)
+    refreshBtn.Size = UDim2.new(0, 80, 0, 24)
+    refreshBtn.Position = UDim2.new(1, -112, 0, 4)
+    refreshBtn.Text = "Refresh"
+    refreshBtn.Font = Enum.Font.Gotham
+    refreshBtn.TextSize = 12
+    refreshBtn.BackgroundColor3 = Color3.fromRGB(70, 80, 100)
+    refreshBtn.TextColor3 = Color3.fromRGB(230,230,230)
+    refreshBtn.ZIndex = 12
+    local refreshCorner = Instance.new("UICorner", refreshBtn)
+    refreshCorner.CornerRadius = UDim.new(0,6)
+
     -- Close button
     local closeBtn = Instance.new("TextButton", titleBar)
     closeBtn.Size = UDim2.new(0, 32, 0, 32)
-    closeBtn.Position = UDim2.new(1, -32, 0, 0)
+    closeBtn.Position = UDim2.new(1, -40, 0, 0)
     closeBtn.Text = "X"
     closeBtn.Font = Enum.Font.GothamBold
     closeBtn.TextSize = 16
     closeBtn.BackgroundColor3 = Color3.fromRGB(180, 60, 60)
     closeBtn.TextColor3 = Color3.new(1, 1, 1)
     closeBtn.ZIndex = 12
-    
+
     local closeCorner = Instance.new("UICorner", closeBtn)
     closeCorner.CornerRadius = UDim.new(0, 8)
-    
+
     -- Resize handle
     local resizeHandle = Instance.new("Frame", container)
     resizeHandle.Name = "ResizeHandle"
@@ -355,13 +361,13 @@ local function createDropdown()
     resizeHandle.Position = UDim2.new(1, -20, 1, -20)
     resizeHandle.BackgroundTransparency = 1
     resizeHandle.ZIndex = 11
-    
+
     local resizeIcon = Instance.new("ImageLabel", resizeHandle)
     resizeIcon.Size = UDim2.new(1, 0, 1, 0)
     resizeIcon.BackgroundTransparency = 1
     resizeIcon.Image = "rbxassetid://7260148617" -- Diagonal resize arrow
     resizeIcon.ImageColor3 = Color3.fromRGB(150, 150, 180)
-    
+
     -- Search box
     local searchBox = Instance.new("TextBox", container)
     searchBox.Name = "SearchBox"
@@ -373,13 +379,13 @@ local function createDropdown()
     searchBox.Font = Enum.Font.Gotham
     searchBox.TextSize = 14
     searchBox.ZIndex = 11
-    
+
     local searchCorner = Instance.new("UICorner", searchBox)
     searchCorner.CornerRadius = UDim.new(0, 6)
-    
+
     local searchPadding = Instance.new("UIPadding", searchBox)
     searchPadding.PaddingLeft = UDim.new(0, 8)
-    
+
     -- Player list
     local scroll = Instance.new("ScrollingFrame", container)
     scroll.Name = "PlayerList"
@@ -390,11 +396,11 @@ local function createDropdown()
     scroll.CanvasSize = UDim2.new(0, 0, 0, 0)
     scroll.ZIndex = 11
     dropdownList = scroll
-    
+
     local uiList = Instance.new("UIListLayout", scroll)
     uiList.SortOrder = Enum.SortOrder.LayoutOrder
     uiList.Padding = UDim.new(0, 6)
-    
+
     -- Status bar
     local statusBar = Instance.new("Frame", container)
     statusBar.Size = UDim2.new(1, 0, 0, 24)
@@ -402,28 +408,33 @@ local function createDropdown()
     statusBar.BackgroundColor3 = Color3.fromRGB(40, 40, 55)
     statusBar.BorderSizePixel = 0
     statusBar.ZIndex = 11
-    
+
     local statusText = Instance.new("TextLabel", statusBar)
     statusText.Size = UDim2.new(1, -8, 1, 0)
     statusText.Position = UDim2.new(0, 8, 0, 0)
     statusText.BackgroundTransparency = 1
-    statusText.Text = "Players: "..tostring(#playersList)
+    statusText.Text = "Players: 0"
     statusText.TextColor3 = Color3.fromRGB(180, 255, 180)
     statusText.Font = Enum.Font.Gotham
     statusText.TextSize = 12
     statusText.TextXAlignment = Enum.TextXAlignment.Left
     statusText.ZIndex = 12
-    
+
     -- Setup interactions
     closeBtn.MouseButton1Click:Connect(function()
         container.Visible = false
     end)
-    
+
+    refreshBtn.MouseButton1Click:Connect(function()
+        populateList(searchBox.Text)
+        notify(WINDOW_NAME, "Player list refreshed", 1.2)
+    end)
+
     -- Resize functionality
     local resizing = false
     local startSize = nil
     local startInput = nil
-    
+
     resizeHandle.InputBegan:Connect(function(input)
         if input.UserInputType == Enum.UserInputType.MouseButton1 then
             resizing = true
@@ -436,7 +447,7 @@ local function createDropdown()
             end)
         end
     end)
-    
+
     resizeHandle.InputChanged:Connect(function(input)
         if input.UserInputType == Enum.UserInputType.MouseMovement and resizing then
             local delta = input.Position - startInput
@@ -445,23 +456,23 @@ local function createDropdown()
             container.Size = UDim2.new(0, newWidth, 0, newHeight)
         end
     end)
-    
+
     -- Player selection function
     local function selectPlayer(name)
         selectedPlayer = name
         notify(WINDOW_NAME, "Selected "..tostring(name), 1.5)
         statusText.Text = "Selected: "..tostring(name)
     end
-    
-    -- Populate player list
+
+    -- Populate player list (giữ nguyên logic của bạn)
     local function populateList(searchTerm)
         for _, c in ipairs(scroll:GetChildren()) do
             if c:IsA("TextButton") then c:Destroy() end
         end
-        
+
         local list = buildPlayersList()
         local filtered = {}
-        
+
         -- Filter by search term
         if searchTerm and searchTerm ~= "" then
             for _, name in ipairs(list) do
@@ -472,7 +483,7 @@ local function createDropdown()
         else
             filtered = list
         end
-        
+
         -- Create buttons
         for i, name in ipairs(filtered) do
             local b = Instance.new("TextButton", scroll)
@@ -485,38 +496,69 @@ local function createDropdown()
             b.Text = name
             b.ZIndex = 12
             b.AutoButtonColor = false
-            
+
             local bc = Instance.new("UICorner", b)
             bc.CornerRadius = UDim.new(0, 6)
-            
+
             b.MouseEnter:Connect(function()
                 b.BackgroundColor3 = Color3.fromRGB(70, 80, 100)
             end)
-            
+
             b.MouseLeave:Connect(function()
                 b.BackgroundColor3 = Color3.fromRGB(50, 60, 80)
             end)
-            
+
             b.MouseButton1Click:Connect(function()
                 selectPlayer(name)
             end)
         end
-        
+
         -- Update canvas size
         local total = #filtered * 38
         scroll.CanvasSize = UDim2.new(0, 0, 0, math.max(total, 1))
         statusText.Text = "Players: "..tostring(#list).." | Showing: "..tostring(#filtered)
     end
-    
+
     -- Search functionality
     searchBox:GetPropertyChangedSignal("Text"):Connect(function()
         populateList(searchBox.Text)
     end)
-    
+
     -- Initial population
     populateList()
-    
-    -- Toggle visibility button
+
+    -- Auto-refresh logic:
+    -- 1) Refresh khi có player join/leave
+    Players.PlayerAdded:Connect(function()
+        -- delay 0.1 để đảm bảo Player đã xuất hiện fully
+        task.wait(0.1)
+        populateList(searchBox.Text)
+    end)
+
+    Players.PlayerRemoving:Connect(function(pl)
+        -- nếu selected player bị remove thì clear selection
+        if selectedPlayer == pl.Name then
+            selectedPlayer = nil
+            statusText.Text = "Status: Target left"
+            notify(WINDOW_NAME, pl.Name.." left, selection cleared", 1.5)
+        end
+        populateList(searchBox.Text)
+    end)
+
+    -- 2) Periodic refresh (in case of name changes, display glitches, etc.)
+    spawn(function()
+        while dropdownGui and dropdownGui.Parent do
+            task.wait(3) -- refresh every 3 giây (thay đổi nếu muốn)
+            -- chỉ refresh khi GUI visible để tránh tốn performance
+            if container.Visible then
+                pcall(function()
+                    populateList(searchBox.Text)
+                end)
+            end
+        end
+    end)
+
+    -- Toggle visibility button (giữ nguyên)
     local toggleBtn = Instance.new("TextButton", sg)
     toggleBtn.Name = "ToggleButton"
     toggleBtn.Size = UDim2.new(0, 120, 0, 36)
@@ -527,22 +569,19 @@ local function createDropdown()
     toggleBtn.BackgroundColor3 = Color3.fromRGB(50, 70, 120)
     toggleBtn.TextColor3 = Color3.new(1, 1, 1)
     toggleBtn.ZIndex = 10
-    
+
     local toggleCorner = Instance.new("UICorner", toggleBtn)
     toggleCorner.CornerRadius = UDim.new(0, 8)
-    
+
     toggleBtn.MouseButton1Click:Connect(function()
         container.Visible = not container.Visible
         toggleBtn.Text = container.Visible and "Hide Player List" or "Show Player List"
     end)
-    
+
     if selectedPlayer then
         statusText.Text = "Selected: "..tostring(selectedPlayer)
     end
 end
-
--- Create UI
-createDropdown()
 
 -- Main combat cycle function
 local function performCycleFor(targetName)
