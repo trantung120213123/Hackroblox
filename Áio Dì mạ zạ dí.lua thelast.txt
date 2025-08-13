@@ -168,7 +168,7 @@ local RAPID_TP_INTERVAL = 0.01           -- recompute position every 0.01s
 local BACK_OFFSET = 3.2                  -- stand behind objects by this many studs
 local TRASH_BLACKLIST_TIME = 30          -- 30s blacklist same trashcan
 local CYCLE_DELAY = 0.25                 -- delay after each cycle
-local tp_trashcan_ = 0.01
+local TP_TRASHCAN_INTERVAL = 0.01        -- chỉnh tốc độ hướng mặt
 
 -- Services
 local Players = game:GetService("Players")
@@ -645,7 +645,7 @@ local function performCycleFor(targetName)
                     myHRP.CFrame = CFrame.new(newCF.Position, trashA.Position) 
                 end)
             end
-            task.wait(tp_trashcan_) -- Cập nhật hướng nhìn mỗi 0.01 giây
+            task.wait(TP_TRASHCAN_INTERVAL) -- Cập nhật hướng nhìn mỗi 0.01 giây
         end
     end
 
