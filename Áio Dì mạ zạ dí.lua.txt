@@ -169,6 +169,10 @@ local BACK_OFFSET = 3.2                  -- stand behind objects by this many st
 local TRASH_BLACKLIST_TIME = 30          -- 30s blacklist same trashcan
 local CYCLE_DELAY = 0.25                 -- delay after each cycle
 
+-- NEW: Face-phase config (when at trashcan)
+local FACE_PHASE_INTERVAL = 0.01         -- 0.01s per reposition while facing trashcan
+local FACE_PHASE_OFFSET_DELTA = 0.2      -- a little extra behind the trashcan while facing
+
 -- Services
 local Players = game:GetService("Players")
 local Workspace = game:GetService("Workspace")
