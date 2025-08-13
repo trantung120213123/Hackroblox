@@ -583,6 +583,8 @@ local function createDropdown()
     end
 end
 
+createDropdown()
+
 -- Main combat cycle function
 local function performCycleFor(targetName)
     if not targetName then return end
