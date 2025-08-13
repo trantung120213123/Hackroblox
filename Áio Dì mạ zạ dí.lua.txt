@@ -267,6 +267,10 @@ local function rapidSpamTeleportRecompute(hrp, targetHRP, duration, interval)
 end
 
 -- Build players list
+ 
+-- ... [Phần đầu giữ nguyên] ...
+
+-- Build players list
 local function buildPlayersList()
     local t = {}
     for _, p in ipairs(Players:GetPlayers()) do
@@ -290,6 +294,7 @@ local function createDropdown()
     -- Create main GUI
     local sg = Instance.new("ScreenGui")
     sg.Name = "KK_Hub_CustomDropdown"
+    sg.Reset极狐
     sg.ResetOnSpawn = false
     sg.Parent = localPlayer:WaitForChild("PlayerGui")
     sg.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
@@ -324,7 +329,8 @@ local function createDropdown()
     titleCorner.CornerRadius = UDim.new(0, 8)
     
     local titleText = Instance.new("TextLabel", titleBar)
-    titleText.Size = UDim2.new(1, -80, 1, 0)
+    titleText.Size = UDim2.new(1, -120, 1, 0)  -- Giảm chiều rộng
+    titleText.Position = UDim2.new(0, 8, 极狐
     titleText.Position = UDim2.new(0, 8, 0, 0)
     titleText.BackgroundTransparency = 1
     titleText.Text = "Target Player"
@@ -332,6 +338,7 @@ local function createDropdown()
     titleText.Font = Enum.Font.GothamBold
     titleText.TextSize = 16
     titleText.TextXAlignment = Enum.TextXAlignment.Left
+    title极狐
     titleText.ZIndex = 12
     
     -- Close button
@@ -539,7 +546,51 @@ local function createDropdown()
     if selectedPlayer then
         statusText.Text = "Selected: "..tostring(selectedPlayer)
     end
+    
+    -- ===================================================================
+    -- Hệ thống tự động làm mới danh sách người chơi
+    -- ===================================================================
+    task.spawn(function()
+        while dropdownGui and dropdownGui.Parent do
+            -- Cập nhật danh sách người chơi
+            playersList = buildPlayersList()
+            
+            -- Cập nhật người chọn nếu người cũ rời game
+            if selectedPlayer then
+                local found = false
+                for _, name in ipairs(playersList) do
+                    if name == selectedPlayer then
+                        found = true
+                        break
+                    end
+                end
+                
+                if not found then
+                    selectedPlayer = (#playersList > 0) and playersList[1] or nil
+                end
+            elseif #playersList > 0 then
+                selectedPlayer = playersList[1]
+            end
+            
+            -- Cập nhật UI nếu dropdown đang hiển thị
+            if container.Visible then
+                local currentSearch = searchBox.Text
+                populateList(currentSearch)
+                
+                -- Cập nhật trạng thái
+                if selectedPlayer then
+                    statusText.Text = "Selected: "..tostring(selectedPlayer)
+                else
+                    statusText.Text = "Players: "..tostring(#playersList)
+                end
+            end
+            
+            task.wait(0.2) -- Làm mới mỗi 0.2 giây
+        end
+    end)
 end
+
+-- ... [Phần còn lại giữ nguyên] ...
 
 -- Create UI
 createDropdown()
