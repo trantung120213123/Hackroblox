@@ -1,3 +1,160 @@
+-- KK Intro: Logo (center) + pulse -> show 2s -> fade out
+-- Dán vào executor, chạy ở client (PlayerGui)
+
+-- Services
+local Players = game:GetService("Players")
+local TweenService = game:GetService("TweenService")
+
+local player = Players.LocalPlayer
+if not player then return end
+local PlayerGui = player:WaitForChild("PlayerGui")
+
+-- Helper tween
+local function tweenObject(obj, props, time, style, dir)
+    time = time or 0.25
+    style = style or Enum.EasingStyle.Sine
+    dir = dir or Enum.EasingDirection.Out
+    local info = TweenInfo.new(time, style, dir)
+    return TweenService:Create(obj, info, props)
+end
+
+-- Remove old intro if tồn tại
+pcall(function()
+    local old = PlayerGui:FindFirstChild("KKIntroGui")
+    if old then old:Destroy() end
+end)
+
+-- Main ScreenGui
+local screenGui = Instance.new("ScreenGui")
+screenGui.Name = "KKIntroGui"
+screenGui.ResetOnSpawn = false
+screenGui.IgnoreGuiInset = true
+screenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+screenGui.Parent = PlayerGui
+
+-- Background shadow (subtle, để logo nổi)
+local bg = Instance.new("Frame", screenGui)
+bg.Name = "BackgroundShadow"
+bg.Size = UDim2.new(1,0,1,0)
+bg.Position = UDim2.new(0,0,0,0)
+bg.BackgroundColor3 = Color3.fromRGB(0,0,0)
+bg.BackgroundTransparency = 1  -- sẽ không hiển thị nhiều, chỉ cần khi cần
+bg.ZIndex = 10
+
+-- Logo container (giữa màn hình)
+local logoFrame = Instance.new("Frame", screenGui)
+logoFrame.Name = "LogoFrame"
+logoFrame.AnchorPoint = Vector2.new(0.5, 0.5)
+logoFrame.Position = UDim2.new(0.5, 0.5, 0.5, 0)
+logoFrame.Size = UDim2.new(0, 300, 0, 300) -- kích thước logo lớn
+logoFrame.BackgroundColor3 = Color3.fromRGB(30,30,30)
+logoFrame.BorderSizePixel = 0
+logoFrame.ZIndex = 50
+
+local logoCorner = Instance.new("UICorner", logoFrame)
+logoCorner.CornerRadius = UDim.new(0, 28)
+
+-- Gradient trên logo để trông đẹp
+local logoGrad = Instance.new("UIGradient", logoFrame)
+logoGrad.Color = ColorSequence.new{
+    ColorSequenceKeypoint.new(0, Color3.fromRGB(120,60,200)),
+    ColorSequenceKeypoint.new(1, Color3.fromRGB(60,200,200))
+}
+logoGrad.Rotation = 45
+
+-- Inner text "KK" (the logo text)
+local logoInner = Instance.new("TextLabel", logoFrame)
+logoInner.Name = "LogoInner"
+logoInner.Size = UDim2.new(1, -36, 1, -36)
+logoInner.Position = UDim2.new(0,18,0,18)
+logoInner.BackgroundTransparency = 1
+logoInner.Text = "KK"
+logoInner.Font = Enum.Font.GothamBold
+logoInner.TextSize = 96
+logoInner.TextColor3 = Color3.fromRGB(245,245,245)
+logoInner.ZIndex = 52
+logoInner.TextXAlignment = Enum.TextXAlignment.Center
+logoInner.TextYAlignment = Enum.TextYAlignment.Center
+
+-- Small dot (cute)
+local logoDot = Instance.new("Frame", logoFrame)
+logoDot.Name = "LogoDot"
+logoDot.Size = UDim2.new(0,18,0,18)
+logoDot.Position = UDim2.new(1, -36, 0, 18)
+logoDot.BackgroundColor3 = Color3.fromRGB(255,240,120)
+logoDot.BorderSizePixel = 0
+logoDot.ZIndex = 53
+local dotCorner = Instance.new("UICorner", logoDot)
+dotCorner.CornerRadius = UDim.new(1,0)
+
+-- Glow (image asset)
+local logoGlow = Instance.new("ImageLabel", logoFrame)
+logoGlow.Name = "LogoGlow"
+logoGlow.Size = UDim2.new(1.8,0,1.8,0)
+logoGlow.Position = UDim2.new(-0.4,0,-0.4,0)
+logoGlow.BackgroundTransparency = 1
+logoGlow.Image = "rbxassetid://4996891970"
+logoGlow.ImageTransparency = 0.88
+logoGlow.ZIndex = 49
+logoGlow.ScaleType = Enum.ScaleType.Slice
+logoGlow.SliceCenter = Rect.new(10,10,118,118)
+
+-- Optional subtle shadow behind logo to make it pop
+local logoShadow = Instance.new("Frame", screenGui)
+logoShadow.Name = "LogoShadow"
+logoShadow.AnchorPoint = Vector2.new(0.5,0.5)
+logoShadow.Position = logoFrame.Position
+logoShadow.Size = UDim2.new(0, 340, 0, 340)
+logoShadow.BackgroundColor3 = Color3.fromRGB(0,0,0)
+logoShadow.BackgroundTransparency = 0.85
+logoShadow.ZIndex = 48
+logoShadow.BorderSizePixel = 0
+local shadowCorner = Instance.new("UICorner", logoShadow)
+shadowCorner.CornerRadius = UDim.new(0, 28)
+
+-- Pulse effect (phồng/thu nhỏ)
+local alive = true
+spawn(function()
+    while alive and logoFrame.Parent do
+        pcall(function()
+            tweenObject(logoFrame, {Size = UDim2.new(0, 320, 0, 320)}, 0.45, Enum.EasingStyle.Sine):Play()
+            tweenObject(logoInner, {TextSize = 104}, 0.45, Enum.EasingStyle.Sine):Play()
+            tweenObject(logoShadow, {Size = UDim2.new(0, 360, 0, 360)}, 0.45, Enum.EasingStyle.Sine):Play()
+        end)
+        task.wait(0.45)
+        pcall(function()
+            tweenObject(logoFrame, {Size = UDim2.new(0, 300, 0, 300)}, 0.45, Enum.EasingStyle.Sine):Play()
+            tweenObject(logoInner, {TextSize = 96}, 0.45, Enum.EasingStyle.Sine):Play()
+            tweenObject(logoShadow, {Size = UDim2.new(0, 340, 0, 340)}, 0.45, Enum.EasingStyle.Sine):Play()
+        end)
+        task.wait(0.45)
+    end
+end)
+
+-- Hiển thị 2 giây
+task.wait(2)
+
+-- Fade out mượt (0.8s)
+local fadeTime = 0.8
+tweenObject(logoGlow, {ImageTransparency = 1}, fadeTime):Play()
+tweenObject(logoInner, {TextTransparency = 1}, fadeTime):Play()
+tweenObject(logoFrame, {BackgroundTransparency = 1}, fadeTime):Play()
+tweenObject(logoDot, {BackgroundTransparency = 1}, fadeTime):Play()
+tweenObject(logoShadow, {BackgroundTransparency = 1}, fadeTime):Play()
+tweenObject(bg, {BackgroundTransparency = 1}, fadeTime):Play()
+
+-- stop pulse and destroy after fade
+alive = false
+task.wait(fadeTime + 0.05)
+
+pcall(function()
+    if screenGui and screenGui.Parent then
+        screenGui:Destroy()
+    end
+end)
+
+-- Done
+
 -- KK Hub v2 — Custom Dropdown Combat
 -- Instant CFrame TP, face trashcan normal, rapid TP target
 -- Custom movable and resizable dropdown implementation
