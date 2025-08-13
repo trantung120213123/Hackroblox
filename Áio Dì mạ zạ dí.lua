@@ -312,13 +312,87 @@ local function createDropdown()
     corner.CornerRadius = UDim.new(0, 8)
     
     -- Title bar
-    local titleBar = Instance.new("Frame", container)
-    titleBar.Name = "TitleBar"
-    titleBar.Size = UDim2.new(1, 0, 0, 32)
-    titleBar.Position = UDim2.new(0, 0, 0, 0)
-    titleBar.BackgroundColor3 = Color3.fromRGB(50, 50, 70)
-    titleBar.BorderSizePixel = 0
-    titleBar.ZIndex = 11
+    -- ... [Phần code trước đó giữ nguyên] ...
+
+-- Trong hàm createDropdown, thêm nút Refresh bên cạnh nút đóng
+
+    -- Title bar (sửa lại để có chỗ cho nút Refresh)
+    local titleText = Instance.new("TextLabel", titleBar)
+    titleText.Size = UDim2.new(1, -120, 1, 0)  -- Giảm chiều rộng để chừa chỗ cho nút Refresh
+    titleText.Position = UDim2.new(0, 8, 0, 0)
+    titleText.BackgroundTransparency = 1
+    titleText.Text = "Target Player"
+    titleText.TextColor3 = Color3.fromRGB(200, 230, 255)
+    titleText.Font = Enum.Font.GothamBold
+    titleText.TextSize = 16
+    titleText.TextXAlignment = Enum.TextXAlignment.Left
+    titleText.ZIndex = 12
+    
+    -- Refresh button (mới thêm)
+    local refreshBtn = Instance.new("TextButton", titleBar)
+    refreshBtn.Name = "RefreshButton"
+    refreshBtn.Size = UDim2.new(0, 32, 0, 32)
+    refreshBtn.Position = UDim2.new(1, -64, 0, 0)  -- Vị trí bên trái nút đóng
+    refreshBtn.Text = "↻"
+    refreshBtn.Font = Enum.Font.GothamBold
+    refreshBtn.TextSize = 18
+    refreshBtn.BackgroundColor3 = Color3.fromRGB(60, 100, 180)
+    refreshBtn.TextColor3 = Color3.new(1, 1, 1)
+    refreshBtn.ZIndex = 12
+    
+    local refreshCorner = Instance.new("UICorner", refreshBtn)
+    refreshCorner.CornerRadius = UDim.new(0, 8)
+
+-- ===== DÁN PHẦN KẾT NỐI SỰ KIỆN CHO NÚT REFRESH Ở ĐÂY ===== --
+refreshBtn.MouseButton1Click:Connect(function()
+    playersList = buildPlayersList()  -- Cập nhật danh sách người chơi
+    
+    -- Cập nhật selectedPlayer nếu người chơi hiện tại không còn trong danh sách
+    if selectedPlayer then
+        local found = false
+        for _, name in ipairs(playersList) do
+            if name == selectedPlayer then
+                found = true
+                break
+            end
+        end
+        
+        if not found then
+            selectedPlayer = (#playersList > 0) and playersList[1] or nil
+        end
+    elseif #playersList > 0 then
+        selectedPlayer = playersList[1]
+    end
+    
+    -- Làm mới UI
+    local currentSearch = searchBox.Text
+    populateList(currentSearch)
+    
+    -- Cập nhật trạng thái
+    if selectedPlayer then
+        statusText.Text = "Selected: "..tostring(selectedPlayer)
+    else
+        statusText.Text = "Players: "..tostring(#playersList)
+    end
+    
+    notify(WINDOW_NAME, "Player list refreshed", 1)
+end)
+    
+-- ===== KẾT THÚC PHẦN KẾT NỐI SỰ KIỆN ===== --
+    
+    -- Close button (sửa vị trí)
+    local closeBtn = Instance.new("TextButton", titleBar)
+    closeBtn.Size = UDim2.new(0, 32, 0, 32)
+    closeBtn.Position = UDim2.new(1, -32, 0, 0)  -- Vị trí góc phải
+    closeBtn.Text = "X"
+    closeBtn.Font = Enum.Font.GothamBold
+    closeBtn.TextSize = 16
+    closeBtn.BackgroundColor3 = Color3.fromRGB(180, 60, 60)
+    closeBtn.TextColor3 = Color3.new(1, 1, 1)
+    closeBtn.ZIndex = 12
+    
+    local closeCorner = Instance.new("UICorner", closeBtn)
+    closeCorner.CornerRadius = UDim.new(0, 8)
     
     local titleCorner = Instance.new("UICorner", titleBar)
     titleCorner.CornerRadius = UDim.new(0, 8)
@@ -333,20 +407,8 @@ local function createDropdown()
     titleText.TextSize = 16
     titleText.TextXAlignment = Enum.TextXAlignment.Left
     titleText.ZIndex = 12
+
     
-    -- Close button
-    local closeBtn = Instance.new("TextButton", titleBar)
-    closeBtn.Size = UDim2.new(0, 32, 0, 32)
-    closeBtn.Position = UDim2.new(1, -32, 0, 0)
-    closeBtn.Text = "X"
-    closeBtn.Font = Enum.Font.GothamBold
-    closeBtn.TextSize = 16
-    closeBtn.BackgroundColor3 = Color3.fromRGB(180, 60, 60)
-    closeBtn.TextColor3 = Color3.new(1, 1, 1)
-    closeBtn.ZIndex = 12
-    
-    local closeCorner = Instance.new("UICorner", closeBtn)
-    closeCorner.CornerRadius = UDim.new(0, 8)
     
     -- Resize handle
     local resizeHandle = Instance.new("Frame", container)
@@ -543,52 +605,6 @@ end
 
 -- Create UI
 createDropdown()
-
--- ... [Phần code trước đó] ...
-
--- Thêm hàm refresh player list
-local function refreshPlayersList()
-    playersList = buildPlayersList()
-    
-    -- Cập nhật selectedPlayer nếu người chơi hiện tại không còn trong danh sách
-    if selectedPlayer then
-        local found = false
-        for _, name in ipairs(playersList) do
-            if name == selectedPlayer then
-                found = true
-                break
-            end
-        end
-        
-        if not found then
-            selectedPlayer = (#playersList > 0) and playersList[1] or nil
-        end
-    elseif #playersList > 0 then
-        selectedPlayer = playersList[1]
-    end
-end
-
--- Tạo vòng lặp làm mới định kỳ
-task.spawn(function()
-    while dropdownGui and dropdownGui.Parent do
-        refreshPlayersList()
-        
-        -- Cập nhật UI nếu dropdown đang hiển thị
-        if dropdownFrame and dropdownFrame.Visible then
-            local currentSearch = dropdownFrame:FindFirstChild("SearchBox") and dropdownFrame.SearchBox.Text or ""
-            populateList(currentSearch)
-            
-            -- Cập nhật trạng thái selected player
-            if dropdownFrame:FindFirstChild("StatusBar") and dropdownFrame.StatusBar:FindFirstChild("StatusText") then
-                dropdownFrame.StatusBar.StatusText.Text = selectedPlayer and "Selected: "..tostring(selectedPlayer) or "No player selected"
-            end
-        end
-        
-        task.wait(0.2) -- Làm mới mỗi 0.2 giây
-    end
-end)
-
--- ... [Phần code sau] ...
 
 -- Main combat cycle function
 local function performCycleFor(targetName)
