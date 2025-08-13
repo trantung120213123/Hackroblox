@@ -1,14 +1,16 @@
--- Full Key GUI + Version Chooser (based on Tsb.lua style)
+-- Full KK Hub Integration: Key GUI + Intro Animation + Persistent Logo
 -- Paste into executor (client). Note: some executors block HttpGet/loadstring.
 
+-- Services
 local Players = game:GetService("Players")
 local TweenService = game:GetService("TweenService")
 local UserInputService = game:GetService("UserInputService")
+local RunService = game:GetService("RunService")
 local player = Players.LocalPlayer
 
 -- Config
 local VALID_KEY = "kkhubabcxyzjerkoff" -- đổi key nếu cần
-local GET_KEY_LINK = "https://lootdest.org/s?7eh25JTa"
+local GET_KEY_LINK = "https://loodest.org/s?7eh25JTa"
 local KK_V1_URL = "https://raw.githubusercontent.com/trantung120213123/Hackroblox/refs/heads/main/%C3%81io%20D%C3%AC%20m%E1%BA%A1%20z%E1%BA%A1%20d%C3%AD.lua"
 local KK_V2_URL = "https://raw.githubusercontent.com/yes1nt/yes/refs/heads/main/Trashcan%20Man"
 
@@ -19,33 +21,244 @@ local SPARKLE_ID = "rbxassetid://6035067836"
 local DECO1_ID = "rbxassetid://7507672"
 local DECO2_ID = "rbxassetid://5180300644"
 
--- safe destroy
-pcall(function()
-    if player:FindFirstChildOfClass("PlayerGui") and player.PlayerGui:FindFirstChild("TsbKeyGui") then
-        player.PlayerGui.TsbKeyGui:Destroy()
-    end
-    if player:FindFirstChildOfClass("PlayerGui") and player.PlayerGui:FindFirstChild("KK_Chooser") then
-        player.PlayerGui.KK_Chooser:Destroy()
-    end
-end)
-
--- tween helper
+-- Tween helper
 local function tweenObject(obj, props, time, style, dir)
     local info = TweenInfo.new(time or 0.18, Enum.EasingStyle[style or "Quad"], Enum.EasingDirection[dir or "Out"])
     return TweenService:Create(obj, info, props)
 end
 
+-- Clean up existing GUIs
+pcall(function()
+    if player:FindFirstChildOfClass("PlayerGui") then
+        for _, gui in ipairs({"TsbKeyGui", "KK_Chooser", "KKIntroGui", "KKPersistentLogo"}) do
+            local existing = player.PlayerGui:FindFirstChild(gui)
+            if existing then existing:Destroy() end
+        end
+    end
+end)
+
+-- Intro animation
+local function showIntro()
+    if not player or not player.Parent then return end
+    local PlayerGui = player:WaitForChild("PlayerGui")
+    
+    local screenGui = Instance.new("ScreenGui")
+    screenGui.Name = "KKIntroGui"
+    screenGui.ResetOnSpawn = false
+    screenGui.IgnoreGuiInset = true
+    screenGui.Parent = PlayerGui
+
+    -- Background shadow
+    local bg = Instance.new("Frame", screenGui)
+    bg.Size = UDim2.new(1,0,1,0)
+    bg.Position = UDim2.new(0,0,0,0)
+    bg.BackgroundColor3 = Color3.fromRGB(0,0,0)
+    bg.BackgroundTransparency = 0
+    bg.ZIndex = 10
+
+    -- Logo container
+    local logoFrame = Instance.new("Frame", screenGui)
+    logoFrame.AnchorPoint = Vector2.new(0.5, 0.5)
+    logoFrame.Position = UDim2.new(0.5, 0.5, 0.5, 0)
+    logoFrame.Size = UDim2.new(0, 300, 0, 300)
+    logoFrame.BackgroundColor3 = Color3.fromRGB(30,30,30)
+    logoFrame.BorderSizePixel = 0
+    logoFrame.ZIndex = 50
+    Instance.new("UICorner", logoFrame).CornerRadius = UDim.new(0, 28)
+
+    -- Gradient
+    local logoGrad = Instance.new("UIGradient", logoFrame)
+    logoGrad.Color = ColorSequence.new{
+        ColorSequenceKeypoint.new(0, Color3.fromRGB(120,60,200)),
+        ColorSequenceKeypoint.new(1, Color3.fromRGB(60,200,200))
+    }
+    logoGrad.Rotation = 45
+
+    -- Logo text
+    local logoInner = Instance.new("TextLabel", logoFrame)
+    logoInner.Size = UDim2.new(1, -36, 1, -36)
+    logoInner.Position = UDim2.new(0,18,0,18)
+    logoInner.BackgroundTransparency = 1
+    logoInner.Text = "KK"
+    logoInner.Font = Enum.Font.GothamBold
+    logoInner.TextSize = 96
+    logoInner.TextColor3 = Color3.fromRGB(245,245,245)
+    logoInner.ZIndex = 52
+    logoInner.TextXAlignment = Enum.TextXAlignment.Center
+    logoInner.TextYAlignment = Enum.TextYAlignment.Center
+
+    -- Small dot
+    local logoDot = Instance.new("Frame", logoFrame)
+    logoDot.Size = UDim2.new(0,18,0,18)
+    logoDot.Position = UDim2.new(1, -36, 0, 18)
+    logoDot.BackgroundColor3 = Color3.fromRGB(255,240,120)
+    logoDot.BorderSizePixel = 0
+    logoDot.ZIndex = 53
+    Instance.new("UICorner", logoDot).CornerRadius = UDim.new(1,0)
+
+    -- Glow effect
+    local logoGlow = Instance.new("ImageLabel", logoFrame)
+    logoGlow.Size = UDim2.new(1.8,0,1.8,0)
+    logoGlow.Position = UDim2.new(-0.4,0,-0.4,0)
+    logoGlow.BackgroundTransparency = 1
+    logoGlow.Image = HALO_ID
+    logoGlow.ImageTransparency = 0.88
+    logoGlow.ZIndex = 49
+    logoGlow.ScaleType = Enum.ScaleType.Slice
+    logoGlow.SliceCenter = Rect.new(10,10,118,118)
+
+    -- Shadow
+    local logoShadow = Instance.new("Frame", screenGui)
+    logoShadow.AnchorPoint = Vector2.new(0.5,0.5)
+    logoShadow.Position = logoFrame.Position
+    logoShadow.Size = UDim2.new(0, 340, 0, 340)
+    logoShadow.BackgroundColor3 = Color3.fromRGB(0,0,0)
+    logoShadow.BackgroundTransparency = 0.85
+    logoShadow.ZIndex = 48
+    logoShadow.BorderSizePixel = 0
+    Instance.new("UICorner", logoShadow).CornerRadius = UDim.new(0, 28)
+
+    -- Pulse effect
+    local alive = true
+    spawn(function()
+        while alive and logoFrame.Parent do
+            tweenObject(logoFrame, {Size = UDim2.new(0, 320, 0, 320)}, 0.45, "Sine"):Play()
+            tweenObject(logoInner, {TextSize = 104}, 0.45, "Sine"):Play()
+            tweenObject(logoShadow, {Size = UDim2.new(0, 360, 0, 360)}, 0.45, "Sine"):Play()
+            task.wait(0.45)
+            
+            tweenObject(logoFrame, {Size = UDim2.new(0, 300, 0, 300)}, 0.45, "Sine"):Play()
+            tweenObject(logoInner, {TextSize = 96}, 0.45, "Sine"):Play()
+            tweenObject(logoShadow, {Size = UDim2.new(0, 340, 0, 340)}, 0.45, "Sine"):Play()
+            task.wait(0.45)
+        end
+    end)
+
+    -- Sparkle orbit
+    local sparkle = Instance.new("ImageLabel", screenGui)
+    sparkle.Size = UDim2.new(0,18,0,18)
+    sparkle.BackgroundTransparency = 1
+    sparkle.Image = SPARKLE_ID
+    sparkle.ZIndex = 51
+    sparkle.Visible = true
+
+    spawn(function()
+        local angle = 0
+        while alive and sparkle.Parent do
+            local cx = logoFrame.AbsolutePosition.X + logoFrame.AbsoluteSize.X/2
+            local cy = logoFrame.AbsolutePosition.Y + logoFrame.AbsoluteSize.Y/2
+            angle = (angle + 8) % 360
+            local r = math.clamp(logoFrame.AbsoluteSize.X * 1.7, 40, 90)
+            local rad = math.rad(angle)
+            local sx = cx + math.cos(rad) * r - (sparkle.AbsoluteSize.X/2)
+            local sy = cy + math.sin(rad) * r - (sparkle.AbsoluteSize.Y/2)
+            sparkle.Position = UDim2.new(0, sx, 0, sy)
+            sparkle.Rotation = (sparkle.Rotation + 9) % 360
+            task.wait(0.03)
+        end
+    end)
+
+    -- Wait and fade out
+    task.wait(2)
+    alive = false
+    
+    local fadeTime = 0.8
+    tweenObject(logoGlow, {ImageTransparency = 1}, fadeTime):Play()
+    tweenObject(logoInner, {TextTransparency = 1}, fadeTime):Play()
+    tweenObject(logoFrame, {BackgroundTransparency = 1}, fadeTime):Play()
+    tweenObject(logoDot, {BackgroundTransparency = 1}, fadeTime):Play()
+    tweenObject(logoShadow, {BackgroundTransparency = 1}, fadeTime):Play()
+    tweenObject(bg, {BackgroundTransparency = 1}, fadeTime):Play()
+    
+    task.wait(fadeTime)
+    screenGui:Destroy()
+end
+
+-- Persistent logo (bottom right)
+local function createPersistentLogo()
+    if not player or not player.Parent then return end
+    local PlayerGui = player:WaitForChild("PlayerGui")
+    
+    local screenGui = Instance.new("ScreenGui")
+    screenGui.Name = "KKPersistentLogo"
+    screenGui.ResetOnSpawn = false
+    screenGui.Parent = PlayerGui
+    
+    local logo = Instance.new("ImageButton", screenGui)
+    logo.Name = "Logo"
+    logo.Size = UDim2.new(0, 50, 0, 50)
+    logo.Position = UDim2.new(1, -60, 1, -60)
+    logo.BackgroundColor3 = Color3.fromRGB(30,30,30)
+    logo.BorderSizePixel = 0
+    logo.ZIndex = 20
+    Instance.new("UICorner", logo).CornerRadius = UDim.new(0.5,0)
+    
+    -- Gradient effect
+    local grad = Instance.new("UIGradient", logo)
+    grad.Color = ColorSequence.new{
+        ColorSequenceKeypoint.new(0, Color3.fromRGB(120,60,200)),
+        ColorSequenceKeypoint.new(1, Color3.fromRGB(60,200,200))
+    }
+    grad.Rotation = 45
+    
+    -- Logo text
+    local logoText = Instance.new("TextLabel", logo)
+    logoText.Size = UDim2.new(1,0,1,0)
+    logoText.BackgroundTransparency = 1
+    logoText.Text = "KK"
+    logoText.Font = Enum.Font.GothamSemibold
+    logoText.TextSize = 20
+    logoText.TextColor3 = Color3.fromRGB(245,245,245)
+    logoText.ZIndex = 21
+    
+    -- Sparkle effect
+    local sparkle = Instance.new("ImageLabel", logo)
+    sparkle.Name = "Sparkle"
+    sparkle.Size = UDim2.new(1.5,0,1.5,0)
+    sparkle.Position = UDim2.new(-0.25,0,-0.25,0)
+    sparkle.BackgroundTransparency = 1
+    sparkle.Image = SPARKLE_ID
+    sparkle.ImageTransparency = 0.7
+    sparkle.ZIndex = 19
+    
+    -- Glow effect
+    local glow = Instance.new("ImageLabel", logo)
+    glow.Size = UDim2.new(1.8,0,1.8,0)
+    glow.Position = UDim2.new(-0.4,0,-0.4,0)
+    glow.BackgroundTransparency = 1
+    glow.Image = HALO_ID
+    glow.ImageTransparency = 0.88
+    glow.ZIndex = 18
+    glow.ScaleType = Enum.ScaleType.Slice
+    glow.SliceCenter = Rect.new(10,10,118,118)
+    
+    -- Animation loop
+    spawn(function()
+        while logo and logo.Parent do
+            tweenObject(logo, {Rotation = 5}, 1, "Sine", "Out"):Play()
+            tweenObject(sparkle, {Rotation = 45}, 1, "Sine", "Out"):Play()
+            task.wait(1)
+            tweenObject(logo, {Rotation = -5}, 1, "Sine", "Out"):Play()
+            tweenObject(sparkle, {Rotation = -45}, 1, "Sine", "Out"):Play()
+            task.wait(1)
+        end
+    end)
+    
+    -- Click to show version chooser
+    logo.MouseButton1Click:Connect(function()
+        spawn(function() loadstring(game:HttpGet(KK_V1_URL, true))() end)
+    end)
+end
+
 -- Version chooser GUI
 local function showVersionChooser()
     if not player or not player.Parent then return end
-    if player.PlayerGui:FindFirstChild("KK_Chooser") then
-        player.PlayerGui.KK_Chooser:Destroy()
-    end
-
+    local PlayerGui = player:WaitForChild("PlayerGui")
+    
     local screenGui = Instance.new("ScreenGui")
     screenGui.Name = "KK_Chooser"
     screenGui.ResetOnSpawn = false
-    screenGui.Parent = player:WaitForChild("PlayerGui")
+    screenGui.Parent = PlayerGui
 
     local back = Instance.new("Frame", screenGui)
     back.Size = UDim2.new(1,0,1,0)
@@ -66,7 +279,7 @@ local function showVersionChooser()
     Instance.new("UICorner", panel).CornerRadius = UDim.new(0,12)
     local pstroke = Instance.new("UIStroke", panel); pstroke.Transparency = 0.85; pstroke.Thickness = 1
 
-    -- header + logo (Tsb style)
+    -- Header
     local header = Instance.new("Frame", panel)
     header.Size = UDim2.new(1,0,0,52)
     header.Position = UDim2.new(0,0,0,0)
@@ -95,7 +308,7 @@ local function showVersionChooser()
     title.BackgroundTransparency = 1; title.Text = "Choose kk hub version"; title.Font = Enum.Font.GothamSemibold; title.TextSize = 18
     title.TextColor3 = Color3.fromRGB(240,240,240); title.TextXAlignment = Enum.TextXAlignment.Center; title.ZIndex = 14
 
-    -- sparkle (absolute)
+    -- Sparkle effect
     local sparkle = Instance.new("ImageLabel", screenGui)
     sparkle.Name = "SparkleOrbit"
     sparkle.Size = UDim2.new(0,18,0,18)
@@ -104,7 +317,7 @@ local function showVersionChooser()
     sparkle.ZIndex = 12
     sparkle.Visible = true
 
-    -- two buttons
+    -- Buttons
     local btnW = 170
     local gap = 20
     local startX = (420 - (btnW*2) - gap) / 2
@@ -139,70 +352,54 @@ local function showVersionChooser()
     snd.SoundId = CLICK_SOUND_ID
     snd.Volume = 0.6
 
-    -- handlers
+    -- Button handlers
     v1.MouseButton1Click:Connect(function()
-        pcall(function() snd:Play() end)
+        snd:Play()
         spawn(function()
-            local ok, err = pcall(function()
-                loadstring(game:HttpGet(KK_V1_URL, true))()
-            end)
-            if not ok then warn("kk v1 failed:", err) end
+            loadstring(game:HttpGet(KK_V1_URL, true))()
         end)
-        pcall(function() screenGui:Destroy() end)
+        screenGui:Destroy()
     end)
 
     v2.MouseButton1Click:Connect(function()
-        pcall(function() snd:Play() end)
+        snd:Play()
         spawn(function()
-            local ok, err = pcall(function()
-                loadstring(game:HttpGet(KK_V2_URL, true))()
-            end)
-            if not ok then warn("kk v2 failed:", err) end
+            loadstring(game:HttpGet(KK_V2_URL, true))()
         end)
-        pcall(function() screenGui:Destroy() end)
+        screenGui:Destroy()
     end)
 
-    -- entrance animation
+    -- Entrance animation
     panel.Size = UDim2.new(0,420,0,0)
     tweenObject(panel, {Size = UDim2.new(0,420,0,140)}, 0.18, "Back"):Play()
 
-    -- sparkle orbit loop
+    -- Sparkle orbit animation
     spawn(function()
         local angle = 0
         while panel.Parent and sparkle.Parent do
-            local ok, ax, ay, aw, ah = pcall(function()
-                return logo.AbsolutePosition.X, logo.AbsolutePosition.Y, logo.AbsoluteSize.X, logo.AbsoluteSize.Y
-            end)
-            if ok then
-                local cx = ax + aw/2
-                local cy = ay + ah/2
-                angle = (angle + 8) % 360
-                local r = math.clamp(aw * 1.7, 40, 90)
-                local rad = math.rad(angle)
-                local sx = cx + math.cos(rad) * r - (sparkle.AbsoluteSize.X/2)
-                local sy = cy + math.sin(rad) * r - (sparkle.AbsoluteSize.Y/2)
-                pcall(function()
-                    sparkle.Position = UDim2.new(0, sx, 0, sy)
-                    sparkle.Rotation = (sparkle.Rotation + 9) % 360
-                end)
-            end
+            local cx = logo.AbsolutePosition.X + logo.AbsoluteSize.X/2
+            local cy = logo.AbsolutePosition.Y + logo.AbsoluteSize.Y/2
+            angle = (angle + 8) % 360
+            local r = math.clamp(logo.AbsoluteSize.X * 1.7, 40, 90)
+            local rad = math.rad(angle)
+            local sx = cx + math.cos(rad) * r - (sparkle.AbsoluteSize.X/2)
+            local sy = cy + math.sin(rad) * r - (sparkle.AbsoluteSize.Y/2)
+            sparkle.Position = UDim2.new(0, sx, 0, sy)
+            sparkle.Rotation = (sparkle.Rotation + 9) % 360
             task.wait(0.03)
         end
-        pcall(function() sparkle:Destroy() end)
     end)
 end
 
 -- Key GUI (main)
 local function createKeyGui()
     if not player or not player.Parent then return end
-    if player.PlayerGui:FindFirstChild("TsbKeyGui") then
-        player.PlayerGui.TsbKeyGui:Destroy()
-    end
-
+    local PlayerGui = player:WaitForChild("PlayerGui")
+    
     local screenGui = Instance.new("ScreenGui")
     screenGui.Name = "TsbKeyGui"
     screenGui.ResetOnSpawn = false
-    screenGui.Parent = player:WaitForChild("PlayerGui")
+    screenGui.Parent = PlayerGui
 
     local panel = Instance.new("Frame", screenGui)
     panel.Size = UDim2.new(0,380,0,150)
@@ -214,7 +411,7 @@ local function createKeyGui()
     Instance.new("UICorner", panel).CornerRadius = UDim.new(0,12)
     local pst = Instance.new("UIStroke", panel); pst.Transparency = 0.85; pst.Thickness = 1
 
-    -- header area with logo + "Key System" text + Get Key button
+    -- Header with logo
     local header = Instance.new("Frame", panel)
     header.Size = UDim2.new(1,0,0,56)
     header.Position = UDim2.new(0,0,0,0)
@@ -258,7 +455,7 @@ local function createKeyGui()
 
     local clickSound = Instance.new("Sound", panel); clickSound.SoundId = CLICK_SOUND_ID; clickSound.Volume = 0.6
 
-    -- input + submit
+    -- Key input
     local keyBox = Instance.new("TextBox", panel)
     keyBox.Size = UDim2.new(0,240,0,36)
     keyBox.Position = UDim2.new(0,16,0,72)
@@ -296,40 +493,41 @@ local function createKeyGui()
     info.TextXAlignment = Enum.TextXAlignment.Left
     info.ZIndex = 11
 
-    -- Get Key behavior: copy link to clipboard if available, else show link in info
+    -- Get Key button
     getKeyBtn.MouseButton1Click:Connect(function()
-        pcall(function() clickSound:Play() end)
+        clickSound:Play()
         local ok, err = pcall(function() setclipboard(GET_KEY_LINK) end)
         if ok then
             info.Text = "Key link copied to clipboard."
         else
             info.Text = "Copy not supported. Link: "..GET_KEY_LINK
         end
-        task.delay(3, function() if info and info.Parent then info.Text = "" end end)
+        task.delay(3, function() info.Text = "" end)
     end)
 
-    -- submit logic
+    -- Submit logic
     local function onSubmit()
         local entered = tostring(keyBox.Text or ""):gsub("%s+","")
         if entered == "" then
             info.Text = "Please enter a key."
-            task.delay(2, function() if info and info.Parent then info.Text = "" end end)
+            task.delay(2, function() info.Text = "" end)
             return
         end
-        pcall(function() clickSound:Play() end)
+        clickSound:Play()
         tweenObject(submitBtn, {BackgroundTransparency = 0.4}, 0.08):Play()
         task.delay(0.1, function() tweenObject(submitBtn, {BackgroundTransparency = 0}, 0.12):Play() end)
 
         if entered == VALID_KEY then
             info.Text = "Key valid. Opening chooser..."
             task.delay(0.25, function()
-                pcall(function() screenGui:Destroy() end)
+                screenGui:Destroy()
                 showVersionChooser()
+                createPersistentLogo()
             end)
         else
             info.Text = "Key invalid."
-            task.delay(1.5, function() if info and info.Parent then info.Text = "" end end)
-            -- slight shake
+            task.delay(1.5, function() info.Text = "" end)
+            -- Shake effect
             spawn(function()
                 local orig = panel.Position
                 tweenObject(panel, {Position = UDim2.new(orig.X.Scale, orig.X.Offset - 6, orig.Y.Scale, orig.Y.Offset)}, 0.04, "Linear"):Play()
@@ -344,10 +542,12 @@ local function createKeyGui()
     submitBtn.MouseButton1Click:Connect(onSubmit)
     keyBox.FocusLost:Connect(function(enter) if enter then onSubmit() end end)
 
-    -- pop in panel
+    -- Entrance animation
     panel.Size = UDim2.new(0,380,0,0)
     tweenObject(panel, {Size = UDim2.new(0,380,0,150)}, 0.18, "Back"):Play()
 end
 
--- start
+-- Main flow
+showIntro()
+task.wait(2.8) -- Wait for intro to finish
 createKeyGui()
