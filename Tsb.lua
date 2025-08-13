@@ -1,4 +1,3 @@
-
 -- Full KK Hub Integration: Key GUI + Intro Animation + Persistent Logo
 -- Paste into executor (client). Note: some executors block HttpGet/loadstring.
 
