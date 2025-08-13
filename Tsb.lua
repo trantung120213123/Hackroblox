@@ -243,12 +243,6 @@ local function createPersistentLogo()
             task.wait(1)
         end
     end)
-    
-    -- Click to show version chooser
-    logo.MouseButton1Click:Connect(function()
-        spawn(function() loadstring(game:HttpGet(, true))() end)
-    end)
-end
 
 -- Version chooser GUI
 local function showVersionChooser()
