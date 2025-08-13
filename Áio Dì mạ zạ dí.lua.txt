@@ -386,8 +386,7 @@ local function createDropdown()
     local searchPadding = Instance.new("UIPadding", searchBox)
     searchPadding.PaddingLeft = UDim.new(0, 8)
 
--- hàm tạo --
-populateLish()
+
 
 -- new
 Players.PlayerAdded:Connect(function()
