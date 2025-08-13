@@ -374,6 +374,7 @@ local function createDropdown()
     searchBox.Size = UDim2.new(1, -16, 0, 32)
     searchBox.Position = UDim2.new(0, 8, 0, 40)
     searchBox.PlaceholderText = "Search player..."
+    searchBox.Text = ""
     searchBox.BackgroundColor3 = Color3.fromRGB(40, 40, 55)
     searchBox.TextColor3 = Color3.new(1, 1, 1)
     searchBox.Font = Enum.Font.Gotham
