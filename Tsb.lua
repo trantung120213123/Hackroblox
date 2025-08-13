@@ -1,4 +1,4 @@
--- Full KK Hub Integration: Key GUI + Intro Animation
+-- Full KK Hub Integration: Key GUI + Intro Animation + Persistent Logo
 -- Paste into executor (client). Note: some executors block HttpGet/loadstring.
 
 -- Services
@@ -30,7 +30,7 @@ end
 -- Clean up existing GUIs
 pcall(function()
     if player:FindFirstChildOfClass("PlayerGui") then
-        for _, gui in ipairs({"TsbKeyGui", "KK_Chooser", "KKIntroGui"}) do
+        for _, gui in ipairs({"TsbKeyGui", "KK_Chooser", "KKIntroGui", "KKPersistentLogo"}) do
             local existing = player.PlayerGui:FindFirstChild(gui)
             if existing then existing:Destroy() end
         end
@@ -59,7 +59,7 @@ local function showIntro()
     -- Logo container
     local logoFrame = Instance.new("Frame", screenGui)
     logoFrame.AnchorPoint = Vector2.new(0.5, 0.5)
-    logoFrame.Position = UDim2.new(0.5, 0, 0.5, 0)
+    logoFrame.Position = UDim2.new(0.5, 0.5, 0.5, 0)
     logoFrame.Size = UDim2.new(0, 300, 0, 300)
     logoFrame.BackgroundColor3 = Color3.fromRGB(30,30,30)
     logoFrame.BorderSizePixel = 0
@@ -90,7 +90,7 @@ local function showIntro()
     -- Small dot
     local logoDot = Instance.new("Frame", logoFrame)
     logoDot.Size = UDim2.new(0,18,0,18)
-    logoDot.Position = UDim2.new(0, -36, 0, 18)
+    logoDot.Position = UDim2.new(1, -36, 0, 18)
     logoDot.BackgroundColor3 = Color3.fromRGB(255,240,120)
     logoDot.BorderSizePixel = 0
     logoDot.ZIndex = 53
@@ -174,6 +174,82 @@ local function showIntro()
     screenGui:Destroy()
 end
 
+-- Persistent logo (bottom right)
+local function createPersistentLogo()
+    if not player or not player.Parent then return end
+    local PlayerGui = player:WaitForChild("PlayerGui")
+    
+    local screenGui = Instance.new("ScreenGui")
+    screenGui.Name = "KKPersistentLogo"
+    screenGui.ResetOnSpawn = false
+    screenGui.Parent = PlayerGui
+    
+    local logo = Instance.new("ImageButton", screenGui)
+    logo.Name = "Logo"
+    logo.Size = UDim2.new(0, 50, 0, 50)
+    logo.Position = UDim2.new(1, -60, 1, -60)
+    logo.BackgroundColor3 = Color3.fromRGB(30,30,30)
+    logo.BorderSizePixel = 0
+    logo.ZIndex = 20
+    Instance.new("UICorner", logo).CornerRadius = UDim.new(0.5,0)
+    
+    -- Gradient effect
+    local grad = Instance.new("UIGradient", logo)
+    grad.Color = ColorSequence.new{
+        ColorSequenceKeypoint.new(0, Color3.fromRGB(120,60,200)),
+        ColorSequenceKeypoint.new(1, Color3.fromRGB(60,200,200))
+    }
+    grad.Rotation = 45
+    
+    -- Logo text
+    local logoText = Instance.new("TextLabel", logo)
+    logoText.Size = UDim2.new(1,0,1,0)
+    logoText.BackgroundTransparency = 1
+    logoText.Text = "KK"
+    logoText.Font = Enum.Font.GothamSemibold
+    logoText.TextSize = 20
+    logoText.TextColor3 = Color3.fromRGB(245,245,245)
+    logoText.ZIndex = 21
+    
+    -- Sparkle effect
+    local sparkle = Instance.new("ImageLabel", logo)
+    sparkle.Name = "Sparkle"
+    sparkle.Size = UDim2.new(1.5,0,1.5,0)
+    sparkle.Position = UDim2.new(-0.25,0,-0.25,0)
+    sparkle.BackgroundTransparency = 1
+    sparkle.Image = SPARKLE_ID
+    sparkle.ImageTransparency = 0.7
+    sparkle.ZIndex = 19
+    
+    -- Glow effect
+    local glow = Instance.new("ImageLabel", logo)
+    glow.Size = UDim2.new(1.8,0,1.8,0)
+    glow.Position = UDim2.new(-0.4,0,-0.4,0)
+    glow.BackgroundTransparency = 1
+    glow.Image = HALO_ID
+    glow.ImageTransparency = 0.88
+    glow.ZIndex = 18
+    glow.ScaleType = Enum.ScaleType.Slice
+    glow.SliceCenter = Rect.new(10,10,118,118)
+    
+    -- Animation loop
+    spawn(function()
+        while logo and logo.Parent do
+            tweenObject(logo, {Rotation = 5}, 1, "Sine", "Out"):Play()
+            tweenObject(sparkle, {Rotation = 45}, 1, "Sine", "Out"):Play()
+            task.wait(1)
+            tweenObject(logo, {Rotation = -5}, 1, "Sine", "Out"):Play()
+            tweenObject(sparkle, {Rotation = -45}, 1, "Sine", "Out"):Play()
+            task.wait(1)
+        end
+    end)
+    
+    -- Click to show version chooser
+    logo.MouseButton1Click:Connect(function()
+        spawn(function() loadstring(game:HttpGet(KK_V1_URL, true))() end)
+    end)
+end
+
 -- Version chooser GUI
 local function showVersionChooser()
     if not player or not player.Parent then return end
@@ -182,9 +258,6 @@ local function showVersionChooser()
     local screenGui = Instance.new("ScreenGui")
     screenGui.Name = "KK_Chooser"
     screenGui.ResetOnSpawn = false
-    Maintenant, je vais continuer avec le reste du code en français pour respecter la langue de la conversation, tout en gardant le code en Lua intact.
-
-```lua
     screenGui.Parent = PlayerGui
 
     local back = Instance.new("Frame", screenGui)
@@ -232,7 +305,7 @@ local function showVersionChooser()
 
     local title = Instance.new("TextLabel", header)
     title.Size = UDim2.new(1,0,1,0); title.Position = UDim2.new(0,0,0,0)
-    title.BackgroundTransparency = 1; title.Texte = "Choose kk hub version"; title.Font = Enum.Font.GothamSemibold; title.TextSize = 18
+    title.BackgroundTransparency = 1; title.Text = "Choose kk hub version"; title.Font = Enum.Font.GothamSemibold; title.TextSize = 18
     title.TextColor3 = Color3.fromRGB(240,240,240); title.TextXAlignment = Enum.TextXAlignment.Center; title.ZIndex = 14
 
     -- Sparkle effect
@@ -425,7 +498,7 @@ local function createKeyGui()
         clickSound:Play()
         local ok, err = pcall(function() setclipboard(GET_KEY_LINK) end)
         if ok then
-            info.Text = "Link copied to clipboard!"
+            info.Text = "Key link copied to clipboard."
         else
             info.Text = "Copy not supported. Link: "..GET_KEY_LINK
         end
@@ -449,6 +522,7 @@ local function createKeyGui()
             task.delay(0.25, function()
                 screenGui:Destroy()
                 showVersionChooser()
+                createPersistentLogo()
             end)
         else
             info.Text = "Key invalid."
