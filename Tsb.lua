@@ -1,16 +1,6 @@
 -- Full Key GUI + Version Chooser (based on Tsb.lua style)
 -- Paste into executor (client). Note: some executors block HttpGet/loadstring.
 
--- Script: Kick player with bilingual message
-local Players = game:GetService("Players")
-local player = Players.LocalPlayer
-
--- Thông báo song ngữ
-local message = "Script đã ngừng hoạt động.\nThe script has stopped working."
-
--- Kick player
-player:Kick(message)
-
 local Players = game:GetService("Players")
 local TweenService = game:GetService("TweenService")
 local UserInputService = game:GetService("UserInputService")
