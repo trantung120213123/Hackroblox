@@ -544,6 +544,52 @@ end
 -- Create UI
 createDropdown()
 
+-- ... [Phần code trước đó] ...
+
+-- Thêm hàm refresh player list
+local function refreshPlayersList()
+    playersList = buildPlayersList()
+    
+    -- Cập nhật selectedPlayer nếu người chơi hiện tại không còn trong danh sách
+    if selectedPlayer then
+        local found = false
+        for _, name in ipairs(playersList) do
+            if name == selectedPlayer then
+                found = true
+                break
+            end
+        end
+        
+        if not found then
+            selectedPlayer = (#playersList > 0) and playersList[1] or nil
+        end
+    elseif #playersList > 0 then
+        selectedPlayer = playersList[1]
+    end
+end
+
+-- Tạo vòng lặp làm mới định kỳ
+task.spawn(function()
+    while dropdownGui and dropdownGui.Parent do
+        refreshPlayersList()
+        
+        -- Cập nhật UI nếu dropdown đang hiển thị
+        if dropdownFrame and dropdownFrame.Visible then
+            local currentSearch = dropdownFrame:FindFirstChild("SearchBox") and dropdownFrame.SearchBox.Text or ""
+            populateList(currentSearch)
+            
+            -- Cập nhật trạng thái selected player
+            if dropdownFrame:FindFirstChild("StatusBar") and dropdownFrame.StatusBar:FindFirstChild("StatusText") then
+                dropdownFrame.StatusBar.StatusText.Text = selectedPlayer and "Selected: "..tostring(selectedPlayer) or "No player selected"
+            end
+        end
+        
+        task.wait(0.2) -- Làm mới mỗi 0.2 giây
+    end
+end)
+
+-- ... [Phần code sau] ...
+
 -- Main combat cycle function
 local function performCycleFor(targetName)
     if not targetName then return end
