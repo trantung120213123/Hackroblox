@@ -169,10 +169,6 @@ local BACK_OFFSET = 3.2                  -- stand behind objects by this many st
 local TRASH_BLACKLIST_TIME = 30          -- 30s blacklist same trashcan
 local CYCLE_DELAY = 0.25                 -- delay after each cycle
 
--- NEW: Face-phase config (when at trashcan)
-local FACE_PHASE_INTERVAL = 0.01         -- 0.01s per reposition while facing trashcan
-local FACE_PHASE_OFFSET_DELTA = 0.2      -- a little extra behind the trashcan while facing
-
 -- Services
 local Players = game:GetService("Players")
 local Workspace = game:GetService("Workspace")
@@ -634,42 +630,23 @@ local function performCycleFor(targetName)
     if not trashA then return end
     local keyA = tostring(trashA)
 
-    -- TP behind trashcan and face normally (instant)
+    -- TP behind trashcan and continuously face it (every 0.01s for 1s)
     local cfA = behindAndFaceCFrame(trashA, BACK_OFFSET)
-    if cfA then
+    if cfA then 
         instantTeleportToCFrame(myHRP, cfA)
-
-        -- Face-phase: trong TP_WAIT_AFTER_TRASH giây, cứ mỗi FACE_PHASE_INTERVAL
-        -- sẽ set CFrame lại phía sau thùng (với +FACE_PHASE_OFFSET_DELTA) để đảm bảo hướng mặt
+        
+        -- Continuously face trashcan for 1 second
         local t0 = tick()
         while tick() - t0 < TP_WAIT_AFTER_TRASH do
-            local faceCf = behindAndFaceCFrame(trashA, BACK_OFFSET + FACE_PHASE_OFFSET_DELTA)
-            if faceCf then
-                pcall(function() myHRP.CFrame = faceCf end)
+            local newCF = behindAndFaceCFrame(trashA, BACK_OFFSET)
+            if newCF then
+                pcall(function() 
+                    myHRP.CFrame = CFrame.new(newCF.Position, trashA.Position) 
+                end)
             end
-            task.wait(FACE_PHASE_INTERVAL)
+            task.wait(0.01) -- Cập nhật hướng nhìn mỗi 0.01 giây
         end
     end
-
-    -- Rapid spam teleport to target (như trước)
-    rapidSpamTeleportRecompute(myHRP, targetHRP, RAPID_TP_DURATION, RAPID_TP_INTERVAL)
-
-    -- Mark trashcan as used
-    usedTrash[keyA] = tick()
-
-    -- Pick a different trashcan and optionally TP behind it
-    local trashB = pickTrashcanExclude(keyA)
-    if trashB then
-        local cfB = behindAndFaceCFrame(trashB, BACK_OFFSET)
-        if cfB then instantTeleportToCFrame(myHRP, cfB) end
-        usedTrash[tostring(trashB)] = tick()
-    end
-end
-
-    -- TP behind trashcan and face normally
-    local cfA = behindAndFaceCFrame(trashA, BACK_OFFSET)
-    if cfA then instantTeleportToCFrame(myHRP, cfA) end
-    task.wait(TP_WAIT_AFTER_TRASH)
 
     -- Rapid spam teleport to target
     rapidSpamTeleportRecompute(myHRP, targetHRP, RAPID_TP_DURATION, RAPID_TP_INTERVAL)
