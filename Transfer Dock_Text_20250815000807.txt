@@ -1,0 +1,764 @@
+
+-- KK Intro: Logo (center) + pulse -> show 2s -> fade out
+-- Dán vào executor, chạy ở client (PlayerGui)
+
+-- Services
+local Players = game:GetService("Players")
+local TweenService = game:GetService("TweenService")
+
+local player = Players.LocalPlayer
+-- after: local localPlayer = Players.LocalPlayer
+local localPlayer = Players.LocalPlayer
+if not localPlayer then return end
+
+-- add this:
+local selectedPlayer = nil
+if not player then return end
+local PlayerGui = player:WaitForChild("PlayerGui")
+
+-- Helper tween
+local function tweenObject(obj, props, time, style, dir)
+    time = time or 0.25
+    style = style or Enum.EasingStyle.Sine
+    dir = dir or Enum.EasingDirection.Out
+    local info = TweenInfo.new(time, style, dir)
+    return TweenService:Create(obj, info, props)
+end
+
+-- Remove old intro if tồn tại
+pcall(function()
+    local old = PlayerGui:FindFirstChild("KKIntroGui")
+    if old then old:Destroy() end
+end)
+
+-- Main ScreenGui
+local screenGui = Instance.new("ScreenGui")
+screenGui.Name = "KKIntroGui"
+screenGui.ResetOnSpawn = false
+screenGui.IgnoreGuiInset = true
+screenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+screenGui.Parent = PlayerGui
+
+-- Background shadow (subtle, để logo nổi)
+local bg = Instance.new("Frame", screenGui)
+bg.Name = "BackgroundShadow"
+bg.Size = UDim2.new(1,0,1,0)
+bg.Position = UDim2.new(0,0,0,0)
+bg.BackgroundColor3 = Color3.fromRGB(0,0,0)
+bg.BackgroundTransparency = 1  -- sẽ không hiển thị nhiều, chỉ cần khi cần
+bg.ZIndex = 10
+
+-- Logo container (giữa màn hình)
+local logoFrame = Instance.new("Frame", screenGui)
+logoFrame.Name = "LogoFrame"
+logoFrame.AnchorPoint = Vector2.new(0.5, 0.5)
+logoFrame.Position = UDim2.new(0.5, 0.5, 0.5, 0)
+logoFrame.Size = UDim2.new(0, 300, 0, 300) -- kích thước logo lớn
+logoFrame.BackgroundColor3 = Color3.fromRGB(30,30,30)
+logoFrame.BorderSizePixel = 0
+logoFrame.ZIndex = 50
+
+local logoCorner = Instance.new("UICorner", logoFrame)
+logoCorner.CornerRadius = UDim.new(0, 28)
+
+-- Gradient trên logo để trông đẹp
+local logoGrad = Instance.new("UIGradient", logoFrame)
+logoGrad.Color = ColorSequence.new{
+    ColorSequenceKeypoint.new(0, Color3.fromRGB(120,60,200)),
+    ColorSequenceKeypoint.new(1, Color3.fromRGB(60,200,200))
+}
+logoGrad.Rotation = 45
+
+-- Inner text "KK" (the logo text)
+local logoInner = Instance.new("TextLabel", logoFrame)
+logoInner.Name = "LogoInner"
+logoInner.Size = UDim2.new(1, -36, 1, -36)
+logoInner.Position = UDim2.new(0,18,0,18)
+logoInner.BackgroundTransparency = 1
+logoInner.Text = "KK"
+logoInner.Font = Enum.Font.GothamBold
+logoInner.TextSize = 96
+logoInner.TextColor3 = Color3.fromRGB(245,245,245)
+logoInner.ZIndex = 52
+logoInner.TextXAlignment = Enum.TextXAlignment.Center
+logoInner.TextYAlignment = Enum.TextYAlignment.Center
+
+-- Small dot (cute)
+local logoDot = Instance.new("Frame", logoFrame)
+logoDot.Name = "LogoDot"
+logoDot.Size = UDim2.new(0,18,0,18)
+logoDot.Position = UDim2.new(1, -36, 0, 18)
+logoDot.BackgroundColor3 = Color3.fromRGB(255,240,120)
+logoDot.BorderSizePixel = 0
+logoDot.ZIndex = 53
+local dotCorner = Instance.new("UICorner", logoDot)
+dotCorner.CornerRadius = UDim.new(1,0)
+
+-- Glow (image asset)
+local logoGlow = Instance.new("ImageLabel", logoFrame)
+logoGlow.Name = "LogoGlow"
+logoGlow.Size = UDim2.new(1.8,0,1.8,0)
+logoGlow.Position = UDim2.new(-0.4,0,-0.4,0)
+logoGlow.BackgroundTransparency = 1
+logoGlow.Image = "rbxassetid://4996891970"
+logoGlow.ImageTransparency = 0.88
+logoGlow.ZIndex = 49
+logoGlow.ScaleType = Enum.ScaleType.Slice
+logoGlow.SliceCenter = Rect.new(10,10,118,118)
+
+-- Optional subtle shadow behind logo to make it pop
+local logoShadow = Instance.new("Frame", screenGui)
+logoShadow.Name = "LogoShadow"
+logoShadow.AnchorPoint = Vector2.new(0.5,0.5)
+logoShadow.Position = logoFrame.Position
+logoShadow.Size = UDim2.new(0, 340, 0, 340)
+logoShadow.BackgroundColor3 = Color3.fromRGB(0,0,0)
+logoShadow.BackgroundTransparency = 0.85
+logoShadow.ZIndex = 48
+logoShadow.BorderSizePixel = 0
+local shadowCorner = Instance.new("UICorner", logoShadow)
+shadowCorner.CornerRadius = UDim.new(0, 28)
+
+-- Pulse effect (phồng/thu nhỏ)
+local alive = true
+spawn(function()
+    while alive and logoFrame.Parent do
+        pcall(function()
+            tweenObject(logoFrame, {Size = UDim2.new(0, 320, 0, 320)}, 0.45, Enum.EasingStyle.Sine):Play()
+            tweenObject(logoInner, {TextSize = 104}, 0.45, Enum.EasingStyle.Sine):Play()
+            tweenObject(logoShadow, {Size = UDim2.new(0, 360, 0, 360)}, 0.45, Enum.EasingStyle.Sine):Play()
+        end)
+        task.wait(0.45)
+        pcall(function()
+            tweenObject(logoFrame, {Size = UDim2.new(0, 300, 0, 300)}, 0.45, Enum.EasingStyle.Sine):Play()
+            tweenObject(logoInner, {TextSize = 96}, 0.45, Enum.EasingStyle.Sine):Play()
+            tweenObject(logoShadow, {Size = UDim2.new(0, 340, 0, 340)}, 0.45, Enum.EasingStyle.Sine):Play()
+        end)
+        task.wait(0.45)
+    end
+end)
+
+-- Hiển thị 2 giây
+task.wait(2)
+
+-- Fade out mượt (0.8s)
+local fadeTime = 0.8
+tweenObject(logoGlow, {ImageTransparency = 1}, fadeTime):Play()
+tweenObject(logoInner, {TextTransparency = 1}, fadeTime):Play()
+tweenObject(logoFrame, {BackgroundTransparency = 1}, fadeTime):Play()
+tweenObject(logoDot, {BackgroundTransparency = 1}, fadeTime):Play()
+tweenObject(logoShadow, {BackgroundTransparency = 1}, fadeTime):Play()
+tweenObject(bg, {BackgroundTransparency = 1}, fadeTime):Play()
+
+-- stop pulse and destroy after fade
+alive = false
+task.wait(fadeTime + 0.05)
+
+pcall(function()
+    if screenGui and screenGui.Parent then
+        screenGui:Destroy()
+    end
+end)
+
+-- Done
+
+-- KK Hub v2 — Custom Dropdown Combat
+-- Instant CFrame TP, face trashcan normal, rapid TP target
+-- Custom movable and resizable dropdown implementation
+
+-- CONFIG
+local WINDOW_NAME = "KK Hub"
+local TAB_NAME = "Combat"
+local TP_WAIT_AFTER_TRASH = 1            -- hold 1s after TP to trashcan
+local RAPID_TP_DURATION = 1.0            -- spam to target for 1s
+local RAPID_TP_INTERVAL = 0.01           -- recompute position every 0.01s
+local BACK_OFFSET = 3.2                  -- stand behind objects by this many studs
+local TRASH_BLACKLIST_TIME = 30          -- 30s blacklist same trashcan
+local CYCLE_DELAY = 0.25                 -- delay after each cycle
+local TP_TRASHCAN_INTERVAL = 0.01        -- chỉnh tốc độ hướng mặt
+
+-- Services
+local Players = game:GetService("Players")
+local Workspace = game:GetService("Workspace")
+local StarterGui = game:GetService("StarterGui")
+local UserInputService = game:GetService("UserInputService")
+local RunService = game:GetService("RunService")
+
+local localPlayer = Players.LocalPlayer
+if not localPlayer then return end
+
+-- Safe notification function
+local function notify(t, m, sec)
+    pcall(function()
+        if StarterGui and StarterGui.SetCore then
+            StarterGui:SetCore("SendNotification", {
+                Title = t or WINDOW_NAME, 
+                Text = m or "", 
+                Duration = sec or 3
+            })
+        end
+    end)
+end
+
+-- UTILS
+local function getTrashcans()
+    local out = {}
+    for _, v in ipairs(Workspace:GetDescendants()) do
+        if v.Name == "Trashcan" then
+            if v:IsA("BasePart") then
+                table.insert(out, v)
+            elseif v:IsA("Model") then
+                local root = v.PrimaryPart or v:FindFirstChildWhichIsA("BasePart")
+                if root then table.insert(out, root) end
+            end
+        end
+    end
+    return out
+end
+
+local usedTrash = {}
+local function pickTrashcanExclude(recentKey)
+    local now = tick()
+    local all = getTrashcans()
+    local candidates = {}
+    for _, p in ipairs(all) do
+        local k = tostring(p)
+        local last = usedTrash[k] or -math.huge
+        if k ~= recentKey and (now - last) >= TRASH_BLACKLIST_TIME then
+            table.insert(candidates, p)
+        end
+    end
+    if #candidates == 0 then
+        for _, p in ipairs(all) do
+            if tostring(p) ~= recentKey then table.insert(candidates, p) end
+        end
+    end
+    if #candidates == 0 then return nil end
+    return candidates[math.random(1,#candidates)]
+end
+
+-- Teleportation functions
+local function behindAndFaceCFrame(part, offset)
+    if not part or not part:IsA("BasePart") then return nil end
+    offset = offset or BACK_OFFSET
+    local posBehind = part.Position - (part.CFrame.LookVector * offset)
+    posBehind = posBehind + Vector3.new(0, 1.6, 0)
+    return CFrame.new(posBehind, part.Position)
+end
+
+local function behindTargetCFrameRealTime(targetHRP, offset)
+    if not targetHRP or not targetHRP:IsA("BasePart") then return nil end
+    offset = offset or BACK_OFFSET
+    local posBehind = targetHRP.Position - (targetHRP.CFrame.LookVector * offset)
+    posBehind = posBehind + Vector3.new(0, 1.6, 0)
+    return CFrame.new(posBehind, targetHRP.Position)
+end
+
+local function instantTeleportToCFrame(hrp, cf)
+    if not hrp or not hrp.Parent or not cf then return false end
+    pcall(function() hrp.CFrame = cf end)
+    return true
+end
+
+local function rapidSpamTeleportRecompute(hrp, targetHRP, duration, interval)
+    if not hrp or not hrp.Parent or not targetHRP or not targetHRP.Parent then return end
+    local t0 = tick()
+    while tick() - t0 < duration do
+        if not hrp.Parent then break end
+        if not targetHRP.Parent then break end
+        local cf = behindTargetCFrameRealTime(targetHRP, BACK_OFFSET)
+        if cf then
+            pcall(function() hrp.CFrame = cf end)
+        end
+        task.wait(interval)
+    end
+end
+
+-- Build players list
+local function buildPlayersList()
+    local t = {}
+    for _, p in ipairs(Players:GetPlayers()) do
+        if p ~= localPlayer then table.insert(t, p.Name) end
+    end
+    table.sort(t)
+    return t
+end
+
+-- Thay thế toàn bộ hàm createDropdown() bằng đoạn này
+local function createDropdown()
+    if dropdownGui and dropdownGui.Parent then return end
+
+    -- Create main GUI
+    local sg = Instance.new("ScreenGui")
+    sg.Name = "KK_Hub_CustomDropdown"
+    sg.ResetOnSpawn = false
+    sg.Parent = localPlayer:WaitForChild("PlayerGui")
+    sg.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+    dropdownGui = sg
+
+    -- Main container
+    local container = Instance.new("Frame", sg)
+    container.Name = "Container"
+    container.Size = UDim2.new(0, 240, 0, 300)
+    container.Position = UDim2.new(0.5, -120, 0.5, -150)
+    container.BackgroundColor3 = Color3.fromRGB(30, 30, 40)
+    container.BackgroundTransparency = 0.05
+    container.BorderSizePixel = 0
+    container.ZIndex = 10
+    container.Active = true
+    container.Draggable = true
+    dropdownFrame = container
+
+    local corner = Instance.new("UICorner", container)
+    corner.CornerRadius = UDim.new(0, 8)
+
+    -- Title bar
+    local titleBar = Instance.new("Frame", container)
+    titleBar.Name = "TitleBar"
+    titleBar.Size = UDim2.new(1, 0, 0, 32)
+    titleBar.Position = UDim2.new(0, 0, 0, 0)
+    titleBar.BackgroundColor3 = Color3.fromRGB(50, 50, 70)
+    titleBar.BorderSizePixel = 0
+    titleBar.ZIndex = 11
+
+    local titleCorner = Instance.new("UICorner", titleBar)
+    titleCorner.CornerRadius = UDim.new(0, 8)
+
+    local titleText = Instance.new("TextLabel", titleBar)
+    titleText.Size = UDim2.new(1, -120, 1, 0)
+    titleText.Position = UDim2.new(0, 8, 0, 0)
+    titleText.BackgroundTransparency = 1
+    titleText.Text = "Target Player"
+    titleText.TextColor3 = Color3.fromRGB(200, 230, 255)
+    titleText.Font = Enum.Font.GothamBold
+    titleText.TextSize = 16
+    titleText.TextXAlignment = Enum.TextXAlignment.Left
+    titleText.ZIndex = 12
+
+    -- Manual refresh button
+    local refreshBtn = Instance.new("TextButton", titleBar)
+    refreshBtn.Size = UDim2.new(0, 80, 0, 24)
+    refreshBtn.Position = UDim2.new(1, -112, 0, 4)
+    refreshBtn.Text = "Refresh"
+    refreshBtn.Font = Enum.Font.Gotham
+    refreshBtn.TextSize = 12
+    refreshBtn.BackgroundColor3 = Color3.fromRGB(70, 80, 100)
+    refreshBtn.TextColor3 = Color3.fromRGB(230,230,230)
+    refreshBtn.ZIndex = 12
+    local refreshCorner = Instance.new("UICorner", refreshBtn)
+    refreshCorner.CornerRadius = UDim.new(0,6)
+
+    -- Close button
+    local closeBtn = Instance.new("TextButton", titleBar)
+    closeBtn.Size = UDim2.new(0, 32, 0, 32)
+    closeBtn.Position = UDim2.new(1, -40, 0, 0)
+    closeBtn.Text = "X"
+    closeBtn.Font = Enum.Font.GothamBold
+    closeBtn.TextSize = 16
+    closeBtn.BackgroundColor3 = Color3.fromRGB(180, 60, 60)
+    closeBtn.TextColor3 = Color3.new(1, 1, 1)
+    closeBtn.ZIndex = 12
+
+    local closeCorner = Instance.new("UICorner", closeBtn)
+    closeCorner.CornerRadius = UDim.new(0, 8)
+
+    -- Resize handle
+    local resizeHandle = Instance.new("Frame", container)
+    resizeHandle.Name = "ResizeHandle"
+    resizeHandle.Size = UDim2.new(0, 20, 0, 20)
+    resizeHandle.Position = UDim2.new(1, -20, 1, -20)
+    resizeHandle.BackgroundTransparency = 1
+    resizeHandle.ZIndex = 11
+
+    local resizeIcon = Instance.new("ImageLabel", resizeHandle)
+    resizeIcon.Size = UDim2.new(1, 0, 1, 0)
+    resizeIcon.BackgroundTransparency = 1
+    resizeIcon.Image = "rbxassetid://7260148617" -- Diagonal resize arrow
+    resizeIcon.ImageColor3 = Color3.fromRGB(150, 150, 180)
+
+    -- Search box
+    local searchBox = Instance.new("TextBox", container)
+    searchBox.Name = "SearchBox"
+    searchBox.Size = UDim2.new(1, -16, 0, 32)
+    searchBox.Position = UDim2.new(0, 8, 0, 40)
+    searchBox.PlaceholderText = "Search player..."
+    searchBox.Text = ""
+    searchBox.BackgroundColor3 = Color3.fromRGB(40, 40, 55)
+    searchBox.TextColor3 = Color3.new(1, 1, 1)
+    searchBox.Font = Enum.Font.Gotham
+    searchBox.TextSize = 14
+    searchBox.ZIndex = 11
+
+    local searchCorner = Instance.new("UICorner", searchBox)
+    searchCorner.CornerRadius = UDim.new(0, 6)
+
+    local searchPadding = Instance.new("UIPadding", searchBox)
+    searchPadding.PaddingLeft = UDim.new(0, 8)
+
+
+
+-- new
+Players.PlayerAdded:Connect(function()
+    task.wait(0.1)
+    populateList(searchBox.Text)
+end)
+
+Players.PlayerRemoving:Connect(function(pl)
+    if selectedPlayer == pl.Name then
+        selectedPlayer = nil
+        statusText.Text = "Status: Target left"
+        notify(WINDOW_NAME, pl.Name.." left, selection cleared", 1.5)
+    end
+    populateList(searchBox.Text)
+end)
+
+task.spawn(function()
+    while dropdownGui and dropdownGui.Parent do
+        task.wait(3)
+        if container.Visible then
+            pcall(function()
+                populateList(searchBox.Text)
+            end)
+        end
+    end
+end)
+
+    -- Player list
+    local scroll = Instance.new("ScrollingFrame", container)
+    scroll.Name = "PlayerList"
+    scroll.Size = UDim2.new(1, -16, 1, -96)
+    scroll.Position = UDim2.new(0, 8, 0, 80)
+    scroll.BackgroundTransparency = 1
+    scroll.ScrollBarThickness = 6
+    scroll.CanvasSize = UDim2.new(0, 0, 0, 0)
+    scroll.ZIndex = 11
+    dropdownList = scroll
+
+    local uiList = Instance.new("UIListLayout", scroll)
+    uiList.SortOrder = Enum.SortOrder.LayoutOrder
+    uiList.Padding = UDim.new(0, 6)
+
+    -- Status bar
+    local statusBar = Instance.new("Frame", container)
+    statusBar.Size = UDim2.new(1, 0, 0, 24)
+    statusBar.Position = UDim2.new(0, 0, 1, -24)
+    statusBar.BackgroundColor3 = Color3.fromRGB(40, 40, 55)
+    statusBar.BorderSizePixel = 0
+    statusBar.ZIndex = 11
+
+    local statusText = Instance.new("TextLabel", statusBar)
+    statusText.Size = UDim2.new(1, -8, 1, 0)
+    statusText.Position = UDim2.new(0, 8, 0, 0)
+    statusText.BackgroundTransparency = 1
+    statusText.Text = "Players: 0"
+    statusText.TextColor3 = Color3.fromRGB(180, 255, 180)
+    statusText.Font = Enum.Font.Gotham
+    statusText.TextSize = 12
+    statusText.TextXAlignment = Enum.TextXAlignment.Left
+    statusText.ZIndex = 12
+
+    -- Setup interactions
+    closeBtn.MouseButton1Click:Connect(function()
+        container.Visible = false
+    end)
+
+    refreshBtn.MouseButton1Click:Connect(function()
+        populateList(searchBox.Text)
+        notify(WINDOW_NAME, "Player list refreshed", 1.2)
+    end)
+
+    -- Resize functionality
+    local resizing = false
+    local startSize = nil
+    local startInput = nil
+
+    resizeHandle.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 then
+            resizing = true
+            startSize = container.Size
+            startInput = input.Position
+            input.Changed:Connect(function()
+                if input.UserInputState == Enum.UserInputState.End then
+                    resizing = false
+                end
+            end)
+        end
+    end)
+
+    resizeHandle.InputChanged:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseMovement and resizing then
+            local delta = input.Position - startInput
+            local newWidth = math.max(200, startSize.Width.Offset + delta.X)
+            local newHeight = math.max(200, startSize.Height.Offset + delta.Y)
+            container.Size = UDim2.new(0, newWidth, 0, newHeight)
+        end
+    end)
+
+    -- Player selection function
+    local function selectPlayer(name)
+        selectedPlayer = name
+        notify(WINDOW_NAME, "Selected "..tostring(name), 1.5)
+        statusText.Text = "Selected: "..tostring(name)
+    end
+
+    -- Populate player list (giữ nguyên logic của bạn)
+    local function populateList(searchTerm)
+        for _, c in ipairs(scroll:GetChildren()) do
+            if c:IsA("TextButton") then c:Destroy() end
+        end
+
+        local list = buildPlayersList()
+        local filtered = {}
+
+        -- Filter by search term
+        if searchTerm and searchTerm ~= "" then
+            for _, name in ipairs(list) do
+                if string.find(string.lower(name), string.lower(searchTerm)) then
+                    table.insert(filtered, name)
+                end
+            end
+        else
+            filtered = list
+        end
+
+        -- Create buttons
+        for i, name in ipairs(filtered) do
+            local b = Instance.new("TextButton", scroll)
+            b.Size = UDim2.new(1, -8, 0, 32)
+            b.Position = UDim2.new(0, 4, 0, 0)
+            b.BackgroundColor3 = Color3.fromRGB(50, 60, 80)
+            b.TextColor3 = Color3.fromRGB(220, 255, 220)
+            b.Font = Enum.Font.Gotham
+            b.TextSize = 14
+            b.Text = name
+            b.ZIndex = 12
+            b.AutoButtonColor = false
+
+            local bc = Instance.new("UICorner", b)
+            bc.CornerRadius = UDim.new(0, 6)
+
+            b.MouseEnter:Connect(function()
+                b.BackgroundColor3 = Color3.fromRGB(70, 80, 100)
+            end)
+
+            b.MouseLeave:Connect(function()
+                b.BackgroundColor3 = Color3.fromRGB(50, 60, 80)
+            end)
+
+            b.MouseButton1Click:Connect(function()
+                selectPlayer(name)
+            end)
+        end
+
+        -- Update canvas size
+        local total = #filtered * 38
+        scroll.CanvasSize = UDim2.new(0, 0, 0, math.max(total, 1))
+        statusText.Text = "Players: "..tostring(#list).." | Showing: "..tostring(#filtered)
+    end
+
+    -- Search functionality
+    searchBox:GetPropertyChangedSignal("Text"):Connect(function()
+        populateList(searchBox.Text)
+    end)
+
+    -- Initial population
+    populateList()
+
+    -- Auto-refresh logic:
+    -- 1) Refresh khi có player join/leave
+    Players.PlayerAdded:Connect(function()
+        -- delay 0.1 để đảm bảo Player đã xuất hiện fully
+        task.wait(0.1)
+        populateList(searchBox.Text)
+    end)
+
+    Players.PlayerRemoving:Connect(function(pl)
+        -- nếu selected player bị remove thì clear selection
+        if selectedPlayer == pl.Name then
+            selectedPlayer = nil
+            statusText.Text = "Status: Target left"
+            notify(WINDOW_NAME, pl.Name.." left, selection cleared", 1.5)
+        end
+        populateList(searchBox.Text)
+    end)
+
+    -- 2) Periodic refresh (in case of name changes, display glitches, etc.)
+    spawn(function()
+        while dropdownGui and dropdownGui.Parent do
+            task.wait(3) -- refresh every 3 giây (thay đổi nếu muốn)
+            -- chỉ refresh khi GUI visible để tránh tốn performance
+            if container.Visible then
+                pcall(function()
+    populateList(searchBox.Text)
+                end)
+            end
+        end
+    end)
+
+    -- Toggle visibility button (giữ nguyên)
+    local toggleBtn = Instance.new("TextButton", sg)
+    toggleBtn.Name = "ToggleButton"
+    toggleBtn.Size = UDim2.new(0, 120, 0, 36)
+    toggleBtn.Position = UDim2.new(0, 20, 1, -46)
+    toggleBtn.Text = "Show Player List"
+    toggleBtn.Font = Enum.Font.GothamBold
+    toggleBtn.TextSize = 14
+    toggleBtn.BackgroundColor3 = Color3.fromRGB(50, 70, 120)
+    toggleBtn.TextColor3 = Color3.new(1, 1, 1)
+    toggleBtn.ZIndex = 10
+
+    local toggleCorner = Instance.new("UICorner", toggleBtn)
+    toggleCorner.CornerRadius = UDim.new(0, 8)
+
+    toggleBtn.MouseButton1Click:Connect(function()
+        container.Visible = not container.Visible
+        toggleBtn.Text = container.Visible and "Hide Player List" or "Show Player List"
+    end)
+
+    if selectedPlayer then
+        statusText.Text = "Selected: "..tostring(selectedPlayer)
+    end
+end
+
+createDropdown()
+
+-- Main combat cycle function
+local function performCycleFor(targetName)
+    if not targetName or targetName == "" then return false end
+
+    local targetP = Players:FindFirstChild(targetName)
+    if not targetP or not targetP.Parent then return false end
+
+    local targetChar = targetP.Character
+    if not targetChar then return false end
+
+    local targetHRP = targetChar:FindFirstChild("HumanoidRootPart") or targetChar:FindFirstChild("Torso") or targetChar.PrimaryPart
+    if not targetHRP or not targetHRP.Parent then return false end
+
+    local myChar = localPlayer.Character
+    local myHRP = myChar and (myChar:FindFirstChild("HumanoidRootPart") or myChar:FindFirstChild("Torso") or myChar.PrimaryPart)
+    if not myHRP or not myHRP.Parent then return false end
+
+    -- còn lại giữ nguyên logic teleport/rapid spam, nhưng bọc pcall cho an toàn
+    local ok, err = pcall(function()
+        local trashA = pickTrashcanExclude(nil)
+        if not trashA then return end
+        local keyA = tostring(trashA)
+
+        local cfA = behindAndFaceCFrame(trashA, BACK_OFFSET)
+        if cfA then 
+            instantTeleportToCFrame(myHRP, cfA)
+
+            local t0 = tick()
+            while tick() - t0 < TP_WAIT_AFTER_TRASH do
+                if not trashA.Parent then break end
+                local newCF = behindAndFaceCFrame(trashA, BACK_OFFSET)
+                if newCF then
+                    pcall(function()
+                        myHRP.CFrame = CFrame.new(newCF.Position, trashA.Position)
+                    end)
+                end
+                task.wait(TP_TRASHCAN_INTERVAL)
+            end
+        end
+
+        rapidSpamTeleportRecompute(myHRP, targetHRP, RAPID_TP_DURATION, RAPID_TP_INTERVAL)
+        usedTrash[keyA] = tick()
+
+        local trashB = pickTrashcanExclude(keyA)
+        if trashB then
+            local cfB = behindAndFaceCFrame(trashB, BACK_OFFSET)
+            if cfB then instantTeleportToCFrame(myHRP, cfB) end
+            usedTrash[tostring(trashB)] = tick()
+        end
+    end)
+    if not ok then
+        warn("performCycleFor error:", err)
+        return false
+    end
+
+    return true
+end
+
+-- Auto-kill toggle and loop
+local autoKill = false
+local killLoopActive = false
+
+-- Create a simple toggle button
+local toggleGui = Instance.new("ScreenGui", localPlayer.PlayerGui)
+toggleGui.Name = "KK_Hub_Toggle"
+toggleGui.ResetOnSpawn = false
+
+local toggleBtn = Instance.new("TextButton", toggleGui)
+toggleBtn.Name = "KillToggle"
+toggleBtn.Size = UDim2.new(0, 160, 0, 40)
+toggleBtn.Position = UDim2.new(0, 20, 0, 20)
+toggleBtn.Text = "START AUTO KILL"
+toggleBtn.Font = Enum.Font.GothamBold
+toggleBtn.TextSize = 16
+toggleBtn.BackgroundColor3 = Color3.fromRGB(180, 60, 60)
+toggleBtn.TextColor3 = Color3.new(1, 1, 1)
+toggleBtn.ZIndex = 5
+
+local toggleCorner = Instance.new("UICorner", toggleBtn)
+toggleCorner.CornerRadius = UDim.new(0, 8)
+
+-- Status label
+local statusLabel = Instance.new("TextLabel", toggleGui)
+statusLabel.Size = UDim2.new(0, 160, 0, 24)
+statusLabel.Position = UDim2.new(0, 20, 0, 70)
+statusLabel.BackgroundColor3 = Color3.fromRGB(30, 30, 40)
+statusLabel.BackgroundTransparency = 0.3
+statusLabel.Text = "Status: Idle"
+statusLabel.TextColor3 = Color3.fromRGB(180, 255, 180)
+statusLabel.Font = Enum.Font.Gotham
+statusLabel.TextSize = 12
+statusLabel.ZIndex = 5
+
+local statusCorner = Instance.new("UICorner", statusLabel)
+statusCorner.CornerRadius = UDim.new(0, 6)
+
+-- Toggle functionality
+toggleBtn.MouseButton1Click:Connect(function()
+    autoKill = not autoKill
+    
+    if autoKill then
+        toggleBtn.Text = "STOP AUTO KILL"
+        toggleBtn.BackgroundColor3 = Color3.fromRGB(60, 180, 80)
+
+        if not killLoopActive then
+    killLoopActive = true
+    spawn(function()
+        while autoKill do
+            if not selectedPlayer or selectedPlayer == "" then
+                statusLabel.Text = "Status: No target selected"
+                task.wait(0.2)
+            else
+                -- check player still in Players list
+                local tp = Players:FindFirstChild(selectedPlayer)
+                if not tp then
+                    selectedPlayer = nil
+                    notify(WINDOW_NAME, "Target left, selection cleared", 1.5)
+                    statusLabel.Text = "Status: Target left"
+                    task.wait(0.5)
+                else
+                    statusLabel.Text = "Status: Attacking "..selectedPlayer
+                    local success = performCycleFor(selectedPlayer)
+                    if not success then
+                        notify(WINDOW_NAME, "Target unavailable, selection cleared", 1.5)
+                        selectedPlayer = nil
+                        statusLabel.Text = "Status: Target unavailable"
+                        task.wait(0.5)
+                    else
+                        statusLabel.Text = "Status: Cycle complete"
+                        task.wait(CYCLE_DELAY)
+                    end
+                end
+            end
+        end
+        killLoopActive = false
+        statusLabel.Text = "Status: Idle"
+    end)
+end
+
+notify(WINDOW_NAME, "Combat ready! Use the Player List dropdown", 3)
