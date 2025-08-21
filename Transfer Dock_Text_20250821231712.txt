@@ -1,0 +1,477 @@
+--[[
+  LocalScript: Performance Monitor - Phiên bản "Cực Xịn"
+
+  Script này tạo ra một giao diện người dùng (GUI) giám sát hiệu suất với các hiệu ứng động phức tạp và hiện đại.
+  Mục đích là tạo ra một UI không chỉ chức năng mà còn đẹp mắt và sống động.
+
+  Các tính năng và hiệu ứng chính:
+  - HIỆU ỨNG PARALLAX: GUI di chuyển nhẹ theo con trỏ chuột.
+  - HẠT NỔI: Các hạt nhỏ di chuyển ngẫu nhiên trong khung, tạo hiệu ứng không gian/công nghệ.
+  - PULSE LOGO: Logo có hoạt ảnh nhấp nháy nhẹ nhàng.
+  - TRANSITION MƯỢT MÀ: Sử dụng TweenService để chuyển đổi giữa các trạng thái một cách liền mạch.
+  - HIỆU ỨNG HOVER CAO CẤP: Các nút và frame có hiệu ứng phóng to và đổi màu khi di chuột qua.
+  - THÊM STATS: Bổ sung chỉ số "Instance Count" để theo dõi số lượng phần tử trong game.
+]]
+
+-- Khởi tạo các dịch vụ cần thiết
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local Stats = game:GetService("Stats")
+local TweenService = game:GetService("TweenService")
+local UserInputService = game:GetService("UserInputService")
+local Workspace = game:GetService("Workspace")
+
+-- Khai báo người chơi và GUI
+local player = Players.LocalPlayer
+local playerGui = player:WaitForChild("PlayerGui")
+
+-- Các hằng số cho UI
+local COMPACT_SIZE = UDim2.new(0, 180, 0, 70)
+local COMPACT_POSITION = UDim2.new(1, -190, 0, 10)
+local EXPANDED_SIZE = UDim2.new(0, 400, 0, 500)
+local EXPANDED_POSITION = UDim2.new(0.5, -200, 0.5, -250)
+
+-- Biến để quản lý trạng thái
+local isExpanded = false
+local fpsUnlocked = false
+local initialPosition = COMPACT_POSITION
+local currentSize = COMPACT_SIZE
+
+--[[  TẠO GIAO DIỆN CHÍNH ]]--
+
+local mainScreenGui = Instance.new("ScreenGui")
+mainScreenGui.Name = "PerformanceMonitor"
+mainScreenGui.Parent = playerGui
+mainScreenGui.ResetOnSpawn = false
+
+-- Frame chính sẽ chứa tất cả các thành phần UI khác
+local mainFrame = Instance.new("Frame")
+mainFrame.Name = "MainFrame"
+mainFrame.Size = COMPACT_SIZE
+mainFrame.Position = COMPACT_POSITION
+mainFrame.BackgroundColor3 = Color3.fromRGB(20, 20, 30)
+mainFrame.BackgroundTransparency = 0.2
+mainFrame.BorderSizePixel = 0
+mainFrame.ClipsDescendants = true
+mainFrame.Parent = mainScreenGui
+
+-- Góc bo tròn
+local uiCorner = Instance.new("UICorner")
+uiCorner.CornerRadius = UDim.new(0, 12)
+uiCorner.Parent = mainFrame
+
+-- Đường viền với gradient
+local uiStroke = Instance.new("UIStroke")
+uiStroke.Color = Color3.fromRGB(90, 60, 180)
+uiStroke.Thickness = 2
+uiStroke.Parent = mainFrame
+
+-- Hiệu ứng nền gradient
+local uigradient = Instance.new("UIGradient")
+uigradient.Color = ColorSequence.new{
+    ColorSequenceKeypoint.new(0.0, Color3.fromRGB(90, 60, 180)),
+    ColorSequenceKeypoint.new(1.0, Color3.fromRGB(50, 30, 120))
+}
+uigradient.Rotation = 45
+uigradient.Parent = mainFrame
+
+-- Lớp nền mờ để UI nhìn rõ hơn
+local backgroundLayer = Instance.new("Frame")
+backgroundLayer.Name = "BackgroundLayer"
+backgroundLayer.Size = UDim2.new(1, 0, 1, 0)
+backgroundLayer.BackgroundColor3 = Color3.fromRGB(20, 20, 30)
+backgroundLayer.BackgroundTransparency = 0.5
+backgroundLayer.BorderSizePixel = 0
+backgroundLayer.ZIndex = -1
+backgroundLayer.Parent = mainFrame
+
+-- Container cho các hạt nổi
+local particleContainer = Instance.new("Frame")
+particleContainer.Name = "ParticleContainer"
+particleContainer.Size = UDim2.new(1, 0, 1, 0)
+particleContainer.BackgroundTransparency = 1
+particleContainer.ZIndex = -2
+particleContainer.Parent = mainFrame
+
+-- Logo và các label chính (chế độ thu gọn)
+local logo = Instance.new("ImageLabel")
+logo.Name = "Logo"
+logo.Size = UDim2.new(0, 30, 0, 30)
+logo.Position = UDim2.new(0, 10, 0, 10)
+logo.BackgroundTransparency = 1
+logo.Image = "rbxassetid://7072716642" -- Thay bằng asset ID của bạn
+logo.ImageColor3 = Color3.fromRGB(180, 120, 255)
+logo.Parent = mainFrame
+
+local fpsLabel = Instance.new("TextLabel")
+fpsLabel.Name = "FPSLabel"
+fpsLabel.Size = UDim2.new(0, 120, 0, 20)
+fpsLabel.Position = UDim2.new(0, 50, 0, 10)
+fpsLabel.BackgroundTransparency = 1
+fpsLabel.Text = "FPS: 0"
+fpsLabel.TextColor3 = Color3.fromRGB(220, 220, 255)
+fpsLabel.TextXAlignment = Enum.TextXAlignment.Left
+fpsLabel.Font = Enum.Font.GothamSemibold
+fpsLabel.TextSize = 16
+fpsLabel.TextStrokeTransparency = 0.8
+fpsLabel.Parent = mainFrame
+
+local pingLabel = Instance.new("TextLabel")
+pingLabel.Name = "PingLabel"
+pingLabel.Size = UDim2.new(0, 120, 0, 20)
+pingLabel.Position = UDim2.new(0, 50, 0, 40)
+pingLabel.BackgroundTransparency = 1
+pingLabel.Text = "Ping: 0ms"
+pingLabel.TextColor3 = Color3.fromRGB(220, 220, 255)
+pingLabel.TextXAlignment = Enum.TextXAlignment.Left
+pingLabel.Font = Enum.Font.GothamSemibold
+pingLabel.TextSize = 16
+pingLabel.TextStrokeTransparency = 0.8
+pingLabel.Parent = mainFrame
+
+-- Nút mở rộng/thu gọn
+local toggleButton = Instance.new("ImageButton")
+toggleButton.Name = "ToggleButton"
+toggleButton.Size = UDim2.new(0, 20, 0, 20)
+toggleButton.Position = UDim2.new(1, -25, 0, 10)
+toggleButton.BackgroundTransparency = 1
+toggleButton.Image = "rbxassetid://3926305904" -- Icon mũi tên
+toggleButton.ImageRectOffset = Vector2.new(924, 724) -- Mũi tên phải (mở rộng)
+toggleButton.ImageRectSize = Vector2.new(36, 36)
+toggleButton.ImageColor3 = Color3.fromRGB(180, 120, 255)
+toggleButton.Parent = mainFrame
+
+-- Tạo các thành phần cho chế độ mở rộng
+local expandedContent = Instance.new("ScrollingFrame")
+expandedContent.Name = "ExpandedContent"
+expandedContent.Size = UDim2.new(1, -20, 1, -90)
+expandedContent.Position = UDim2.new(0, 10, 0, 80)
+expandedContent.BackgroundTransparency = 1
+expandedContent.BorderSizePixel = 0
+expandedContent.ScrollBarThickness = 5
+expandedContent.ScrollBarImageColor3 = Color3.fromRGB(90, 60, 180)
+expandedContent.CanvasSize = UDim2.new(0, 0, 0, 600)
+expandedContent.Parent = mainFrame
+expandedContent.Visible = false
+
+local uiListLayout = Instance.new("UIListLayout")
+uiListLayout.Padding = UDim.new(0, 10)
+uiListLayout.Parent = expandedContent
+
+--[[  CÁC HÀM TIỆN ÍCH VÀ LOGIC ]]--
+
+-- Hàm tạo các section
+local function createSection(name, title, height)
+    local sectionFrame = Instance.new("Frame")
+    sectionFrame.Name = name .. "Section"
+    sectionFrame.Size = UDim2.new(1, 0, 0, height)
+    sectionFrame.BackgroundColor3 = Color3.fromRGB(25, 25, 40)
+    sectionFrame.BackgroundTransparency = 0.5
+    sectionFrame.BorderSizePixel = 0
+    sectionFrame.Parent = expandedContent
+
+    local sectionCorner = Instance.new("UICorner")
+    sectionCorner.CornerRadius = UDim.new(0, 10)
+    sectionCorner.Parent = sectionFrame
+
+    local sectionTitle = Instance.new("TextLabel")
+    sectionTitle.Name = name .. "Title"
+    sectionTitle.Size = UDim2.new(1, -20, 0, 30)
+    sectionTitle.Position = UDim2.new(0, 10, 0, 10)
+    sectionTitle.BackgroundTransparency = 1
+    sectionTitle.Text = title
+    sectionTitle.TextColor3 = Color3.fromRGB(180, 120, 255)
+    sectionTitle.TextXAlignment = Enum.TextXAlignment.Left
+    sectionTitle.Font = Enum.Font.GothamBold
+    sectionTitle.TextSize = 18
+    sectionTitle.Parent = sectionFrame
+
+    return sectionFrame
+end
+
+-- Hàm tạo các label
+local function createStatLabel(parent, name, text, pos)
+    local label = Instance.new("TextLabel")
+    label.Name = name
+    label.Size = UDim2.new(1, -20, 0, 25)
+    label.Position = UDim2.new(0, 10, 0, pos)
+    label.BackgroundTransparency = 1
+    label.Text = text
+    label.TextColor3 = Color3.fromRGB(220, 220, 255)
+    label.TextXAlignment = Enum.TextXAlignment.Left
+    label.Font = Enum.Font.GothamSemibold
+    label.TextSize = 16
+    label.Parent = parent
+    return label
+end
+
+-- Tạo các section và label chi tiết
+local fpsSection = createSection("FPS", "FPS DETAILS", 100)
+local fpsValue = createStatLabel(fpsSection, "FPSValue", "Current: 0", 50)
+local fpsRating = createStatLabel(fpsSection, "FPSRating", "Rating: Excellent", 75)
+
+local pingSection = createSection("Ping", "PING DETAILS", 100)
+local pingValue = createStatLabel(pingSection, "PingValue", "Current: 0ms", 50)
+local pingRating = createStatLabel(pingSection, "PingRating", "Rating: Excellent", 75)
+
+local systemSection = createSection("System", "SYSTEM INFO", 150)
+local memoryUsage = createStatLabel(systemSection, "MemoryUsage", "Memory: 0 MB", 50)
+local graphicsQuality = createStatLabel(systemSection, "GraphicsQuality", "Graphics Quality: High", 75)
+local instanceCount = createStatLabel(systemSection, "InstanceCount", "Instances: 0", 100)
+
+local controlsSection = createSection("Controls", "CONTROLS", 120)
+local unlockFpsButton = Instance.new("TextButton")
+unlockFpsButton.Name = "UnlockFpsButton"
+unlockFpsButton.Size = UDim2.new(1, -20, 0, 40)
+unlockFpsButton.Position = UDim2.new(0, 10, 0, 50)
+unlockFpsButton.BackgroundColor3 = Color3.fromRGB(60, 40, 120)
+unlockFpsButton.BackgroundTransparency = 0.5
+unlockFpsButton.BorderSizePixel = 0
+unlockFpsButton.Text = "UNLOCK FPS CAP"
+unlockFpsButton.TextColor3 = Color3.fromRGB(220, 220, 255)
+unlockFpsButton.Font = Enum.Font.GothamBold
+unlockFpsButton.TextSize = 16
+unlockFpsButton.Parent = controlsSection
+local unlockFpsCorner = Instance.new("UICorner")
+unlockFpsCorner.CornerRadius = UDim.new(0, 8)
+unlockFpsCorner.Parent = unlockFpsButton
+
+--[[  TẠO CÁC HIỆU ỨNG ĐỘNG ]]--
+
+-- HIỆU ỨNG HẠT NỔI
+local function createParticle()
+    local particle = Instance.new("Frame")
+    particle.Name = "Particle"
+    particle.Size = UDim2.new(0, math.random(2, 5), 0, math.random(2, 5))
+    particle.BackgroundColor3 = Color3.fromRGB(math.random(150, 255), math.random(150, 255), math.random(150, 255))
+    particle.BackgroundTransparency = 0.8 + math.random() * 0.2
+    particle.ZIndex = -1
+    particle.Parent = particleContainer
+
+    local particleCorner = Instance.new("UICorner")
+    particleCorner.CornerRadius = UDim.new(1, 0)
+    particleCorner.Parent = particle
+
+    -- Tween để di chuyển hạt
+    local function moveParticle()
+        local newX = math.random()
+        local newY = math.random()
+        local tweenInfo = TweenInfo.new(math.random(5, 10), Enum.EasingStyle.Quad, Enum.EasingDirection.InOut)
+        local tween = TweenService:Create(particle, tweenInfo, {Position = UDim2.new(newX, 0, newY, 0)})
+        tween:Play()
+        tween.Completed:Connect(moveParticle)
+    end
+    
+    particle.Position = UDim2.new(math.random(), 0, math.random(), 0)
+    moveParticle()
+end
+
+for i = 1, 20 do
+    createParticle()
+end
+
+-- HIỆU ỨNG PULSE cho logo
+local logoTweenInfo = TweenInfo.new(1, Enum.EasingStyle.Sine, Enum.EasingDirection.Out, -1, true)
+local logoTween = TweenService:Create(logo, logoTweenInfo, {Size = UDim2.new(0, 34, 0, 34)})
+logoTween:Play()
+
+-- HIỆU ỨNG HOVER
+local function setupHoverEffects(element, hoverProps, initialProps)
+    element.MouseEnter:Connect(function()
+        TweenService:Create(element, TweenInfo.new(0.2), hoverProps):Play()
+    end)
+    element.MouseLeave:Connect(function()
+        TweenService:Create(element, TweenInfo.new(0.2), initialProps):Play()
+    end)
+end
+
+-- Hover cho nút mở rộng
+setupHoverEffects(toggleButton,
+    {ImageColor3 = Color3.fromRGB(220, 180, 255), ImageTransparency = 0.5},
+    {ImageColor3 = Color3.fromRGB(180, 120, 255), ImageTransparency = 0}
+)
+
+-- Hover cho nút unlock FPS
+setupHoverEffects(unlockFpsButton,
+    {Size = UDim2.new(1, -10, 0, 45), BackgroundTransparency = 0.3},
+    {Size = UDim2.new(1, -20, 0, 40), BackgroundTransparency = 0.5}
+)
+
+-- Hover cho frame chính (chỉ ở chế độ thu gọn)
+setupHoverEffects(mainFrame,
+    {BackgroundTransparency = 0.1, BorderSizePixel = 1},
+    {BackgroundTransparency = 0.2, BorderSizePixel = 0}
+)
+
+
+--[[  CÁC HÀM CẬP NHẬT CHỈ SỐ ]]--
+
+-- Hàm cập nhật màu sắc dựa trên giá trị
+local function updateColorBasedOnValue(value, isFPS)
+    if isFPS then
+        if value >= 60 then
+            return Color3.fromRGB(50, 255, 50)
+        elseif value >= 30 then
+            return Color3.fromRGB(255, 255, 50)
+        else
+            return Color3.fromRGB(255, 50, 50)
+        end
+    else
+        if value < 50 then
+            return Color3.fromRGB(50, 255, 50)
+        elseif value < 100 then
+            return Color3.fromRGB(255, 255, 50)
+        else
+            return Color3.fromRGB(255, 50, 50)
+        end
+    end
+end
+
+-- Hàm lấy giá trị Ping
+local function getPing()
+    local stats = Stats.Network.ServerStatsItem["Data Ping"]
+    return stats and math.floor(stats:GetValue() * 100) / 100 or 0
+end
+
+-- Hàm lấy giá trị bộ nhớ sử dụng
+local function getMemoryUsage()
+    local stats = Stats:FindFirstChild("PerformanceStats")
+    local mem = stats and stats:FindFirstChild("Memory")
+    return mem and math.floor(mem:GetValue() / 1024 / 1024) or 0
+end
+
+-- Hàm lấy chất lượng đồ họa
+local function getGraphicsQuality()
+    local qualityLevel = settings().Rendering.QualityLevel
+    local qualityMap = {
+        [1] = "Very Low", [2] = "Low", [3] = "Low", [4] = "Medium",
+        [5] = "Medium", [6] = "High", [7] = "High", [8] = "Very High",
+        [9] = "Very High", [10] = "Ultra"
+    }
+    return qualityMap[qualityLevel] or "Unknown"
+end
+
+-- Hàm lấy số lượng Instance trong game
+local function getInstanceCount()
+    return #Workspace:GetDescendants()
+end
+
+-- Hàm đánh giá FPS/Ping
+local function getRating(value, isFPS)
+    if isFPS then
+        if value >= 60 then return "Excellent" end
+        if value >= 45 then return "Good" end
+        if value >= 30 then return "Average" end
+        return "Poor"
+    else -- Ping
+        if value < 50 then return "Excellent" end
+        if value < 100 then return "Good" end
+        if value < 200 then return "Average" end
+        return "Poor"
+    end
+end
+
+-- Hàm cập nhật tất cả các chỉ số
+local function updateAllStats()
+    local ping = getPing()
+    local memory = getMemoryUsage()
+    local graphics = getGraphicsQuality()
+    local instances = getInstanceCount()
+    
+    pingLabel.Text = "Ping: " .. ping .. "ms"
+    pingLabel.TextColor3 = updateColorBasedOnValue(ping, false)
+    
+    pingValue.Text = "Current: " .. ping .. "ms"
+    pingRating.Text = "Rating: " .. getRating(ping, false)
+    pingValue.TextColor3 = updateColorBasedOnValue(ping, false)
+    
+    memoryUsage.Text = "Memory: " .. memory .. " MB"
+    graphicsQuality.Text = "Graphics Quality: " .. graphics
+    instanceCount.Text = "Instances: " .. instances
+end
+
+-- Vòng lặp chính để cập nhật chỉ số
+local lastTime = 0
+local frameCount = 0
+local lastStatUpdate = os.clock()
+RunService.RenderStepped:Connect(function()
+    -- Cập nhật FPS mỗi giây
+    frameCount = frameCount + 1
+    local currentTime = os.clock()
+    if currentTime - lastTime >= 1 then
+        local currentFPS = math.floor(frameCount / (currentTime - lastTime))
+        frameCount = 0
+        lastTime = currentTime
+        
+        fpsLabel.Text = "FPS: " .. currentFPS
+        fpsLabel.TextColor3 = updateColorBasedOnValue(currentFPS, true)
+        
+        fpsValue.Text = "Current: " .. currentFPS
+        fpsRating.Text = "Rating: " .. getRating(currentFPS, true)
+        fpsValue.TextColor3 = updateColorBasedOnValue(currentFPS, true)
+    end
+
+    -- Cập nhật các chỉ số khác 1 giây/lần
+    if currentTime - lastStatUpdate >= 1 then
+        updateAllStats()
+        lastStatUpdate = currentTime
+    end
+end)
+
+--[[  HÀM XỬ LÝ CHUYỂN ĐỔI TRẠNG THÁI VÀ SỰ KIỆN ]]--
+
+local function toggleExpanded()
+    isExpanded = not isExpanded
+    
+    local targetSize = isExpanded and EXPANDED_SIZE or COMPACT_SIZE
+    local targetPosition = isExpanded and EXPANDED_POSITION or COMPACT_POSITION
+    local tweenInfo = TweenInfo.new(0.3, Enum.EasingStyle.Quart, Enum.EasingDirection.Out)
+    
+    -- Dừng và tiếp tục hiệu ứng pulse logo khi mở/đóng
+    if isExpanded then
+        logoTween:Pause()
+        logo.Size = UDim2.new(0, 50, 0, 50)
+        expandedContent.Visible = true
+        toggleButton.ImageRectOffset = Vector2.new(1004, 724) -- Mũi tên xuống
+    else
+        logoTween:Play()
+        logo.Size = UDim2.new(0, 30, 0, 30)
+        expandedContent.Visible = false
+        toggleButton.ImageRectOffset = Vector2.new(924, 724) -- Mũi tên phải
+    end
+    
+    -- Tween để thay đổi kích thước và vị trí của frame
+    TweenService:Create(mainFrame, tweenInfo, {Size = targetSize, Position = targetPosition}):Play()
+end
+
+-- Kết nối sự kiện click
+toggleButton.MouseButton1Click:Connect(toggleExpanded)
+
+-- Sự kiện click vào nút unlock FPS
+unlockFpsButton.MouseButton1Click:Connect(function()
+    fpsUnlocked = not fpsUnlocked
+    if fpsUnlocked then
+        settings().Rendering.FramerateLimit = 0
+        unlockFpsButton.Text = "LOCK FPS CAP"
+        unlockFpsButton.BackgroundColor3 = Color3.fromRGB(80, 180, 80)
+    else
+        settings().Rendering.FramerateLimit = 60
+        unlockFpsButton.Text = "UNLOCK FPS CAP"
+        unlockFpsButton.BackgroundColor3 = Color3.fromRGB(60, 40, 120)
+    end
+end)
+
+-- HIỆU ỨNG PARALLAX (di chuyển theo chuột)
+UserInputService.InputChanged:Connect(function(input)
+    if isExpanded and input.UserInputType == Enum.UserInputType.MouseMovement then
+        local mousePos = input.Position
+        local screenCenter = Vector2.new(mainScreenGui.AbsoluteSize.X / 2, mainScreenGui.AbsoluteSize.Y / 2)
+        local offset = mousePos - screenCenter
+        
+        local newX = (EXPANDED_POSITION.X.Offset - offset.X * 0.05)
+        local newY = (EXPANDED_POSITION.Y.Offset - offset.Y * 0.05)
+        
+        mainFrame.Position = UDim2.new(0.5, newX, 0.5, newY)
+    end
+end)
+
