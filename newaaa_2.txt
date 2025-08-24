@@ -1,0 +1,668 @@
+local UserInputService = game:GetService("UserInputService")
+local TweenService = game:GetService("TweenService")
+local HttpService = game:GetService("HttpService")
+local RunService = game:GetService("RunService")
+
+-- Configuration
+local KEY_DURATION = 8 * 60 * 60 -- 8 hours in seconds
+local KEY_PREFIX = "luex-"
+local VALID_KEY_LENGTH = 12 -- characters after prefix
+
+-- Links for SMS codes
+local LINKS = {
+    "https://pastefy.app/EsyVRNVP/raw",
+    "https://pastefy.app/Zkkeo7Ee/raw",
+    "https://pastefy.app/J6ykcLHB/raw",
+    "https://pastefy.app/3mA9P6bK/raw",
+    "https://pastefy.app/i0HREDlE/raw",
+    "https://pastefy.app/nfFtbUTD/raw",
+    "https://pastefy.app/zdqK0JId/raw",
+    "https://pastefy.app/lUj5MsGk/raw",
+    "https://pastefy.app/Anw0HI4s/raw",
+    "https://pastefy.app/6KwnBtM9/raw",
+    "https://pastefy.app/YilF70XQ/raw",
+    "https://pastefy.app/0AZiIuqm/raw",
+    "https://pastefy.app/pcKswRCC/raw",
+    "https://pastefy.app/LjY5K8GB/raw"
+}
+
+-- State management
+local usedLinks = {}
+local currentLinkIndex = 1
+local currentKey = nil
+local keyExpiration = nil
+local validCodes = {}
+local enteredCodes = {}
+
+-- Generate a random code
+local function generateCode(length)
+    local chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
+    local code = ""
+    for i = 1, length do
+        local rand = math.random(1, #chars)
+        code = code .. string.sub(chars, rand, rand)
+    end
+    return code
+end
+
+-- Generate codes for all links
+for _, link in ipairs(LINKS) do
+    validCodes[link] = {}
+    for i = 1, 10 do -- 10 codes per link
+        table.insert(validCodes[link], generateCode(8))
+    end
+end
+
+-- Create main GUI
+local screenGui = Instance.new("ScreenGui")
+screenGui.Name = "LuexPremiumGui"
+screenGui.Parent = game.Players.LocalPlayer:WaitForChild("PlayerGui")
+screenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+
+-- Main frame
+local mainFrame = Instance.new("Frame")
+mainFrame.Name = "MainFrame"
+mainFrame.Size = UDim2.new(0, 400, 0, 500)
+mainFrame.Position = UDim2.new(0.5, -200, 0.5, -250)
+mainFrame.AnchorPoint = Vector2.new(0.5, 0.5)
+mainFrame.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+mainFrame.BorderSizePixel = 0
+mainFrame.ClipsDescendants = true
+mainFrame.Parent = screenGui
+
+-- Corner rounding
+local corner = Instance.new("UICorner")
+corner.CornerRadius = UDim.new(0, 8)
+corner.Parent = mainFrame
+
+-- Drop shadow
+local shadow = Instance.new("ImageLabel")
+shadow.Name = "Shadow"
+shadow.Size = UDim2.new(1, 20, 1, 20)
+shadow.Position = UDim2.new(0, -10, 0, -10)
+shadow.BackgroundTransparency = 1
+shadow.Image = "rbxassetid://5554236805"
+shadow.ImageColor3 = Color3.new(0, 0, 0)
+shadow.ImageTransparency = 0.8
+shadow.ScaleType = Enum.ScaleType.Slice
+shadow.SliceCenter = Rect.new(10, 10, 118, 118)
+shadow.ZIndex = -1
+shadow.Parent = mainFrame
+
+-- Header
+local header = Instance.new("Frame")
+header.Name = "Header"
+header.Size = UDim2.new(1, 0, 0, 50)
+header.Position = UDim2.new(0, 0, 0, 0)
+header.BackgroundColor3 = Color3.fromRGB(200, 0, 0)
+header.BorderSizePixel = 0
+header.ZIndex = 2
+header.Parent = mainFrame
+
+local headerCorner = Instance.new("UICorner")
+headerCorner.CornerRadius = UDim.new(0, 8)
+headerCorner.Parent = header
+
+local title = Instance.new("TextLabel")
+title.Name = "Title"
+title.Size = UDim2.new(1, 0, 1, 0)
+title.Position = UDim2.new(0, 0, 0, 0)
+title.BackgroundTransparency = 1
+title.Text = "Luex Premium System"
+title.TextColor3 = Color3.fromRGB(255, 255, 255)
+title.TextSize = 20
+title.Font = Enum.Font.GothamBold
+title.ZIndex = 3
+title.Parent = header
+
+local closeButton = Instance.new("TextButton")
+closeButton.Name = "CloseButton"
+closeButton.Size = UDim2.new(0, 30, 0, 30)
+closeButton.Position = UDim2.new(1, -35, 0, 10)
+closeButton.BackgroundColor3 = Color3.fromRGB(180, 0, 0)
+closeButton.BorderSizePixel = 0
+closeButton.Text = "X"
+closeButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+closeButton.TextSize = 16
+closeButton.Font = Enum.Font.GothamBold
+closeButton.ZIndex = 3
+closeButton.Visible = false
+closeButton.Parent = header
+
+local closeCorner = Instance.new("UICorner")
+closeCorner.CornerRadius = UDim.new(0, 15)
+closeCorner.Parent = closeButton
+
+-- Content frame
+local content = Instance.new("Frame")
+content.Name = "Content"
+content.Size = UDim2.new(1, -20, 1, -70)
+content.Position = UDim2.new(0, 10, 0, 60)
+content.BackgroundTransparency = 1
+content.Parent = mainFrame
+
+-- Input fields
+local inputContainer = Instance.new("Frame")
+inputContainer.Name = "InputContainer"
+inputContainer.Size = UDim2.new(1, 0, 0, 180)
+inputContainer.Position = UDim2.new(0, 0, 0, 0)
+inputContainer.BackgroundTransparency = 1
+inputContainer.Parent = content
+
+local codeLabel = Instance.new("TextLabel")
+codeLabel.Name = "CodeLabel"
+codeLabel.Size = UDim2.new(1, 0, 0, 20)
+codeLabel.Position = UDim2.new(0, 0, 0, 0)
+codeLabel.BackgroundTransparency = 1
+codeLabel.Text = "Enter SMS Code:"
+codeLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+codeLabel.TextSize = 16
+codeLabel.TextXAlignment = Enum.TextXAlignment.Left
+codeLabel.Font = Enum.Font.Gotham
+codeLabel.Parent = inputContainer
+
+local codeBox = Instance.new("TextBox")
+codeBox.Name = "CodeBox"
+codeBox.Size = UDim2.new(1, 0, 0, 40)
+codeBox.Position = UDim2.new(0, 0, 0, 25)
+codeBox.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
+codeBox.BorderSizePixel = 0
+codeBox.Text = ""
+codeBox.PlaceholderText = "Enter code from SMS"
+codeBox.TextColor3 = Color3.fromRGB(255, 255, 255)
+codeBox.TextSize = 16
+codeBox.Font = Enum.Font.Gotham
+codeBox.Parent = inputContainer
+
+local codeCorner = Instance.new("UICorner")
+codeCorner.CornerRadius = UDim.new(0, 6)
+codeCorner.Parent = codeBox
+
+local getSmsButton = Instance.new("TextButton")
+getSmsButton.Name = "GetSmsButton"
+getSmsButton.Size = UDim2.new(1, 0, 0, 40)
+getSmsButton.Position = UDim2.new(0, 0, 0, 75)
+getSmsButton.BackgroundColor3 = Color3.fromRGB(200, 0, 0)
+getSmsButton.BorderSizePixel = 0
+getSmsButton.Text = "Get SMS Code"
+getSmsButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+getSmsButton.TextSize = 16
+getSmsButton.Font = Enum.Font.GothamBold
+getSmsButton.Parent = inputContainer
+
+local smsCorner = Instance.new("UICorner")
+smsCorner.CornerRadius = UDim.new(0, 6)
+smsCorner.Parent = getSmsButton
+
+local keyLabel = Instance.new("TextLabel")
+keyLabel.Name = "KeyLabel"
+keyLabel.Size = UDim2.new(1, 0, 0, 20)
+keyLabel.Position = UDim2.new(0, 0, 0, 125)
+keyLabel.BackgroundTransparency = 1
+keyLabel.Text = "Your Premium Key:"
+keyLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+keyLabel.TextSize = 16
+keyLabel.TextXAlignment = Enum.TextXAlignment.Left
+keyLabel.Font = Enum.Font.Gotham
+keyLabel.Parent = inputContainer
+
+local keyBox = Instance.new("TextBox")
+keyBox.Name = "KeyBox"
+keyBox.Size = UDim2.new(1, 0, 0, 40)
+keyBox.Position = UDim2.new(0, 0, 0, 150)
+keyBox.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
+keyBox.BorderSizePixel = 0
+keyBox.Text = ""
+keyBox.PlaceholderText = "Your premium key will appear here"
+keyBox.TextColor3 = Color3.fromRGB(255, 255, 255)
+keyBox.TextSize = 16
+keyBox.Font = Enum.Font.Gotham
+keyBox.Parent = inputContainer
+
+local keyCorner = Instance.new("UICorner")
+keyCorner.CornerRadius = UDim.new(0, 6)
+keyCorner.Parent = keyBox
+
+-- Status display
+local statusContainer = Instance.new("Frame")
+statusContainer.Name = "StatusContainer"
+statusContainer.Size = UDim2.new(1, 0, 0, 100)
+statusContainer.Position = UDim2.new(0, 0, 0, 190)
+statusContainer.BackgroundTransparency = 1
+statusContainer.Parent = content
+
+local timeLabel = Instance.new("TextLabel")
+timeLabel.Name = "TimeLabel"
+timeLabel.Size = UDim2.new(1, 0, 0, 20)
+timeLabel.Position = UDim2.new(0, 0, 0, 0)
+timeLabel.BackgroundTransparency = 1
+timeLabel.Text = "Key Time Remaining: 00:00:00"
+timeLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+timeLabel.TextSize = 16
+timeLabel.TextXAlignment = Enum.TextXAlignment.Left
+timeLabel.Font = Enum.Font.Gotham
+timeLabel.Parent = statusContainer
+
+local statusLabel = Instance.new("TextLabel")
+statusLabel.Name = "StatusLabel"
+statusLabel.Size = UDim2.new(1, 0, 0, 60)
+statusLabel.Position = UDim2.new(0, 0, 0, 30)
+statusLabel.BackgroundTransparency = 1
+statusLabel.Text = "Status: Ready to activate"
+statusLabel.TextColor3 = Color3.fromRGB(200, 200, 200)
+statusLabel.TextSize = 14
+statusLabel.TextXAlignment = Enum.TextXAlignment.Left
+statusLabel.TextYAlignment = Enum.TextYAlignment.Top
+statusLabel.Font = Enum.Font.Gotham
+statusLabel.Parent = statusContainer
+
+-- Options frame (shown when key already exists)
+local optionsContainer = Instance.new("Frame")
+optionsContainer.Name = "OptionsContainer"
+optionsContainer.Size = UDim2.new(1, 0, 0, 120)
+optionsContainer.Position = UDim2.new(0, 0, 0, 300)
+optionsContainer.BackgroundTransparency = 1
+optionsContainer.Visible = false
+optionsContainer.Parent = content
+
+local optionsTitle = Instance.new("TextLabel")
+optionsTitle.Name = "OptionsTitle"
+optionsTitle.Size = UDim2.new(1, 0, 0, 20)
+optionsTitle.Position = UDim2.new(0, 0, 0, 0)
+optionsTitle.BackgroundTransparency = 1
+optionsTitle.Text = "Key Options:"
+optionsTitle.TextColor3 = Color3.fromRGB(255, 255, 255)
+optionsTitle.TextSize = 16
+optionsTitle.TextXAlignment = Enum.TextXAlignment.Left
+optionsTitle.Font = Enum.Font.Gotham
+optionsTitle.Parent = optionsContainer
+
+local extendButton = Instance.new("TextButton")
+extendButton.Name = "ExtendButton"
+extendButton.Size = UDim2.new(1, 0, 0, 40)
+extendButton.Position = UDim2.new(0, 0, 0, 30)
+extendButton.BackgroundColor3 = Color3.fromRGB(0, 120, 0)
+extendButton.BorderSizePixel = 0
+extendButton.Text = "Extend Time (+8 hours)"
+extendButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+extendButton.TextSize = 16
+extendButton.Font = Enum.Font.GothamBold
+extendButton.Parent = optionsContainer
+
+local extendCorner = Instance.new("UICorner")
+extendCorner.CornerRadius = UDim.new(0, 6)
+extendCorner.Parent = extendButton
+
+local resetButton = Instance.new("TextButton")
+resetButton.Name = "ResetButton"
+resetButton.Size = UDim2.new(1, 0, 0, 40)
+resetButton.Position = UDim2.new(0, 0, 0, 80)
+resetButton.BackgroundColor3 = Color3.fromRGB(200, 100, 0)
+resetButton.BorderSizePixel = 0
+resetButton.Text = "Generate New Key"
+resetButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+resetButton.TextSize = 16
+resetButton.Font = Enum.Font.GothamBold
+resetButton.Parent = optionsContainer
+
+local resetCorner = Instance.new("UICorner")
+resetCorner.CornerRadius = UDim.new(0, 6)
+resetCorner.Parent = resetButton
+
+-- Notification system
+local notification = Instance.new("Frame")
+notification.Name = "Notification"
+notification.Size = UDim2.new(0, 300, 0, 60)
+notification.Position = UDim2.new(0.5, -150, 1, 10)
+notification.AnchorPoint = Vector2.new(0.5, 1)
+notification.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+notification.BorderSizePixel = 0
+notification.Visible = false
+notification.ZIndex = 10
+notification.Parent = screenGui
+
+local notifCorner = Instance.new("UICorner")
+notifCorner.CornerRadius = UDim.new(0, 8)
+notifCorner.Parent = notification
+
+local notifShadow = Instance.new("ImageLabel")
+notifShadow.Name = "NotifShadow"
+notifShadow.Size = UDim2.new(1, 20, 1, 20)
+notifShadow.Position = UDim2.new(0, -10, 0, -10)
+notifShadow.BackgroundTransparency = 1
+notifShadow.Image = "rbxassetid://5554236805"
+notifShadow.ImageColor3 = Color3.new(0, 0, 0)
+notifShadow.ImageTransparency = 0.8
+notifShadow.ScaleType = Enum.ScaleType.Slice
+notifShadow.SliceCenter = Rect.new(10, 10, 118, 118)
+notifShadow.ZIndex = 9
+notifShadow.Parent = notification
+
+local notifText = Instance.new("TextLabel")
+notifText.Name = "NotifText"
+notifText.Size = UDim2.new(1, -20, 1, -20)
+notifText.Position = UDim2.new(0, 10, 0, 10)
+notifText.BackgroundTransparency = 1
+notifText.Text = "Notification text"
+notifText.TextColor3 = Color3.fromRGB(255, 255, 255)
+notifText.TextSize = 14
+notifText.TextWrapped = true
+notifText.Font = Enum.Font.Gotham
+notifText.ZIndex = 11
+notifText.Parent = notification
+
+-- Functions
+local function showNotification(message, duration)
+    notifText.Text = message
+    notification.Visible = true
+    
+    local tweenIn = TweenService:Create(
+        notification,
+        TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
+        {Position = UDim2.new(0.5, -150, 1, -80)}
+    )
+    
+    local tweenOut = TweenService:Create(
+        notification,
+        TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
+        {Position = UDim2.new(0.5, -150, 1, 10)}
+    )
+    
+    tweenIn:Play()
+    
+    if duration then
+        task.spawn(function()
+            task.wait(duration)
+            tweenOut:Play()
+            task.wait(0.3)
+            notification.Visible = false
+        end)
+    end
+end
+
+local function getNextLink()
+    if #usedLinks >= #LINKS then
+        -- Reset if all links used
+        usedLinks = {}
+        currentLinkIndex = 1
+        enteredCodes = {}
+        showNotification("All codes used! Cycle reset.", 3)
+    end
+    
+    local link = LINKS[currentLinkIndex]
+    currentLinkIndex = currentLinkIndex + 1
+    if currentLinkIndex > #LINKS then
+        currentLinkIndex = 1
+    end
+    
+    table.insert(usedLinks, link)
+    return link
+end
+
+function generateKey()
+    local chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
+    local key = KEY_PREFIX
+    for i = 1, VALID_KEY_LENGTH do
+        local rand = math.random(1, #chars)
+        key = key .. string.sub(chars, rand, rand)
+    end
+    return key
+end
+
+local function saveKey(key, expiration)
+    currentKey = key
+    keyExpiration = expiration
+    keyBox.Text = key
+    
+    -- Save to data store (pseudo-code)
+    -- For a real implementation, you'd use DataStoreService
+    pcall(function()
+        local data = {
+            key = key,
+            expiration = expiration
+        }
+        -- Simulate saving
+        _G.LuexKeyData = data
+    end)
+end
+
+local function loadKey()
+    -- Load from data store (pseudo-code)
+    pcall(function()
+        if _G.LuexKeyData then
+            local data = _G.LuexKeyData
+            if data.expiration > os.time() then
+                currentKey = data.key
+                keyExpiration = data.expiration
+                keyBox.Text = currentKey
+                return true
+            end
+        end
+    end)
+    return false
+end
+
+local function updateTimeDisplay()
+    if keyExpiration then
+        local remaining = keyExpiration - os.time()
+        if remaining > 0 then
+            local hours = math.floor(remaining / 3600)
+            local minutes = math.floor((remaining % 3600) / 60)
+            local seconds = remaining % 60
+            timeLabel.Text = string.format("Key Time Remaining: %02d:%02d:%02d", hours, minutes, seconds)
+        else
+            timeLabel.Text = "Key Time Remaining: EXPIRED"
+            currentKey = nil
+            keyExpiration = nil
+        end
+    else
+        timeLabel.Text = "Key Time Remaining: 00:00:00"
+    end
+end
+
+local function validateCode(inputCode)
+    for link, codes in pairs(validCodes) do
+        for _, code in ipairs(codes) do
+            if code == inputCode and not enteredCodes[code] then
+                enteredCodes[code] = true
+                
+                -- Check if all codes for this link are used
+                local allUsed = true
+                for _, c in ipairs(codes) do
+                    if not enteredCodes[c] then
+                        allUsed = false
+                        break
+                    end
+                end
+                
+                if allUsed then
+                    showNotification("All codes from this link have been used!", 3)
+                end
+                
+                return true
+            end
+        end
+    end
+    return false
+end
+
+local function activatePremium()
+    statusLabel.Text = "Status: Activating premium..."
+    
+    -- Animation
+    local pulseTween = TweenService:Create(
+        header,
+        TweenInfo.new(0.5, Enum.EasingStyle.Quad, Enum.EasingDirection.Out, -1, true),
+        {BackgroundColor3 = Color3.fromRGB(255, 50, 50)}
+    )
+    pulseTween:Play()
+    
+    -- Wait 3 seconds
+    for i = 3, 1, -1 do
+        statusLabel.Text = "Status: Premium activating in " .. i .. "..."
+        task.wait(1)
+    end
+    
+    pulseTween:Cancel()
+    header.BackgroundColor3 = Color3.fromRGB(200, 0, 0)
+    
+    -- Set key and load script
+    getgenv().LuexKey = "prenium"
+    statusLabel.Text = "Status: Premium activated! Loading script..."
+    
+    -- Load the external script
+    local success, err = pcall(function()
+getgenv().LuexKey = "luexprenium"
+        loadstring(game:HttpGet('https://raw.githubusercontent.com/trantung120213123/Hackroblox/refs/heads/main/Luexhubreal.lua'))()
+    end)
+    
+    if success then
+        statusLabel.Text = "Status: Script loaded successfully!"
+        
+        -- Close button appears after activation
+        closeButton.Visible = true
+        
+        -- Fade out after 3 seconds
+        task.wait(3)
+        local fadeTween = TweenService:Create(
+            mainFrame,
+            TweenInfo.new(1, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
+            {Size = UDim2.new(0, 0, 0, 0), Position = UDim2.new(0.5, 0, 0.5, 0)}
+        )
+        fadeTween:Play()
+        fadeTween.Completed:Connect(function()
+            screenGui:Destroy()
+        end)
+    else
+        statusLabel.Text = "Status: Error loading script: " .. tostring(err)
+    end
+end
+
+-- Event handlers
+getSmsButton.MouseButton1Click:Connect(function()
+    local link = getNextLink()
+    setclipboard(link)
+    showNotification("Link copied to clipboard: " .. link, 3)
+end)
+
+codeBox.FocusLost:Connect(function(enterPressed)
+    if enterPressed and codeBox.Text ~= "" then
+        if validateCode(codeBox.Text) then
+            showNotification("Code accepted!", 2)
+            
+            if currentKey then
+                -- Show options if key already exists
+                optionsContainer.Visible = true
+                statusLabel.Text = "Status: Code accepted! Choose an option for your existing key."
+            else
+                -- Generate new key
+                local newKey = generateKey()
+                local expiration = os.time() + KEY_DURATION
+                saveKey(newKey, expiration)
+                statusLabel.Text = "Status: New key generated! You can now activate premium."
+            end
+            
+            codeBox.Text = ""
+        else
+            showNotification("Invalid or already used code!", 2)
+            statusLabel.Text = "Status: Invalid code. Please try another one."
+        end
+    end
+end)
+
+keyBox.FocusLost:Connect(function(enterPressed)
+    if enterPressed and keyBox.Text ~= "" then
+        if keyBox.Text == currentKey then
+            activatePremium()
+        else
+            showNotification("Invalid key!", 2)
+            statusLabel.Text = "Status: Invalid key. Please enter a valid key."
+        end
+    end
+end)
+
+extendButton.MouseButton1Click:Connect(function()
+    if currentKey and keyExpiration then
+        keyExpiration = keyExpiration + KEY_DURATION
+        saveKey(currentKey, keyExpiration)
+        showNotification("Key extended by 8 hours!", 3)
+        statusLabel.Text = "Status: Key time extended. You can now activate premium."
+        optionsContainer.Visible = false
+    end
+end)
+
+resetButton.MouseButton1Click:Connect(function()
+    local newKey = generateKey()
+    local expiration = os.time() + KEY_DURATION
+    saveKey(newKey, expiration)
+    showNotification("New key generated!", 3)
+    statusLabel.Text = "Status: New key generated! You can now activate premium."
+    optionsContainer.Visible = false
+end)
+
+closeButton.MouseButton1Click:Connect(function()
+    screenGui:Destroy()
+end)
+
+-- Make window draggable
+do
+    local dragging
+    local dragInput
+    local dragStart
+    local startPos
+
+    local function update(input)
+        local delta = input.Position - dragStart
+        mainFrame.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
+    end
+
+    header.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+            dragging = true
+            dragStart = input.Position
+            startPos = mainFrame.Position
+            
+            input.Changed:Connect(function()
+                if input.UserInputState == Enum.UserInputState.End then
+                    dragging = false
+                end
+            end)
+        end
+    end)
+
+    header.InputChanged:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
+            dragInput = input
+        end
+    end)
+
+    UserInputService.InputChanged:Connect(function(input)
+        if input == dragInput and dragging then
+            update(input)
+        end
+    end)
+end
+
+-- Initialize
+if loadKey() then
+    statusLabel.Text = "Status: Existing key loaded. You can activate premium."
+else
+    statusLabel.Text = "Status: Ready to activate. Get an SMS code to begin."
+end
+
+-- Time update loop
+task.spawn(function()
+    while screenGui and screenGui.Parent do
+        updateTimeDisplay()
+        task.wait(1)
+    end
+end)
+
+-- Animation on open
+mainFrame.Size = UDim2.new(0, 0, 0, 0)
+local openTween = TweenService:Create(
+    mainFrame,
+    TweenInfo.new(0.5, Enum.EasingStyle.Back, Enum.EasingDirection.Out),
+    {Size = UDim2.new(0, 400, 0, 500)}
+)
+openTween:Play()
