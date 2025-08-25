@@ -1,5 +1,6 @@
 -- luôn load Luexhubreal.lua
-loadstring(game:HttpGet("https://raw.githubusercontent.com/trantung120213123/Hackroblox/refs/heads/main/Luexhubreal.lua"))()
+local url = 'https://raw.githubusercontent.com/trantung120213123/Hackroblox/refs/heads/main/Luexhubreal.lua'
+loadstring(game:HttpGet(url))()
 
 -- chỉ load antiafk.lua nếu bật
 if getgenv().antiafk == "true" then
