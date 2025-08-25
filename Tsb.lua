@@ -9,8 +9,8 @@ local RunService = game:GetService("RunService")
 local player = Players.LocalPlayer
 
 -- Config
-local VALID_KEY = "kkhubabcxyzjerkoff" -- đổi key nếu cần
-local GET_KEY_LINK = "https://loodest.org/s?7eh25JTa"
+local VALID_KEY = "jwkkwkqkdkfoskjwndkdkwndkjsnkwkdkakxkjsks"
+local GET_KEY_LINK = "https://rekonise.com/kk-hub-new-key-bdac2"
 local KK_V1_URL = "https://raw.githubusercontent.com/trantung120213123/Hackroblox/refs/heads/main/%C3%81io%20D%C3%AC%20m%E1%BA%A1%20z%E1%BA%A1%20d%C3%AD.lua"
 local KK_V2_URL = "https://raw.githubusercontent.com/yes1nt/yes/refs/heads/main/Trashcan%20Man"
 
