@@ -8,7 +8,7 @@ local userId = tostring(player.UserId)
 local username = player.Name
 
 -- URL server Render
-local serverURL = "https://qqwq-6.onrender.com"
+local serverURL = "https://qqwq-5.onrender.com/"
 local websiteURL = "https://your-website.com" -- Thay bằng website thực tế của bạn
 
 -- Tạo GUI
