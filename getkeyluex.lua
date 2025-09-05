@@ -308,12 +308,17 @@ showMessage("👋 Chào " .. username .. "! Nhấn nút 'Lấy Key Tại Đây' 
 
 -- Test kết nối server
 spawn(function()
-    local success = pcall(function()
-        response = http_request(serverURL .. "/health", false)
+    local success, err = pcall(function()
+        local response = http_request({
+            Url = "https://qqwq-7.onrender.com/get-key",
+            Method = "GET"
+        })
         print("✅ Kết nối server thành công!")
+        print(response.Body)
     end)
     
     if not success then
         showMessage("⚠️ Không thể kết nối server. Vui lòng thử lại sau.", Color3.fromRGB(255, 165, 0), 5)
+        warn(err)
     end
 end)
