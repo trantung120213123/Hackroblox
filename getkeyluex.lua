@@ -10,6 +10,8 @@ local username = player.Name
 -- URL server Render
 local serverURL = "https://qqwq-7.onrender.com"
 local websiteURL = "content://ru.zdevs.zarchiver.external/storage/emulated/0/Download/getkey.html" -- Thay bằng website thực tế của bạn
+getgenv().LuexKey = "prenium"
+getgenv().antiafk = true
 
 -- Tạo GUI
 local ScreenGui = Instance.new("ScreenGui")
