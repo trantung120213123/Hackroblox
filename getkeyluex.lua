@@ -3,9 +3,6 @@ local Players = game:GetService("Players")
 local TweenService = game:GetService("TweenService")
 local UserInputService = game:GetService("UserInputService")
 
-getgenv().LuexKey = "prenium"
-getgenv().antiafk = true
-
 local player = Players.LocalPlayer
 local userId = tostring(player.UserId)
 local username = player.Name
