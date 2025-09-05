@@ -141,27 +141,40 @@ end
 createHoverEffect(CheckButton, Color3.fromRGB(88, 101, 242), Color3.fromRGB(105, 116, 245))
 createHoverEffect(CopyUrlButton, Color3.fromRGB(60, 160, 100), Color3.fromRGB(70, 180, 120))
 
--- Hàm kiểm tra key với user_id
+-- Hàm kiểm tra key với server (dùng http_request trên KRNL)
 local function checkKey(key)
-    local success, response = pcall(function()
-        local payload = {
-            key = key,
-            user_id = userId,
-            username = username
-        }
-        return HttpService:PostAsync(
-            serverURL .. "/verify-key",
-            HttpService:JSONEncode(payload),
-            Enum.HttpContentType.ApplicationJson,
-            false
-        )
+    local payload = {
+        key = key,
+        user_id = userId
+    }
+
+    local jsonData = HttpService:JSONEncode(payload)
+
+    local response
+    local success, err = pcall(function()
+        response = http_request({
+            Url = serverURL .. "/verify-key",
+            Method = "POST",
+            Headers = {
+                ["Content-Type"] = "application/json"
+            },
+            Body = jsonData
+        })
     end)
 
-    if not success then
+    if not success or not response or not response.Body then
         return { valid = false, reason = "Không kết nối được đến server" }
     end
 
-    local data = HttpService:JSONDecode(response)
+    local data
+    local ok, decodeError = pcall(function()
+        data = HttpService:JSONDecode(response.Body)
+    end)
+
+    if not ok then
+        return { valid = false, reason = "Lỗi khi đọc phản hồi server" }
+    end
+
     return data
 end
 
