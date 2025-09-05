@@ -8,7 +8,7 @@ local userId = tostring(player.UserId)
 local username = player.Name
 
 -- URL server Render
-local serverURL = "https://qqwq-4.onrender.com"
+local serverURL = "https://qqwq-6.onrender.com"
 local websiteURL = "https://your-website.com" -- Thay bằng website thực tế của bạn
 
 -- Tạo GUI
@@ -307,7 +307,7 @@ showMessage("👋 Chào " .. username .. "! Nhấn nút 'Lấy Key Tại Đây' 
 -- Test kết nối server
 spawn(function()
     local success = pcall(function()
-        local response = HttpService:GetAsync(serverURL .. "/health", false)
+       local response = http_request(serverURL .. "/health", false)
         print("✅ Kết nối server thành công!")
     end)
     
