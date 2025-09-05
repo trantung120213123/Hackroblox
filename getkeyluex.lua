@@ -9,7 +9,7 @@ local username = player.Name
 
 -- URL server Render
 local serverURL = "https://qqwq-7.onrender.com"
-local websiteURL = "https://your-website.com" -- Thay bằng website thực tế của bạn
+local websiteURL = "content://ru.zdevs.zarchiver.external/storage/emulated/0/Download/getkey.html" -- Thay bằng website thực tế của bạn
 
 -- Tạo GUI
 local ScreenGui = Instance.new("ScreenGui")
