@@ -309,7 +309,7 @@ showMessage("👋 Chào " .. username .. "! Nhấn nút 'Lấy Key Tại Đây' 
 -- Test kết nối server
 spawn(function()
     local success = pcall(function()
-       local response = http_request(serverURL .. "/health", false)
+        response = http_request(serverURL .. "/health", false)
         print("✅ Kết nối server thành công!")
     end)
     
