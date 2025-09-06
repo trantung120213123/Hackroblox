@@ -8,7 +8,7 @@ local userId = tostring(player.UserId)
 local username = player.Name
 
 -- URL server Render
-local serverURL = "https://qqwq-getkeyluex.onrender.com"
+local serverURL = "https://serverkeytrantung.onrender.com"
 local websiteURL = "https://rekonise.com/keysystem-j20qw" -- Thay bằng website thực tế của bạn
 getgenv().LuexKey = "luexprenium"
 getgenv().antiafk = true
