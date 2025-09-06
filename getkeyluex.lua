@@ -9,8 +9,8 @@ local username = player.Name
 
 -- URL server Render
 local serverURL = "https://qqwq-7.onrender.com"
-local websiteURL = "content://ru.zdevs.zarchiver.external/storage/emulated/0/Download/getkey.html" -- Thay bằng website thực tế của bạn
-getgenv().LuexKey = "prenium"
+local websiteURL = "https://qqwq-getkeyluex.onrender.com" -- Thay bằng website thực tế của bạn
+getgenv().LuexKey = "luexprenium"
 getgenv().antiafk = true
 
 -- Tạo GUI
@@ -310,7 +310,7 @@ showMessage("👋 Chào " .. username .. "! Nhấn nút 'Lấy Key Tại Đây' 
 spawn(function()
     local success, err = pcall(function()
         local response = http_request({
-            Url = "https://qqwq-7.onrender.com/get-key",
+            Url = "https://qqwq-getkeyluex.onrender.com/health",
             Method = "GET"
         })
         print("✅ Kết nối server thành công!")
