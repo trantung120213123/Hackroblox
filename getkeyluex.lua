@@ -310,7 +310,7 @@ showMessage("👋 Chào " .. username .. "! Nhấn nút 'Lấy Key Tại Đây' 
 spawn(function()
     local success, err = pcall(function()
         local response = http_request({
-            Url = "https://qqwq-getkeyluex.onrender.com/health",
+            Url = "https://serverkeytrantung.onrender.com/health",
             Method = "GET"
         })
         print("✅ Kết nối server thành công!")
