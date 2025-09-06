@@ -8,8 +8,8 @@ local userId = tostring(player.UserId)
 local username = player.Name
 
 -- URL server Render
-local serverURL = "https://qqwq-7.onrender.com"
-local websiteURL = "https://qqwq-getkeyluex.onrender.com" -- Thay bằng website thực tế của bạn
+local serverURL = "https://qqwq-getkeyluex.onrender.com"
+local websiteURL = "https://newgetkey.onrender.com" -- Thay bằng website thực tế của bạn
 getgenv().LuexKey = "luexprenium"
 getgenv().antiafk = true
 
