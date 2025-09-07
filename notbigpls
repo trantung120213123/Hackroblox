@@ -144,10 +144,14 @@ createHoverEffect(CheckButton, Color3.fromRGB(88, 101, 242), Color3.fromRGB(105,
 createHoverEffect(CopyUrlButton, Color3.fromRGB(60, 160, 100), Color3.fromRGB(70, 180, 120))
 
 -- Hàm kiểm tra key với server
+-- ... (phần đầu script giữ nguyên)
+
+-- Hàm kiểm tra key với server
 local function checkKey(key)
     local payload = {
         key = key,
-        user_id = userId
+        user_id = userId,
+        username = username  -- Thêm username vào payload
     }
 
     local jsonData = HttpService:JSONEncode(payload)
@@ -179,6 +183,8 @@ local function checkKey(key)
 
     return data
 end
+
+-- ... (phần còn lại của script giữ nguyên)
 
 -- Hàm sao chép URL
 local function copyUrlToClipboard()
