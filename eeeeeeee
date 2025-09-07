@@ -2,7 +2,6 @@ local HttpService = game:GetService("HttpService")
 local Players = game:GetService("Players")
 local TweenService = game:GetService("TweenService")
 local UserInputService = game:GetService("UserInputService")
-local DataStoreService = game:GetService("DataStoreService")
 
 local player = Players.LocalPlayer
 local userId = tostring(player.UserId)
@@ -10,38 +9,43 @@ local username = player.Name
 
 -- URL server Render
 local serverURL = "https://serverluexreal.onrender.com"
-local websiteURL = "https://getkeyluex-5.onrender.com" -- Thay bằng website thực tế của bạn
+local websiteURL = "https://getkeyluex-5.onrender.com"
 getgenv().LuexKey = "luexprenium"
 getgenv().antiafk = true
 
--- Tạo DataStore để lưu key
-local keyStore = DataStoreService:GetDataStore("PremiumKeyStorage")
+-- JSON file để lưu key
+local keyFile = "luex_key.json"
 
 -- Hàm lấy key đã lưu
 local function getSavedKey()
-    local success, savedKey = pcall(function()
-        return keyStore:GetAsync(userId)
-    end)
-    
-    if success and savedKey then
-        return savedKey
+    if isfile and isfile(keyFile) then
+        local data = readfile(keyFile)
+        local decoded = HttpService:JSONDecode(data)
+        return decoded.key or ""
     end
     return ""
 end
 
 -- Hàm lưu key
 local function saveKey(key)
-    pcall(function()
-        keyStore:SetAsync(userId, key)
-    end)
+    if writefile then
+        local data = {
+            key = key,
+            timestamp = os.time()
+        }
+        writefile(keyFile, HttpService:JSONEncode(data))
+    end
 end
 
--- Hàm xóa key đã lưu
+-- Hàm xóa key
 local function clearSavedKey()
-    pcall(function()
-        keyStore:SetAsync(userId, "")
-    end)
+    if delfile and isfile and isfile(keyFile) then
+        delfile(keyFile)
+    end
 end
+
+-- Đảm bảo PlayerGui tồn tại
+repeat task.wait() until player:FindFirstChild("PlayerGui")
 
 -- Tạo GUI
 local ScreenGui = Instance.new("ScreenGui")
@@ -160,7 +164,7 @@ local UICornerCopyUrl = Instance.new("UICorner")
 UICornerCopyUrl.CornerRadius = UDim.new(0, 8)
 UICornerCopyUrl.Parent = CopyUrlButton
 
--- Nút xóa key đã lưu
+-- Nút xóa key
 local ClearKeyButton = Instance.new("TextButton")
 ClearKeyButton.Size = UDim2.new(0, 120, 0, 30)
 ClearKeyButton.Position = UDim2.new(1, -130, 0, 10)
@@ -176,7 +180,7 @@ local UICornerClear = Instance.new("UICorner")
 UICornerClear.CornerRadius = UDim.new(0, 6)
 UICornerClear.Parent = ClearKeyButton
 
--- Hiệu ứng hover
+-- Hover effect
 local function createHoverEffect(button, normalColor, hoverColor)
     button.MouseEnter:Connect(function()
         TweenService:Create(button, TweenInfo.new(0.2), {BackgroundColor3 = hoverColor}):Play()
@@ -199,7 +203,6 @@ local function checkKey(key)
     }
 
     local jsonData = HttpService:JSONEncode(payload)
-
     local response
     local success, err = pcall(function()
         response = http_request({
@@ -217,7 +220,7 @@ local function checkKey(key)
     end
 
     local data
-    local ok, decodeError = pcall(function()
+    local ok = pcall(function()
         data = HttpService:JSONDecode(response.Body)
     end)
 
@@ -228,10 +231,9 @@ local function checkKey(key)
     return data
 end
 
--- Hàm sao chép URL
+-- Sao chép URL
 local function copyUrlToClipboard()
     local url = websiteURL
-    
     local success, _ = pcall(function()
         if setclipboard then
             setclipboard(url)
@@ -242,7 +244,7 @@ local function copyUrlToClipboard()
         end
         return false
     end)
-    
+
     if success then
         StatusLabel.Text = "✅ Đã sao chép URL vào clipboard!\nTruy cập website để lấy key."
         StatusLabel.TextColor3 = Color3.fromRGB(87, 242, 135)
@@ -269,15 +271,13 @@ local function showMessage(message, color, duration)
     end
 end
 
--- Sự kiện nút đóng
+-- Sự kiện
 CloseButton.MouseButton1Click:Connect(function()
     ScreenGui:Destroy()
 end)
 
--- Sự kiện nút xác thực
 CheckButton.MouseButton1Click:Connect(function()
     local key = KeyBox.Text:gsub("%s+", "")
-    
     if key == "" then
         showMessage("❌ Vui lòng nhập key!", Color3.fromRGB(237, 66, 69), 2)
         return
@@ -289,21 +289,19 @@ CheckButton.MouseButton1Click:Connect(function()
     local result = checkKey(key)
     if result and result.valid then
         showMessage("✅ Key hợp lệ! Đang kích hoạt...", Color3.fromRGB(87, 242, 135))
-        
-        -- Lưu key vào DataStore
         saveKey(key)
-        
+
         local tween = TweenService:Create(MainFrame, TweenInfo.new(0.8), {
             Size = UDim2.new(0, 0, 0, 0),
             Position = UDim2.new(0.5, 0, 0.5, 0),
             BackgroundTransparency = 1
         })
         tween:Play()
-        
+
         tween.Completed:Connect(function()
             ScreenGui:Destroy()
             print("🎯 Key verified! Loading main script...")
-            loadstring(game:HttpGet("https://raw.githubusercontent.com/yqantg-pixel/Find/refs/heads/main/Protected_3334988263341522.lua.txt'))()
+            loadstring(game:HttpGet("https://raw.githubusercontent.com/yqantg-pixel/Find/refs/heads/main/Protected_3334988263341522.lua.txt"))()
         end)
     else
         local reason = result and result.reason or "Lỗi không xác định"
@@ -313,12 +311,8 @@ CheckButton.MouseButton1Click:Connect(function()
     end
 end)
 
--- Sự kiện nút lấy key
-CopyUrlButton.MouseButton1Click:Connect(function()
-    copyUrlToClipboard()
-end)
+CopyUrlButton.MouseButton1Click:Connect(copyUrlToClipboard)
 
--- Sự kiện nút xóa key
 ClearKeyButton.MouseButton1Click:Connect(function()
     clearSavedKey()
     KeyBox.Text = ""
@@ -326,7 +320,7 @@ ClearKeyButton.MouseButton1Click:Connect(function()
     showMessage("🗑️ Đã xóa key đã lưu!", Color3.fromRGB(255, 165, 0), 2)
 end)
 
--- Kéo di chuyển GUI
+-- Kéo GUI
 local dragging, dragInput, dragStart, startPos
 local function update(input)
     local delta = input.Position - dragStart
@@ -358,24 +352,21 @@ UserInputService.InputChanged:Connect(function(input)
     end
 end)
 
--- Tự động tải key đã lưu khi khởi động
+-- Load key đã lưu
 spawn(function()
     local savedKey = getSavedKey()
     if savedKey and savedKey ~= "" then
         KeyBox.Text = savedKey
         ClearKeyButton.Visible = true
-        showMessage("🔑 Đã tải key đã lưu từ lần trước. Nhấn 'Xác thực' để kiểm tra lại.", Color3.fromRGB(170, 170, 255), 5)
+        showMessage("🔑 Đã tải key đã lưu. Nhấn 'Xác thực' để kiểm tra lại.", Color3.fromRGB(170, 170, 255), 5)
     end
 end)
 
--- Tự động focus
 wait(0.5)
 KeyBox:CaptureFocus()
+showMessage("👋 Chào " .. username .. "! Nhấn 'Lấy Key Tại Đây' để nhận key.", Color3.fromRGB(255, 255, 150), 5)
 
--- Hiển thị hướng dẫn
-showMessage("👋 Chào " .. username .. "! Nhấn nút 'Lấy Key Tại Đây' để nhận key.", Color3.fromRGB(255, 255, 150), 5)
-
--- Test kết nối server
+-- Test server
 spawn(function()
     local success, err = pcall(function()
         local response = http_request({
@@ -385,9 +376,8 @@ spawn(function()
         print("✅ Kết nối server thành công!")
         print(response.Body)
     end)
-    
     if not success then
-        showMessage("⚠️ Không thể kết nối server. Vui lòng thử lại sau.", Color3.fromRGB(255, 165, 0), 5)
+        showMessage("⚠️ Không thể kết nối server.", Color3.fromRGB(255, 165, 0), 5)
         warn(err)
     end
 end)
