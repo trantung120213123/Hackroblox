@@ -9,7 +9,7 @@ local username = player.Name
 
 -- URL server Render
 local serverURL = "https://serverluexreal.onrender.com"
-local websiteURL = "https://getkeyluex-3.onrender.com" -- Thay bằng website thực tế của bạn
+local websiteURL = "https://getkeyluex-5.onrender.com" -- Thay bằng website thực tế của bạn
 getgenv().LuexKey = "luexprenium"
 getgenv().antiafk = true
 
