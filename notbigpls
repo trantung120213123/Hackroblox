@@ -2,6 +2,7 @@ local HttpService = game:GetService("HttpService")
 local Players = game:GetService("Players")
 local TweenService = game:GetService("TweenService")
 local UserInputService = game:GetService("UserInputService")
+local DataStoreService = game:GetService("DataStoreService")
 
 local player = Players.LocalPlayer
 local userId = tostring(player.UserId)
@@ -12,6 +13,35 @@ local serverURL = "https://serverluexreal.onrender.com"
 local websiteURL = "https://getkeyluex-5.onrender.com" -- Thay bằng website thực tế của bạn
 getgenv().LuexKey = "luexprenium"
 getgenv().antiafk = true
+
+-- Tạo DataStore để lưu key
+local keyStore = DataStoreService:GetDataStore("PremiumKeyStorage")
+
+-- Hàm lấy key đã lưu
+local function getSavedKey()
+    local success, savedKey = pcall(function()
+        return keyStore:GetAsync(userId)
+    end)
+    
+    if success and savedKey then
+        return savedKey
+    end
+    return ""
+end
+
+-- Hàm lưu key
+local function saveKey(key)
+    pcall(function()
+        keyStore:SetAsync(userId, key)
+    end)
+end
+
+-- Hàm xóa key đã lưu
+local function clearSavedKey()
+    pcall(function()
+        keyStore:SetAsync(userId, "")
+    end)
+end
 
 -- Tạo GUI
 local ScreenGui = Instance.new("ScreenGui")
@@ -130,6 +160,22 @@ local UICornerCopyUrl = Instance.new("UICorner")
 UICornerCopyUrl.CornerRadius = UDim.new(0, 8)
 UICornerCopyUrl.Parent = CopyUrlButton
 
+-- Nút xóa key đã lưu
+local ClearKeyButton = Instance.new("TextButton")
+ClearKeyButton.Size = UDim2.new(0, 120, 0, 30)
+ClearKeyButton.Position = UDim2.new(1, -130, 0, 10)
+ClearKeyButton.Text = "🗑️ Xóa Key"
+ClearKeyButton.TextSize = 12
+ClearKeyButton.Font = Enum.Font.Gotham
+ClearKeyButton.BackgroundColor3 = Color3.fromRGB(80, 80, 85)
+ClearKeyButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+ClearKeyButton.Visible = false
+ClearKeyButton.Parent = TopBar
+
+local UICornerClear = Instance.new("UICorner")
+UICornerClear.CornerRadius = UDim.new(0, 6)
+UICornerClear.Parent = ClearKeyButton
+
 -- Hiệu ứng hover
 local function createHoverEffect(button, normalColor, hoverColor)
     button.MouseEnter:Connect(function()
@@ -142,16 +188,14 @@ end
 
 createHoverEffect(CheckButton, Color3.fromRGB(88, 101, 242), Color3.fromRGB(105, 116, 245))
 createHoverEffect(CopyUrlButton, Color3.fromRGB(60, 160, 100), Color3.fromRGB(70, 180, 120))
-
--- Hàm kiểm tra key với server
--- ... (phần đầu script giữ nguyên)
+createHoverEffect(ClearKeyButton, Color3.fromRGB(80, 80, 85), Color3.fromRGB(100, 100, 105))
 
 -- Hàm kiểm tra key với server
 local function checkKey(key)
     local payload = {
         key = key,
         user_id = userId,
-        username = username  -- Thêm username vào payload
+        username = username
     }
 
     local jsonData = HttpService:JSONEncode(payload)
@@ -183,8 +227,6 @@ local function checkKey(key)
 
     return data
 end
-
--- ... (phần còn lại của script giữ nguyên)
 
 -- Hàm sao chép URL
 local function copyUrlToClipboard()
@@ -248,6 +290,9 @@ CheckButton.MouseButton1Click:Connect(function()
     if result and result.valid then
         showMessage("✅ Key hợp lệ! Đang kích hoạt...", Color3.fromRGB(87, 242, 135))
         
+        -- Lưu key vào DataStore
+        saveKey(key)
+        
         local tween = TweenService:Create(MainFrame, TweenInfo.new(0.8), {
             Size = UDim2.new(0, 0, 0, 0),
             Position = UDim2.new(0.5, 0, 0.5, 0),
@@ -271,6 +316,14 @@ end)
 -- Sự kiện nút lấy key
 CopyUrlButton.MouseButton1Click:Connect(function()
     copyUrlToClipboard()
+end)
+
+-- Sự kiện nút xóa key
+ClearKeyButton.MouseButton1Click:Connect(function()
+    clearSavedKey()
+    KeyBox.Text = ""
+    ClearKeyButton.Visible = false
+    showMessage("🗑️ Đã xóa key đã lưu!", Color3.fromRGB(255, 165, 0), 2)
 end)
 
 -- Kéo di chuyển GUI
@@ -302,6 +355,16 @@ end)
 UserInputService.InputChanged:Connect(function(input)
     if input == dragInput and dragging then
         update(input)
+    end
+end)
+
+-- Tự động tải key đã lưu khi khởi động
+spawn(function()
+    local savedKey = getSavedKey()
+    if savedKey and savedKey ~= "" then
+        KeyBox.Text = savedKey
+        ClearKeyButton.Visible = true
+        showMessage("🔑 Đã tải key đã lưu từ lần trước. Nhấn 'Xác thực' để kiểm tra lại.", Color3.fromRGB(170, 170, 255), 5)
     end
 end)
 
