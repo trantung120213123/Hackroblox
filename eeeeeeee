@@ -303,7 +303,7 @@ CheckButton.MouseButton1Click:Connect(function()
         tween.Completed:Connect(function()
             ScreenGui:Destroy()
             print("🎯 Key verified! Loading main script...")
-            loadstring(game:HttpGet("https://raw.githubusercontent.com/trantung120213123/Hackroblox/refs/heads/main/luexver1.9.lua"))()
+            loadstring(game:HttpGet("https://raw.githubusercontent.com/yqantg-pixel/Find/refs/heads/main/Protected_3334988263341522.lua.txt'))()
         end)
     else
         local reason = result and result.reason or "Lỗi không xác định"
