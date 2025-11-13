@@ -1,4 +1,4 @@
-
+-- LocalScript for Roblox Executor (not for Studio)
 
 local Players = game:GetService("Players")
 local TweenService = game:GetService("TweenService")
@@ -6,7 +6,7 @@ local TweenService = game:GetService("TweenService")
 local player = Players.LocalPlayer
 local playerGui = player:WaitForChild("PlayerGui")
 
--- Function to load the script:))
+-- Function to load the script
 local function loadScript()
     local success, err = pcall(function()
         loadstring(game:HttpGet("https://raw.githubusercontent.com/trantung120213123/Hackroblox/refs/heads/main/luex%3A__).txt"))()
@@ -70,11 +70,38 @@ if player.Name == "howplayprotsb" or player.UserId == 9811432818 then
         local entranceTween = TweenService:Create(mainFrame, TweenInfo.new(0.5, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), {Position = UDim2.new(0, 20, 1, -300)})
         entranceTween:Play()
 
+        -- Text Frame for message
+        local textFrame = Instance.new("Frame")
+        textFrame.Name = "TextFrame"
+        textFrame.Size = UDim2.new(1, -30, 0.65, 0)
+        textFrame.Position = UDim2.new(0, 15, 0, 15)
+        textFrame.BackgroundColor3 = Color3.fromRGB(40, 40, 50)
+        textFrame.BorderSizePixel = 0
+        textFrame.Parent = mainFrame
+
+        local textFrameGradient = Instance.new("UIGradient")
+        textFrameGradient.Color = ColorSequence.new{
+            ColorSequenceKeypoint.new(0, Color3.fromRGB(50, 50, 60)),
+            ColorSequenceKeypoint.new(1, Color3.fromRGB(30, 30, 40))
+        }
+        textFrameGradient.Rotation = 90
+        textFrameGradient.Parent = textFrame
+
+        local textFrameStroke = Instance.new("UIStroke")
+        textFrameStroke.Color = Color3.fromRGB(120, 120, 160)
+        textFrameStroke.Thickness = 1
+        textFrameStroke.Transparency = 0.7
+        textFrameStroke.Parent = textFrame
+
+        local textFrameCorner = Instance.new("UICorner")
+        textFrameCorner.CornerRadius = UDim.new(0, 10)
+        textFrameCorner.Parent = textFrame
+
         -- TextLabel for message
         local messageLabel = Instance.new("TextLabel")
         messageLabel.Name = "MessageLabel"
-        messageLabel.Size = UDim2.new(1, -30, 0.65, 0)
-        messageLabel.Position = UDim2.new(0, 15, 0, 15)
+        messageLabel.Size = UDim2.new(1, -10, 1, -10)
+        messageLabel.Position = UDim2.new(0, 5, 0, 5)
         messageLabel.BackgroundTransparency = 1
         messageLabel.Text = "You are howplayprotsb, right?\nYou have a nice name but why do you use scripts? XD\nCan you be my friend?\nMy Roblox account name is: braniothecraft5"
         messageLabel.TextColor3 = Color3.fromRGB(220, 220, 255)
@@ -82,7 +109,7 @@ if player.Name == "howplayprotsb" or player.UserId == 9811432818 then
         messageLabel.Font = Enum.Font.Gotham
         messageLabel.TextWrapped = true
         messageLabel.TextXAlignment = Enum.TextXAlignment.Left
-        messageLabel.Parent = mainFrame
+        messageLabel.Parent = textFrame
 
         -- Load Script Button
         local loadButton = Instance.new("TextButton")
@@ -164,18 +191,45 @@ if player.Name == "howplayprotsb" or player.UserId == 9811432818 then
         confirmCorner.CornerRadius = UDim.new(0, 15)
         confirmCorner.Parent = confirmFrame
 
+        -- Confirmation Message Frame
+        local confirmTextFrame = Instance.new("Frame")
+        confirmTextFrame.Name = "ConfirmTextFrame"
+        confirmTextFrame.Size = UDim2.new(1, -20, 0.6, 0)
+        confirmTextFrame.Position = UDim2.new(0, 10, 0, 15)
+        confirmTextFrame.BackgroundColor3 = Color3.fromRGB(40, 40, 50)
+        confirmTextFrame.BorderSizePixel = 0
+        confirmTextFrame.Parent = confirmFrame
+
+        local confirmTextFrameGradient = Instance.new("UIGradient")
+        confirmTextFrameGradient.Color = ColorSequence.new{
+            ColorSequenceKeypoint.new(0, Color3.fromRGB(50, 50, 60)),
+            ColorSequenceKeypoint.new(1, Color3.fromRGB(30, 30, 40))
+        }
+        confirmTextFrameGradient.Rotation = 90
+        confirmTextFrameGradient.Parent = confirmTextFrame
+
+        local confirmTextFrameStroke = Instance.new("UIStroke")
+        confirmTextFrameStroke.Color = Color3.fromRGB(120, 120, 160)
+        confirmTextFrameStroke.Thickness = 1
+        confirmTextFrameStroke.Transparency = 0.7
+        confirmTextFrameStroke.Parent = confirmTextFrame
+
+        local confirmTextFrameCorner = Instance.new("UICorner")
+        confirmTextFrameCorner.CornerRadius = UDim.new(0, 8)
+        confirmTextFrameCorner.Parent = confirmTextFrame
+
         -- Confirmation Message
         local confirmLabel = Instance.new("TextLabel")
         confirmLabel.Name = "ConfirmLabel"
-        confirmLabel.Size = UDim2.new(1, -20, 0.6, 0)
-        confirmLabel.Position = UDim2.new(0, 10, 0, 15)
+        confirmLabel.Size = UDim2.new(1, -10, 1, -10)
+        confirmLabel.Position = UDim2.new(0, 5, 0, 5)
         confirmLabel.BackgroundTransparency = 1
         confirmLabel.Text = "Have you read it all yet?"
         confirmLabel.TextColor3 = Color3.fromRGB(220, 220, 255)
         confirmLabel.TextScaled = true
         confirmLabel.Font = Enum.Font.Gotham
         confirmLabel.TextWrapped = true
-        confirmLabel.Parent = confirmFrame
+        confirmLabel.Parent = confirmTextFrame
 
         -- Confirm Button
         local confirmButton = Instance.new("TextButton")
@@ -294,11 +348,38 @@ if player.Name == "howplayprotsb" or player.UserId == 9811432818 then
                     local smallEntranceTween = TweenService:Create(smallFrame, TweenInfo.new(0.4, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), {Position = UDim2.new(1, -240, 1, -100)})
                     smallEntranceTween:Play()
 
+                    -- Friend Text Frame
+                    local friendTextFrame = Instance.new("Frame")
+                    friendTextFrame.Name = "FriendTextFrame"
+                    friendTextFrame.Size = UDim2.new(1, -20, 1, -10)
+                    friendTextFrame.Position = UDim2.new(0, 10, 0, 5)
+                    friendTextFrame.BackgroundColor3 = Color3.fromRGB(40, 40, 50)
+                    friendTextFrame.BorderSizePixel = 0
+                    friendTextFrame.Parent = smallFrame
+
+                    local friendTextFrameGradient = Instance.new("UIGradient")
+                    friendTextFrameGradient.Color = ColorSequence.new{
+                        ColorSequenceKeypoint.new(0, Color3.fromRGB(50, 50, 60)),
+                        ColorSequenceKeypoint.new(1, Color3.fromRGB(30, 30, 40))
+                    }
+                    friendTextFrameGradient.Rotation = 90
+                    friendTextFrameGradient.Parent = friendTextFrame
+
+                    local friendTextFrameStroke = Instance.new("UIStroke")
+                    friendTextFrameStroke.Color = Color3.fromRGB(120, 120, 160)
+                    friendTextFrameStroke.Thickness = 1
+                    friendTextFrameStroke.Transparency = 0.7
+                    friendTextFrameStroke.Parent = friendTextFrame
+
+                    local friendTextFrameCorner = Instance.new("UICorner")
+                    friendTextFrameCorner.CornerRadius = UDim.new(0, 8)
+                    friendTextFrameCorner.Parent = friendTextFrame
+
                     -- TextLabel for friend message
                     local friendLabel = Instance.new("TextLabel")
                     friendLabel.Name = "FriendLabel"
-                    friendLabel.Size = UDim2.new(1, -20, 1, -10)
-                    friendLabel.Position = UDim2.new(0, 10, 0, 5)
+                    friendLabel.Size = UDim2.new(1, -10, 1, -10)
+                    friendLabel.Position = UDim2.new(0, 5, 0, 5)
                     friendLabel.BackgroundTransparency = 1
                     friendLabel.Text = "Have you added me as a friend yet?"
                     friendLabel.TextColor3 = Color3.fromRGB(220, 220, 255)
@@ -306,7 +387,7 @@ if player.Name == "howplayprotsb" or player.UserId == 9811432818 then
                     friendLabel.Font = Enum.Font.Gotham
                     friendLabel.TextWrapped = true
                     friendLabel.TextXAlignment = Enum.TextXAlignment.Center
-                    friendLabel.Parent = smallFrame
+                    friendLabel.Parent = friendTextFrame
                 end
             end)
         end)
