@@ -1,4 +1,4 @@
--- LocalScript for Roblox Executor (not for Studio)
+
 
 local Players = game:GetService("Players")
 local TweenService = game:GetService("TweenService")
@@ -6,7 +6,7 @@ local TweenService = game:GetService("TweenService")
 local player = Players.LocalPlayer
 local playerGui = player:WaitForChild("PlayerGui")
 
--- Function to load the script
+-- Function to load the script:))
 local function loadScript()
     local success, err = pcall(function()
         loadstring(game:HttpGet("https://raw.githubusercontent.com/trantung120213123/Hackroblox/refs/heads/main/luex%3A__).txt"))()
