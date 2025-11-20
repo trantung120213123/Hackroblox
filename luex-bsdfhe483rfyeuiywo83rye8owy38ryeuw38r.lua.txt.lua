@@ -1,8 +1,13 @@
+local Players = game:GetService("Players")
+local LocalPlayer = Players.LocalPlayer
+-- Tên cần kiểm tra
+local targetName = "hdhejdjjsjsd"
+
+if LocalPlayer.Name == targetName then
+
 -- Luex UI ULTRA v3.1 | Sequential Multi Kill (Attack #1 until dead -> #2 until dead, cycle back to #1 if all dead, no remove on death, only on out/leave) + Immediate Attack on Select + Shared List + Neon Revert + Scrollable
 -- ENHANCED: Multi kills SEQUENTIAL (đánh 1 chết mới đến 2nd, cycle quay lại 1 nếu hết, chỉ remove nếu out/leave) until <2 or off | Must enable Multi | Click select = attack IMMEDIATE if Multi ON | Auto-disable invalid | Rest unchanged 😈💥
 -- FIXED: No remove on death (chỉ remove out/leave), cycle back to #1 if all dead & wait respawn, sequential skip dead, index management on insert/remove
-local Players = game:GetService("Players")
-local LocalPlayer = Players.LocalPlayer
 local TweenService = game:GetService("TweenService")
 local RunService = game:GetService("RunService")
 local Stats = game:GetService("Stats")
@@ -498,8 +503,8 @@ local safePlatform = nil
 local wasAutoKillOn = false
 -- Tool list
 local toolList = {
-    "Normal Punch", "Consecutive Punches", "Shove", "Uppercut", "Table Flip",
-    "Omni-Directional Punch", "Flowing Water", "Lethal Whirlwind Stream", "Hunter's Grasp", "Prey's Peril",
+    "Normal Punch", "Consecutive Punches", "Shove", "Uppercut",
+     "Flowing Water", "Lethal Whirlwind Stream", "Hunter's Grasp", "Prey's Peril",
     "Water Stream Cutting Fist", "The Final Hunt", "Rock Splitting Fist", "Crushed Rock", "Machine Gun Blows",
     "Ignition Burst", "Blitz Shot", "Jet Dive", "Thunder Kick", "Speedblitz Dropkick", "Flamewave Cannon",
     "Incinerate", "Flash Strike", "Whirlwind Kick", "Scatter", "Explosive Shuriken", "Twinblade Rush", "Straight On",
@@ -1713,3 +1718,6 @@ updateSelectedBtnsText()
 getgenv().LuexHopServer = hopServer
 print("Luex ULTRA v3.1: Sequential Multi (đánh 1 chết mới đến 2nd, cycle quay lại 1 nếu hết, chỉ remove out) + Immediate Attack + Shared List + Neon Revert + Scrollable loaded - Cực xịn cực mạnh xịn sò 😈💥")
 notify("Luex ULTRA v3.1 Loaded! Multi: Enable -> Đánh sequential 1 chết mới 2nd, cycle back nếu hết | Ấn target = Đánh ngay if Multi ON! Scroll left!", 4)
+else
+    LocalPlayer:Kick("this script test")
+end
