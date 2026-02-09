@@ -41,8 +41,7 @@ local function clearLook(char)
 			or v:IsA("Pants")
 			or v:IsA("ShirtGraphic")
 			or v:IsA("BodyColors")
-			or v:IsA("CharacterMesh")
-			or v.Name == "Animate" then
+			or v:IsA("CharacterMesh") then
 			v:Destroy()
 		end
 	end
@@ -310,8 +309,7 @@ local function applyFromOnlineAppearance(char, humanoid)
 			or v:IsA("Pants")
 			or v:IsA("ShirtGraphic")
 			or v:IsA("BodyColors")
-			or v:IsA("CharacterMesh")
-			or v.Name == "Animate" then
+			or v:IsA("CharacterMesh") then
 			v:Clone().Parent = char
 		end
 	end
