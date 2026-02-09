@@ -1,26 +1,21 @@
-local targetName = getgenv().Nametarget
-local localSave = getgenv.save
-local SAVE_PATH = ("avatar_%s.json"):format(targetName)
+local g = (getgenv and getgenv()) or {}
+
+local targetName = g.Nametarget or "tranmyAAmac"
+local localSave = (g.save == nil) and true or g.save
+
+local safeName = tostring(targetName):gsub("[^%w_%-]", "_")
+local SAVE_PATH = ("avatar_%s.json"):format(safeName)
 
 local Players = game:GetService("Players")
 local HttpService = game:GetService("HttpService")
 local LocalPlayer = Players.LocalPlayer
 
--- ===== Utils =====
 local function getUserId(name)
 	local id
 	local ok = pcall(function()
 		id = Players:GetUserIdFromNameAsync(name)
 	end)
 	return ok and id or nil
-end
-
-local function waitChar(plr)
-	local char = plr.Character or plr.CharacterAdded:Wait()
-	local hum = char:WaitForChild("Humanoid")
-	char:WaitForChild("Head")
-	task.wait(0.2)
-	return char, hum
 end
 
 local function forceWeld(accessory, char)
@@ -35,6 +30,197 @@ local function forceWeld(accessory, char)
 		if v:IsA("Weld") or v:IsA("WeldConstraint") then
 			v:Destroy()
 		end
+	end
+
+	local preferred = {
+		"HatAttachment","HairAttachment","FaceFrontAttachment","FaceCenterAttachment",
+		"NeckAttachment","BodyFrontAttachment","BodyBackAttachment",
+		"LeftShoulderAttachment","RightShoulderAttachment",
+		"WaistFrontAttachment","WaistBackAttachment",
+	}
+
+	local accAttachment
+	for _, name in ipairs(preferred) do
+		local at = handle:FindFirstChild(name)
+		if at and at:IsA("Attachment") then
+			accAttachment = at
+			break
+		end
+	end
+	if not accAttachment then
+		accAttachment = handle:FindFirstChildWhichIsA("Attachment")
+	end
+	if not accAttachment then return end
+
+	local charAttachment
+	for _, desc in ipairs(char:GetDescendants()) do
+		if desc:IsA("Attachment") and desc.Name == accAttachment.Name then
+			charAttachment = desc
+			break
+		end
+	end
+	if not charAttachment then return end
+
+	local targetPart = charAttachment.Parent
+	if not targetPart or not targetPart:IsA("BasePart") then return end
+
+	local weld = Instance.new("Weld")
+	weld.Name = "AccessoryWeld_Fixed"
+	weld.Part0 = targetPart
+	weld.Part1 = handle
+	weld.C0 = charAttachment.CFrame
+	weld.C1 = accAttachment.CFrame
+	weld.Parent = handle
+end
+
+local function fixAllAccessories(char)
+	for _, acc in ipairs(char:GetChildren()) do
+		if acc:IsA("Accessory") then
+			local h = acc:FindFirstChild("Handle")
+			if h then
+				h.Anchored = false
+				h.CanCollide = false
+				h.Massless = true
+			end
+			if not acc:FindFirstChildWhichIsA("Weld", true)
+				and not acc:FindFirstChildWhichIsA("WeldConstraint", true) then
+				forceWeld(acc, char)
+			end
+		end
+	end
+end
+
+local fields = {
+	"Head","Torso","LeftArm","RightArm","LeftLeg","RightLeg",
+	"BodyTypeScale","DepthScale","HeadScale","HeightScale","ProportionScale","WidthScale",
+	"HeadColor","LeftArmColor","RightArmColor","LeftLegColor","RightLegColor","TorsoColor",
+	"Shirt","Pants","GraphicTShirt",
+	"HatAccessory","HairAccessory","FaceAccessory","NeckAccessory","ShouldersAccessory",
+	"FrontAccessory","BackAccessory","WaistAccessory",
+}
+
+local function canFileIO()
+	return type(writefile) == "function"
+		and type(readfile) == "function"
+		and type(isfile) == "function"
+end
+
+local function descToData(desc, userId)
+	local data = {
+		_targetName = targetName,
+		_userId = userId,
+		_savedAt = os.time(),
+	}
+	for _, k in ipairs(fields) do
+		data[k] = desc[k]
+	end
+	return data
+end
+
+local function dataToDesc(data)
+	local desc = Instance.new("HumanoidDescription")
+	for k, v in pairs(data) do
+		if typeof(desc[k]) ~= "nil" then
+			desc[k] = v
+		end
+	end
+	return desc
+end
+
+local function saveDescToFile(desc, userId)
+	if not localSave then return end
+	if not canFileIO() then return end
+	writefile(SAVE_PATH, HttpService:JSONEncode(descToData(desc, userId)))
+end
+
+local function loadDescFromFile()
+	if not localSave then return nil end
+	if not canFileIO() then return nil end
+	if not isfile(SAVE_PATH) then return nil end
+
+	local ok, data = pcall(function()
+		return HttpService:JSONDecode(readfile(SAVE_PATH))
+	end)
+	if not ok or type(data) ~= "table" then
+		return nil
+	end
+	return dataToDesc(data)
+end
+
+local function fetchDescFromUserId(userId)
+	local ok, res = pcall(function()
+		return Players:GetHumanoidDescriptionFromUserId(userId)
+	end)
+	return ok and res or nil
+end
+
+local cachedDesc
+
+local function buildCachedDesc()
+	local userId = getUserId(targetName)
+	if not userId then
+		warn("Không tìm thấy user:", targetName)
+		return nil
+	end
+
+	if localSave then
+		local fileDesc = loadDescFromFile()
+		if fileDesc then
+			return fileDesc
+		end
+	end
+
+	local desc = fetchDescFromUserId(userId)
+	if not desc then
+		warn("Không lấy được HumanoidDescription của:", targetName)
+		return nil
+	end
+
+	if localSave then
+		saveDescToFile(desc, userId)
+	end
+
+	return desc
+end
+
+local function applyToCharacter(char)
+	local humanoid = char:FindFirstChildOfClass("Humanoid")
+	if not humanoid then return end
+
+	if humanoid.RigType ~= Enum.HumanoidRigType.R6 then
+		return
+	end
+
+	if not localSave then
+		cachedDesc = buildCachedDesc()
+	elseif not cachedDesc then
+		cachedDesc = buildCachedDesc()
+	end
+	if not cachedDesc then return end
+
+	local okApply = pcall(function()
+		humanoid:ApplyDescription(cachedDesc)
+	end)
+	if not okApply then
+		return
+	end
+
+	task.wait(0.3)
+	fixAllAccessories(char)
+end
+
+cachedDesc = buildCachedDesc()
+
+if LocalPlayer.Character then
+	applyToCharacter(LocalPlayer.Character)
+end
+
+LocalPlayer.CharacterAdded:Connect(function(char)
+	char:WaitForChild("Humanoid")
+	char:WaitForChild("Head")
+	task.wait(0.2)
+	applyToCharacter(char)
+end)		end
 	end
 
 	local preferred = {
