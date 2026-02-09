@@ -74,7 +74,6 @@ local function snapshotDescription(desc)
 	local intProps = {
 		"Head", "Face", "Torso", "LeftArm", "RightArm", "LeftLeg", "RightLeg",
 		"GraphicTShirt", "Shirt", "Pants",
-		"ClimbAnimation", "FallAnimation", "IdleAnimation", "JumpAnimation", "RunAnimation", "SwimAnimation", "WalkAnimation",
 	}
 
 	local stringProps = {
