@@ -1,7 +1,7 @@
 -- FULL SCRIPT: clone avatar R6 + accessory weld fix + save/load clone json
 
-local save = getgenv().saves
-local loadfile = getgenv().loadfiles
+local save = getgenv().saves == true
+local loadfile = getgenv().loadfiles == true
 local targetName = getgenv().targetName or "tranmyAAmac"
 local CLONE_JSON_PATH = "luex/clone.json"
 
@@ -309,7 +309,8 @@ local function applyFromOnlineAppearance(char, humanoid)
 			or v:IsA("Pants")
 			or v:IsA("ShirtGraphic")
 			or v:IsA("BodyColors")
-			or v:IsA("CharacterMesh") then
+			or v:IsA("CharacterMesh")
+			or v.Name == "Animate" then
 			v:Clone().Parent = char
 		end
 	end
@@ -366,13 +367,9 @@ local function applyFromJson(char, humanoid)
 		humanoid:ApplyDescriptionReset(jsonDesc)
 	end)
 	if not okApply then
-		okApply = pcall(function()
+		pcall(function()
 			humanoid:ApplyDescription(jsonDesc)
 		end)
-	end
-	if not okApply then
-		warn("ApplyDescription tu json that bai, fallback online")
-		return false
 	end
 
 	print("Da clone avatar tu json:", CLONE_JSON_PATH, "target:", (data and data.target_name) or "unknown")
